@@ -1,0 +1,162 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { LogOut, ChevronRight, Lock, X } from "lucide-react";
+import { clsx } from "clsx";
+import { motion } from "framer-motion";
+import { brand } from "@/config/brand.config";
+import { getVisibleWorkflowSteps, getCoreResourceNav, isNavItemLocked } from "@/lib/features";
+import { getNavIcon } from "@/lib/nav-icons";
+import { SidebarPromos } from "./PromoOrchestrator";
+import { useWorkflowNav } from "@/context/WorkflowNavContext";
+import { BrandLogo } from "./BrandLogo";
+import { SidebarStatusPanel } from "@/features/dopamine/components/SidebarStatusPanel";
+import { isFeatureEnabled } from "@/config/features.config";
+import { BlogBuilderNav } from "@/features/blog-builder/components/BlogBuilderNav";
+import type { NavItem } from "@/config/navigation.config";
+
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
+  const pathname = usePathname();
+  const workflowSteps = getVisibleWorkflowSteps();
+  const coreResourceNav = getCoreResourceNav();
+  const workflow = useWorkflowNav();
+  const workflowProgress = workflow.progress;
+  const blogEnabled = isFeatureEnabled("blog-builder");
+
+  const currentWorkflowIndex = workflowSteps.findIndex((s) => s.path === pathname);
+  const progress =
+    currentWorkflowIndex >= 0
+      ? ((currentWorkflowIndex + 1) / Math.max(workflowSteps.length, 1)) * 100
+      : 0;
+
+  const handleLogout = async () => {
+    onMobileClose?.();
+    await workflow.resetSession();
+  };
+
+  const handleNavClick = () => onMobileClose?.();
+
+  const renderNavLink = (item: NavItem, progress: number) => {
+    const isActive = pathname === item.path;
+    const Icon = getNavIcon(item.icon);
+    const locked = isNavItemLocked(item, progress);
+
+    if (locked) {
+      return (
+        <div
+          key={item.path}
+          className="command-nav-link py-3 sm:py-4 opacity-40 cursor-not-allowed"
+          title="Complete the previous step first"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <Lock size={18} className="text-text-muted shrink-0" />
+            <span className="brand-font text-sm font-medium text-text-muted leading-snug">
+              {item.label}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={item.path}
+        href={item.path}
+        onClick={handleNavClick}
+        className={clsx("command-nav-link py-3 sm:py-4", isActive && "active")}
+      >
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <Icon size={18} className={clsx("shrink-0", isActive ? "text-accent" : "text-text-muted")} />
+          <span className="brand-font text-sm font-medium leading-snug">{item.label}</span>
+        </div>
+        {isActive && <ChevronRight size={14} className="text-accent ml-2 shrink-0" />}
+      </Link>
+    );
+  };
+
+  return (
+    <aside
+      className={clsx(
+        "fixed inset-y-0 left-0 z-50 flex flex-col h-[100dvh] overflow-hidden border-r border-[#1e2128] shrink-0",
+        "w-[min(18rem,88vw)] lg:static lg:w-72 lg:translate-x-0",
+        "transition-transform duration-300 ease-out",
+        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}
+      style={{ backgroundColor: brand.colors.sidebar }}
+    >
+      {workflowSteps.length > 0 && (
+        <div className="absolute left-0 top-0 w-0.5 h-full bg-[#1e2128] z-0">
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: `${progress}%` }}
+            className="w-full"
+            style={{ backgroundColor: brand.colors.primary, boxShadow: "0 0 15px rgba(69,162,158,0.4)" }}
+            transition={{ duration: 1, ease: "circOut" }}
+          />
+        </div>
+      )}
+
+      <div className="flex flex-col p-4 sm:p-6 gap-6 sm:gap-8 relative z-10 h-full">
+        <div className="flex items-start justify-between gap-2">
+          <Link href="/dashboard" className="min-w-0 flex-1" onClick={handleNavClick}>
+            <BrandLogo size="sm" />
+          </Link>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={onMobileClose}
+            className="lg:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#1e2128] text-text-muted hover:text-text-primary"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <nav className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar pb-6">
+          {workflowSteps.length > 0 && (
+            <>
+              <span className="text-[10px] font-black tracking-[0.25em] text-[#6b7280] uppercase px-3 sm:px-5 mb-2">
+                Extraction Protocol
+              </span>
+              {workflowSteps.map((step) => renderNavLink(step, workflowProgress))}
+            </>
+          )}
+
+          {blogEnabled && <BlogBuilderNav pathname={pathname} onNavClick={handleNavClick} />}
+
+          {coreResourceNav.length > 0 && (
+            <>
+              <span className="text-[10px] font-black tracking-[0.25em] text-[#6b7280] uppercase px-3 sm:px-5 mt-4 mb-2">
+                Resources
+              </span>
+              {coreResourceNav.map((step) => renderNavLink(step, workflowProgress))}
+            </>
+          )}
+
+          <SidebarPromos />
+
+          <div className="mt-auto flex flex-col gap-4 pt-4 sm:pt-6">
+            {(isFeatureEnabled("dopamine") || isFeatureEnabled("extraction-workflow")) && (
+              <SidebarStatusPanel />
+            )}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="command-nav-link py-3 sm:py-4 text-red-400/60 hover:text-red-400 hover:bg-red-500/5"
+            >
+              <div className="flex items-center gap-3">
+                <LogOut size={18} className="shrink-0" />
+                <span className="brand-font text-sm font-medium">Sign Out</span>
+              </div>
+            </button>
+          </div>
+        </nav>
+      </div>
+    </aside>
+  );
+}

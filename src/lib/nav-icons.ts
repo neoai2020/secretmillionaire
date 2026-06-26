@@ -1,0 +1,51 @@
+import {
+  LayoutGrid,
+  Search,
+  Brain,
+  Radar,
+  MessageSquare,
+  GraduationCap,
+  TrendingUp,
+  Scan,
+  Sparkles,
+  Rocket,
+  Target,
+  Smartphone,
+  Headphones,
+  Wifi,
+  Activity,
+  Wallet,
+  Globe,
+  Link2,
+  FileText,
+  MapPin,
+  type LucideIcon,
+} from "lucide-react";
+import type { NavIconName } from "@/config/navigation.config";
+
+const ICON_MAP: Record<NavIconName | "Target" | "Smartphone", LucideIcon> = {
+  LayoutGrid,
+  Search,
+  Brain,
+  Radar,
+  MessageSquare,
+  GraduationCap,
+  TrendingUp,
+  Scan,
+  Sparkles,
+  Rocket,
+  Target,
+  Smartphone,
+  Headphones,
+  Wifi,
+  Activity,
+  Wallet,
+  Globe,
+  Link2,
+  FileText,
+  MapPin,
+};
+
+export function getNavIcon(name: string): LucideIcon {
+  return ICON_MAP[name as keyof typeof ICON_MAP] ?? Target;
+}

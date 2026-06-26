@@ -1,0 +1,17 @@
+---
+description: Default GitHub remote for push/deploy commands
+alwaysApply: true
+---
+
+# Git remote (Secret Millionaire Society)
+
+This project pushes to **https://github.com/neoai2020/secretmillionaire**.
+
+When the user says **push** (or asks to push changes):
+
+1. Use `origin` → `https://github.com/neoai2020/secretmillionaire.git`
+2. Only push when explicitly requested — do not push proactively after commits
+3. Use `git push -u origin HEAD` on first push for a new branch; otherwise `git push origin <branch>`
+4. Never force-push to `main`/`master` unless the user explicitly asks
+
+Repository is currently empty on GitHub; first push may need an initial commit on the default branch.
