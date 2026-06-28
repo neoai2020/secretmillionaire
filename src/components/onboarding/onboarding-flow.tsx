@@ -9,6 +9,7 @@ import { brand } from "@/config/brand.config";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import {
   onboardingContent,
+  ONBOARDING_BETA_QUALIFICATION_CTA_URL,
   ONBOARDING_DASHBOARD_ROUTE,
   ONBOARDING_META_KEY,
 } from "@/config/onboarding-content";
@@ -130,14 +131,21 @@ function PreparingStep({ onContinue }: { onContinue: () => void }) {
 }
 
 function WelcomeCompleteStep({
-  onContinue,
+  onClaimOffer,
   onSkip,
   busy,
 }: {
-  onContinue: () => void;
+  onClaimOffer: () => void;
   onSkip: () => void;
   busy: boolean;
 }) {
+  const { welcome, partnerOffer } = onboardingContent;
+  const showPartnerCta = partnerOffer.enabled;
+  const primaryCta = showPartnerCta
+    ? partnerOffer.qualification.primaryCta
+    : welcome.continueCta;
+  const skipCta = showPartnerCta ? partnerOffer.qualification.noThanksCta : null;
+
   return (
     <section className="flex flex-col min-h-0 flex-1 justify-center w-full max-w-2xl mx-auto gap-6 text-center">
       <div
@@ -146,19 +154,21 @@ function WelcomeCompleteStep({
       >
         <CheckCircle2 size={32} style={{ color: brand.colors.encryptedGreen }} />
       </div>
-      <h1 className="text-3xl font-extrabold text-white">{onboardingContent.welcome.title}</h1>
-      <p className="text-slate-400 leading-relaxed">{onboardingContent.welcome.body}</p>
-      <button type="button" disabled={busy} onClick={onContinue} className="btn-primary w-full">
-        {busy ? "Saving..." : onboardingContent.welcome.continueCta}
+      <h1 className="text-3xl font-extrabold text-white">{welcome.title}</h1>
+      <p className="text-slate-400 leading-relaxed">{welcome.body}</p>
+      <button type="button" disabled={busy} onClick={onClaimOffer} className="btn-primary w-full">
+        {busy ? "Saving..." : primaryCta}
       </button>
-      <button
-        type="button"
-        disabled={busy}
-        onClick={onSkip}
-        className="text-sm text-slate-400 underline hover:text-slate-300 transition-colors"
-      >
-        {onboardingContent.welcome.noThanksCta}
-      </button>
+      {skipCta && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onSkip}
+          className="text-sm text-slate-400 underline hover:text-slate-300 transition-colors"
+        >
+          {skipCta}
+        </button>
+      )}
     </section>
   );
 }
@@ -176,6 +186,17 @@ export function OnboardingFlow() {
     if (busy) return;
     setBusy(true);
     await persistCompletion();
+    setBusy(false);
+    goToDashboard();
+  };
+
+  const handleClaimOffer = async () => {
+    if (busy) return;
+    setBusy(true);
+    await persistCompletion();
+    if (ONBOARDING_BETA_QUALIFICATION_CTA_URL) {
+      window.open(ONBOARDING_BETA_QUALIFICATION_CTA_URL, "_blank", "noopener,noreferrer");
+    }
     goToDashboard();
   };
 
@@ -201,7 +222,7 @@ export function OnboardingFlow() {
               {step === 0 && <PreparingStep onContinue={() => setStep(1)} />}
               {step === 1 && (
                 <WelcomeCompleteStep
-                  onContinue={finishOnboarding}
+                  onClaimOffer={handleClaimOffer}
                   onSkip={finishOnboarding}
                   busy={busy}
                 />
