@@ -236,4 +236,12 @@
       0 0 32px rgba(69, 162, 158, 0.35);
     animation: ai-loading-sweep 1.75s ease-in-out infinite;
   }
+
+  .ai-loading-fill {
+    background: linear-gradient(90deg, #2d7a76 0%, #45A29E 45%, #D4AF37 100%);
+    box-shadow:
+      0 0 10px rgba(69, 162, 158, 0.75),
+      0 0 18px rgba(212, 175, 55, 0.35);
+    transition: width 0.45s ease-out;
+  }
 }
