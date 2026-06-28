@@ -4,10 +4,23 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Rocket, ArrowRight, CheckCircle2, RotateCcw } from "lucide-react";
+import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
 import { useBlogBuilder } from "../context/BlogBuilderContext";
 import { GenerationTerminal } from "../components/GenerationTerminal";
+import { DeploySitePreview } from "../components/DeploySitePreview";
+import { DeployPostGrid, type PostSlotState } from "../components/DeployPostGrid";
+import { buildClusterTopics } from "../lib/templates";
+import type { BlogPost, BlogSite } from "../types";
 
-type DeployPhase = "idle" | "deploying" | "complete" | "error";
+type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
+
+function initSlots(topics: ReturnType<typeof buildClusterTopics>): PostSlotState[] {
+  return topics.map((topic) => ({
+    topic,
+    status: "queued",
+    progress: 0,
+  }));
+}
 
 export default function DeployAssetPage() {
   const router = useRouter();
@@ -26,7 +39,9 @@ export default function DeployAssetPage() {
   const [phase, setPhase] = useState<DeployPhase>("idle");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [site, setSite] = useState<BlogSite | null>(null);
+  const [postSlots, setPostSlots] = useState<PostSlotState[]>([]);
+  const slotProgressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (sessionLoaded && !linksArmed) router.replace("/arm-links");
@@ -34,7 +49,7 @@ export default function DeployAssetPage() {
 
   useEffect(() => {
     return () => {
-      if (progressTimer.current) clearInterval(progressTimer.current);
+      if (slotProgressTimer.current) clearInterval(slotProgressTimer.current);
     };
   }, []);
 
@@ -42,27 +57,57 @@ export default function DeployAssetPage() {
     setProgress((current) => Math.max(current, target));
   };
 
-  const startCreep = (from: number, to: number) => {
-    if (progressTimer.current) clearInterval(progressTimer.current);
-    progressTimer.current = setInterval(() => {
-      setProgress((current) => {
-        if (current >= to) return current;
-        return Math.min(to, current + 1);
-      });
-    }, 1800);
+  const clearSlotProgressTimer = () => {
+    if (slotProgressTimer.current) {
+      clearInterval(slotProgressTimer.current);
+      slotProgressTimer.current = null;
+    }
   };
 
-  const stopCreep = () => {
-    if (progressTimer.current) {
-      clearInterval(progressTimer.current);
-      progressTimer.current = null;
-    }
+  const startSlotProgress = (index: number) => {
+    clearSlotProgressTimer();
+    slotProgressTimer.current = setInterval(() => {
+      setPostSlots((prev) =>
+        prev.map((s, idx) => {
+          if (idx !== index || s.status !== "generating") return s;
+          const next = s.progress + 1.5 + Math.random() * 2.5;
+          return { ...s, progress: Math.min(94, next) };
+        })
+      );
+    }, 700);
+  };
+
+  const setSlotGenerating = (index: number) => {
+    setPostSlots((prev) =>
+      prev.map((s, idx) =>
+        idx === index ? { ...s, status: "generating", progress: 4, error: undefined } : s
+      )
+    );
+    startSlotProgress(index);
+  };
+
+  const setSlotComplete = (index: number, post: BlogPost) => {
+    clearSlotProgressTimer();
+    setPostSlots((prev) =>
+      prev.map((s, idx) =>
+        idx === index ? { ...s, status: "complete", progress: 100, post } : s
+      )
+    );
+  };
+
+  const setSlotError = (index: number, message: string) => {
+    clearSlotProgressTimer();
+    setPostSlots((prev) =>
+      prev.map((s, idx) => (idx === index ? { ...s, status: "error", error: message } : s))
+    );
   };
 
   const deploy = async () => {
     setError(null);
-    setPhase("deploying");
+    setPhase("setup");
     setProgress(0);
+    setSite(null);
+    setPostSlots([]);
     setGenerating(true);
 
     const niche = territory.trim() || hobby.trim();
@@ -96,37 +141,94 @@ export default function DeployAssetPage() {
       const createData = await createRes.json();
       if (!createRes.ok) throw new Error(createData.error || "Failed to create site");
 
-      bumpProgress(22);
-      appendLog("Generating pillar + 6 cluster posts...");
-      startCreep(22, 82);
+      const createdSite = createData.site as BlogSite;
+      setSite(createdSite);
+      bumpProgress(15);
 
-      const clusterRes = await fetch("/api/blog/generate-cluster", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId: createData.site.id as string }),
-      });
-      const clusterData = await clusterRes.json();
-      stopCreep();
-      if (!clusterRes.ok) throw new Error(clusterData.error || "Generation failed");
+      const deployHobby = createdSite.hobby || hobby.trim() || niche;
+      const topics = buildClusterTopics(deployHobby);
+      const slots = initSlots(topics);
+      setPostSlots(slots);
 
-      bumpProgress(88);
-      appendLog(`Created ${clusterData.count} posts. Publishing...`);
+      let productContext = "";
+      const affiliateUrl = armedLinks[0]?.url;
+      if (affiliateUrl) {
+        appendLog("Scanning affiliate offer page...");
+        try {
+          const scrapeRes = await fetch("/api/blog/scrape", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: affiliateUrl }),
+          });
+          const scrapeData = await scrapeRes.json();
+          if (scrapeRes.ok && scrapeData.data) {
+            productContext = `${scrapeData.data.title}. ${scrapeData.data.description}`;
+          }
+        } catch {
+          // Non-fatal
+        }
+      }
+
+      bumpProgress(20);
+      appendLog("Site ready — generating posts in pipeline...");
+      setPhase("generating");
+
+      const siteId = createdSite.id;
+      let createdCount = 0;
+
+      for (let i = 0; i < topics.length; i++) {
+        const topic = topics[i];
+        appendLog(`Writing ${i + 1}/${topics.length}: ${topic.title}...`);
+        setSlotGenerating(i);
+
+        const overallPct = 20 + Math.round((i / topics.length) * 65);
+        bumpProgress(overallPct);
+
+        const postRes = await fetch("/api/blog/generate-one-post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            siteId,
+            topic,
+            productContext,
+            fastImages: true,
+          }),
+        });
+        const postData = await postRes.json();
+
+        if (!postRes.ok) {
+          setSlotError(i, postData.error || "Generation failed");
+          throw new Error(postData.error || `Failed on post ${i + 1}`);
+        }
+
+        setSlotComplete(i, postData.post as BlogPost);
+        if (!postData.skipped) createdCount++;
+        bumpProgress(20 + Math.round(((i + 1) / topics.length) * 65));
+      }
+
+      setPhase("publishing");
+      bumpProgress(92);
+      appendLog(
+        createdCount > 0
+          ? `Created ${createdCount} new posts. Publishing...`
+          : "All posts ready. Publishing..."
+      );
 
       const pubRes = await fetch("/api/blog/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId: createData.site.id as string }),
+        body: JSON.stringify({ siteId }),
       });
       const pubData = await pubRes.json();
       if (!pubRes.ok) throw new Error(pubData.error || "Publish failed");
 
       bumpProgress(100);
       appendLog("Money site is live — traffic routing enabled.");
-      markDeployed(createData.site.id as string, createData.site.slug as string);
+      markDeployed(siteId, createdSite.slug);
       setPhase("complete");
       setGenerating(false);
     } catch (e) {
-      stopCreep();
+      clearSlotProgressTimer();
       let msg = e instanceof Error ? e.message : "Deploy failed";
       if (msg === "Unauthorized") {
         msg = "Not signed in. Please log in at /login and try again.";
@@ -145,7 +247,16 @@ export default function DeployAssetPage() {
   }
 
   const terminalPhase =
-    phase === "complete" ? "complete" : phase === "deploying" ? "running" : "idle";
+    phase === "complete"
+      ? "complete"
+      : phase === "setup"
+        ? "running"
+        : phase === "generating" || phase === "publishing"
+          ? "running"
+          : "idle";
+
+  const completedPosts = postSlots.filter((s) => s.status === "complete").length;
+  const showResults = site && (phase === "generating" || phase === "publishing" || phase === "complete");
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full">
@@ -160,7 +271,43 @@ export default function DeployAssetPage() {
         </p>
       </div>
 
-      <GenerationTerminal phase={terminalPhase} progress={progress} logLines={generationLog} />
+      {phase === "setup" && (
+        <GenerationTerminal phase={terminalPhase} progress={progress} logLines={generationLog} />
+      )}
+
+      {showResults && site && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col gap-6"
+        >
+          <DeploySitePreview site={site} />
+
+          {(phase === "generating" || phase === "publishing") && (
+            <AiLoadingBar
+              label={
+                phase === "publishing"
+                  ? "Publishing money site live"
+                  : `Generating content — ${completedPosts}/${postSlots.length} posts`
+              }
+              progress={progress}
+            />
+          )}
+
+          {postSlots.length > 0 && <DeployPostGrid slots={postSlots} />}
+
+          {phase === "publishing" && (
+            <div className="rounded-xl border border-[#45A29E]/25 bg-black/40 p-4 font-mono text-xs text-[#45A29E]">
+              {generationLog.slice(-3).map((line, idx) => (
+                <p key={`${line}-${idx}`} className="mb-1">
+                  {line.startsWith(">") ? line : `> ${line}`}
+                </p>
+              ))}
+              <span className="inline-block w-2 h-4 bg-[#45A29E] animate-pulse ml-1" />
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {phase === "complete" && (
         <motion.div
@@ -170,6 +317,7 @@ export default function DeployAssetPage() {
         >
           <CheckCircle2 className="text-[#45A29E]" size={28} />
           <p className="text-sm text-[#C5C6C7]">Your money site is live and ready for traffic.</p>
+          <AiLoadingBar label="Deploy complete" progress={100} className="w-full max-w-md" />
         </motion.div>
       )}
 
@@ -177,6 +325,10 @@ export default function DeployAssetPage() {
         <p className="text-sm text-red-400/90 text-center rounded-lg border border-red-500/30 bg-red-500/10 p-3">
           {error}
         </p>
+      )}
+
+      {phase === "idle" && (
+        <GenerationTerminal phase="idle" progress={0} logLines={generationLog} />
       )}
 
       {phase === "idle" && (

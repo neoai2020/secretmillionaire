@@ -92,11 +92,13 @@ export async function resolvePostImage(params: {
   hobby: string;
   userId: string;
   supabase: SupabaseClient;
+  /** Skip slow RapidAPI image gen — use Pollinations only (faster deploy). */
+  fast?: boolean;
 }): Promise<{ url: string; alt: string }> {
   const alt = `${params.title} — ${params.hobby} guide`;
   const prompt = `Professional blog hero photo about ${params.hobby}: ${params.title}. Photorealistic, vibrant, no text.`;
 
-  const buffer = await callNanoBanana(prompt);
+  const buffer = params.fast ? null : await callNanoBanana(prompt);
   if (buffer) {
     const fileName = `${params.userId}/${randomUUID()}.png`;
     const { error } = await params.supabase.storage

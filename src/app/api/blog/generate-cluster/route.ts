@@ -45,13 +45,20 @@ export async function POST(request: Request) {
   }
 
   const topics = buildClusterTopics(typedSite.hobby);
-  const existingSlugs: string[] = [];
-
-  await supabase.from("posts").delete().eq("site_id", siteId);
-
   const createdPosts = [];
 
   for (const topic of topics) {
+    const { data: existing } = await supabase
+      .from("posts")
+      .select("id")
+      .eq("site_id", siteId)
+      .eq("slug", topic.slug)
+      .maybeSingle();
+
+    if (existing) {
+      createdPosts.push(existing);
+      continue;
+    }
     const content = await generateBlogPostContent({
       topic: topic.title,
       hobby: typedSite.hobby,
@@ -99,7 +106,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    existingSlugs.push(topic.slug);
     createdPosts.push(post);
   }
 
