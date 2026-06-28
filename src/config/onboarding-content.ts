@@ -1,8 +1,9 @@
 import { brand } from "./brand.config";
+import { PARTNER_LINK_PLACEHOLDER } from "./offers.config";
 
 export const ONBOARDING_PRODUCT_NAME = brand.productName;
 
-export const ONBOARDING_BETA_QUALIFICATION_CTA_URL = "https://example.com/partner-offer";
+export const ONBOARDING_BETA_QUALIFICATION_CTA_URL = PARTNER_LINK_PLACEHOLDER;
 
 export const ONBOARDING_DASHBOARD_ROUTE = "/dashboard";
 

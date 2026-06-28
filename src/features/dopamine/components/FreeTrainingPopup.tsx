@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight } from "lucide-react";
+import { PARTNER_LINK_PLACEHOLDER } from "@/config/offers.config";
 
-const CTA_URL = "https://www.breakoutai.net/5k-passive-9";
+const CTA_URL = PARTNER_LINK_PLACEHOLDER;
 const SESSION_KEY = "sms_training_popup";
 
 const SPARKLE_POSITIONS = [

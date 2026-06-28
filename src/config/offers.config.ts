@@ -1,16 +1,10 @@
-/** Client-supplied offer URLs — replace before production */
+/** Replace with real partner/affiliate URLs before launch */
+export const PARTNER_LINK_PLACEHOLDER = "https://example.com/partner-offer";
 
 export const offers = {
-
-  vaultAcceleration: "https://jvz4.com/c/3547097/442443/",
-
-  quantumNode: "https://jvz4.com/c/3547097/442443/",
-
-  commissionStream: "https://jvz1.com/c/3547097/442055/",
-
-  innerVaultAccess: "https://example.com/sms-inner-vault",
-
-  withdrawRouting: "https://jvz4.com/c/3547097/442443/",
-
+  vaultAcceleration: PARTNER_LINK_PLACEHOLDER,
+  quantumNode: PARTNER_LINK_PLACEHOLDER,
+  commissionStream: PARTNER_LINK_PLACEHOLDER,
+  innerVaultAccess: PARTNER_LINK_PLACEHOLDER,
+  withdrawRouting: PARTNER_LINK_PLACEHOLDER,
 } as const;
-

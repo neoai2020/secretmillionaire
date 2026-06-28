@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { PARTNER_LINK_PLACEHOLDER } from "@/config/offers.config";
 
-const CTA_URL = "https://www.breakoutai.net/5k-passive-9";
+const CTA_URL = PARTNER_LINK_PLACEHOLDER;
 
 export default function ScaleTrainingPage() {
     return (
