@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       {
         user_id: user.id,
         deployed: true,
+        is_generating: false,
         step: 3,
         site_id: siteId,
         site_slug: site.slug,

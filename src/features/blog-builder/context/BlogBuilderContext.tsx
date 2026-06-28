@@ -78,6 +78,8 @@ interface DbSessionRow {
   deployed?: boolean;
   site_id?: string | null;
   site_slug?: string | null;
+  is_generating?: boolean;
+  generation_log?: string[];
 }
 
 function mapSessionFromDb(row: DbSessionRow): Partial<BlogBuilderState> {
@@ -91,6 +93,8 @@ function mapSessionFromDb(row: DbSessionRow): Partial<BlogBuilderState> {
     deployed: row.deployed ?? false,
     siteId: row.site_id ?? null,
     siteSlug: row.site_slug ?? null,
+    isGenerating: row.is_generating ?? false,
+    generationLog: Array.isArray(row.generation_log) ? row.generation_log : [],
   };
 }
 
@@ -105,6 +109,8 @@ function persistPayload(state: BlogBuilderState) {
     deployed: state.deployed,
     siteId: state.siteId,
     siteSlug: state.siteSlug,
+    isGenerating: state.isGenerating,
+    generationLog: state.generationLog,
   };
 }
 
@@ -172,16 +178,20 @@ export function BlogBuilderProvider({ children }: { children: React.ReactNode })
     };
   }, []);
 
+  const persistToServer = useCallback((payload: ReturnType<typeof persistPayload>) => {
+    void fetch("/api/blog/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify(payload),
+    });
+  }, []);
+
   useEffect(() => {
     if (!persistReady.current) return;
 
     const timer = setTimeout(() => {
-      void fetch("/api/blog/session", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify(persistPayload(state)),
-      });
+      persistToServer(persistPayload(state));
     }, 400);
 
     return () => clearTimeout(timer);
@@ -195,6 +205,8 @@ export function BlogBuilderProvider({ children }: { children: React.ReactNode })
     state.deployed,
     state.siteId,
     state.siteSlug,
+    state.generationLog,
+    persistToServer,
   ]);
 
   const persistVault = useCallback(async (links: ArmedLink[]) => {
@@ -278,9 +290,20 @@ export function BlogBuilderProvider({ children }: { children: React.ReactNode })
     }));
   }, []);
 
-  const setGenerating = useCallback((isGenerating: boolean) => {
-    setState((s) => ({ ...s, isGenerating, generationLog: isGenerating ? [] : s.generationLog }));
-  }, []);
+  const setGenerating = useCallback(
+    (isGenerating: boolean) => {
+      setState((s) => {
+        const next = {
+          ...s,
+          isGenerating,
+          generationLog: isGenerating ? [] : s.generationLog,
+        };
+        persistToServer(persistPayload(next));
+        return next;
+      });
+    },
+    [persistToServer]
+  );
 
   const resetWizard = useCallback(async () => {
     await fetch("/api/blog/session", { method: "DELETE", cache: "no-store" });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Rocket, ArrowRight, CheckCircle2, RotateCcw } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
@@ -10,6 +10,7 @@ import { GenerationTerminal } from "../components/GenerationTerminal";
 import { DeploySitePreview } from "../components/DeploySitePreview";
 import { DeployPostGrid, type PostSlotState } from "../components/DeployPostGrid";
 import { buildClusterTopics } from "../lib/templates";
+import { buildDeploySlots, firstQueuedSlotIndex } from "../lib/deploy-slots";
 import type { BlogPost, BlogSite } from "../types";
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
@@ -30,6 +31,7 @@ export default function DeployAssetPage() {
     hobby,
     territory,
     armedLinks,
+    deployed,
     generationLog,
     setGenerating,
     markDeployed,
@@ -41,7 +43,11 @@ export default function DeployAssetPage() {
   const [error, setError] = useState<string | null>(null);
   const [site, setSite] = useState<BlogSite | null>(null);
   const [postSlots, setPostSlots] = useState<PostSlotState[]>([]);
+  const [deployLoaded, setDeployLoaded] = useState(false);
+  const [canResume, setCanResume] = useState(false);
+  const [resumeLabel, setResumeLabel] = useState("");
   const slotProgressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const deployRunning = useRef(false);
 
   useEffect(() => {
     if (sessionLoaded && !linksArmed) router.replace("/arm-links");
@@ -52,6 +58,49 @@ export default function DeployAssetPage() {
       if (slotProgressTimer.current) clearInterval(slotProgressTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!sessionLoaded) return;
+
+    let cancelled = false;
+
+    async function loadDeployState() {
+      try {
+        const res = await fetch("/api/blog/deploy-state", { cache: "no-store" });
+        const data = res.ok ? await res.json() : null;
+        if (cancelled || !data) return;
+
+        if (data.site) setSite(data.site as BlogSite);
+        if (Array.isArray(data.slots) && data.slots.length > 0) {
+          setPostSlots(data.slots as PostSlotState[]);
+        }
+
+        const completed = data.completedCount ?? 0;
+        const total = data.totalCount ?? 0;
+
+        if (data.session?.deployed && data.site) {
+          setPhase("complete");
+          setProgress(100);
+        } else if (deployed && data.site) {
+          setPhase("complete");
+          setProgress(100);
+        } else if (data.site && total > 0 && completed === total && !data.session?.deployed) {
+          setCanResume(true);
+          setResumeLabel(`Publish money site (${completed}/${total} posts ready)`);
+        } else if (data.canResume && data.site) {
+          setCanResume(true);
+          setResumeLabel(`Continue deployment (${completed}/${total} posts ready)`);
+        }
+      } finally {
+        if (!cancelled) setDeployLoaded(true);
+      }
+    }
+
+    loadDeployState();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionLoaded, deployed]);
 
   const bumpProgress = (target: number) => {
     setProgress((current) => Math.max(current, target));
@@ -102,87 +151,23 @@ export default function DeployAssetPage() {
     );
   };
 
-  const deploy = async () => {
-    setError(null);
-    setPhase("setup");
-    setProgress(0);
-    setSite(null);
-    setPostSlots([]);
-    setGenerating(true);
-
-    const niche = territory.trim() || hobby.trim();
-    if (!niche) {
-      setError("Missing territory — go back to Choose Territory and pick a niche first.");
-      setPhase("error");
-      setGenerating(false);
-      return;
-    }
-
-    if (armedLinks.length === 0) {
-      setError("No armed links found — go back to Arm Your Links and add at least one affiliate URL.");
-      setPhase("error");
-      setGenerating(false);
-      return;
-    }
-
-    try {
-      appendLog("Creating cash asset record...");
-      bumpProgress(8);
-
-      const createRes = await fetch("/api/blog/create-site", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          hobby: hobby.trim() || niche,
-          territory: niche,
-          armedLinks,
-        }),
-      });
-      const createData = await createRes.json();
-      if (!createRes.ok) throw new Error(createData.error || "Failed to create site");
-
-      const createdSite = createData.site as BlogSite;
-      setSite(createdSite);
-      bumpProgress(15);
-
-      const deployHobby = createdSite.hobby || hobby.trim() || niche;
-      const topics = buildClusterTopics(deployHobby);
-      const slots = initSlots(topics);
-      setPostSlots(slots);
-
-      let productContext = "";
-      const affiliateUrl = armedLinks[0]?.url;
-      if (affiliateUrl) {
-        appendLog("Scanning affiliate offer page...");
-        try {
-          const scrapeRes = await fetch("/api/blog/scrape", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: affiliateUrl }),
-          });
-          const scrapeData = await scrapeRes.json();
-          if (scrapeRes.ok && scrapeData.data) {
-            productContext = `${scrapeData.data.title}. ${scrapeData.data.description}`;
-          }
-        } catch {
-          // Non-fatal
-        }
-      }
-
-      bumpProgress(20);
-      appendLog("Site ready — generating posts in pipeline...");
-      setPhase("generating");
-
-      const siteId = createdSite.id;
+  const runPostGeneration = useCallback(
+    async (params: {
+      siteId: string;
+      deployHobby: string;
+      topics: ReturnType<typeof buildClusterTopics>;
+      slots: PostSlotState[];
+      productContext: string;
+      startIndex?: number;
+    }) => {
+      const { siteId, topics, productContext, startIndex = 0 } = params;
       let createdCount = 0;
 
-      for (let i = 0; i < topics.length; i++) {
+      for (let i = startIndex; i < topics.length; i++) {
         const topic = topics[i];
         appendLog(`Writing ${i + 1}/${topics.length}: ${topic.title}...`);
         setSlotGenerating(i);
-
-        const overallPct = 20 + Math.round((i / topics.length) * 65);
-        bumpProgress(overallPct);
+        bumpProgress(20 + Math.round((i / topics.length) * 65));
 
         const postRes = await fetch("/api/blog/generate-one-post", {
           method: "POST",
@@ -206,27 +191,181 @@ export default function DeployAssetPage() {
         bumpProgress(20 + Math.round(((i + 1) / topics.length) * 65));
       }
 
-      setPhase("publishing");
-      bumpProgress(92);
+      return createdCount;
+    },
+    [appendLog]
+  );
+
+  const publishSite = async (siteId: string, siteSlug: string) => {
+    setPhase("publishing");
+    bumpProgress(92);
+    appendLog("Publishing money site live...");
+
+    const pubRes = await fetch("/api/blog/publish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ siteId }),
+    });
+    const pubData = await pubRes.json();
+    if (!pubRes.ok) throw new Error(pubData.error || "Publish failed");
+
+    bumpProgress(100);
+    appendLog("Money site is live — traffic routing enabled.");
+    markDeployed(siteId, siteSlug);
+    setPhase("complete");
+    setCanResume(false);
+    setGenerating(false);
+  };
+
+  const deploy = async (resume = false) => {
+    if (deployRunning.current) return;
+    deployRunning.current = true;
+
+    setError(null);
+    setCanResume(false);
+    setGenerating(true);
+
+    const niche = territory.trim() || hobby.trim();
+    if (!niche) {
+      setError("Missing territory — go back to Choose Territory and pick a niche first.");
+      setPhase("error");
+      setGenerating(false);
+      deployRunning.current = false;
+      return;
+    }
+
+    if (armedLinks.length === 0) {
+      setError("No armed links found — go back to Arm Your Links and add at least one affiliate URL.");
+      setPhase("error");
+      setGenerating(false);
+      deployRunning.current = false;
+      return;
+    }
+
+    try {
+      let activeSite = site;
+      let activeSlots = postSlots;
+      let startIndex = 0;
+      let productContext = "";
+
+      if (resume && activeSite) {
+        const deployHobby = activeSite.hobby || hobby.trim() || niche;
+        const topics = buildClusterTopics(deployHobby);
+        activeSlots =
+          activeSlots.length > 0 ? activeSlots : buildDeploySlots(deployHobby, []);
+        startIndex = firstQueuedSlotIndex(activeSlots);
+        if (startIndex === -1) {
+          await publishSite(activeSite.id, activeSite.slug);
+          deployRunning.current = false;
+          return;
+        }
+        setPostSlots(activeSlots);
+        setPhase("generating");
+        bumpProgress(20 + Math.round((startIndex / topics.length) * 65));
+        appendLog(`Resuming from post ${startIndex + 1}/${topics.length}...`);
+
+        const affiliateUrl = armedLinks[0]?.url;
+        if (affiliateUrl) {
+          try {
+            const scrapeRes = await fetch("/api/blog/scrape", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: affiliateUrl }),
+            });
+            const scrapeData = await scrapeRes.json();
+            if (scrapeRes.ok && scrapeData.data) {
+              productContext = `${scrapeData.data.title}. ${scrapeData.data.description}`;
+            }
+          } catch {
+            // Non-fatal
+          }
+        }
+
+        const createdCount = await runPostGeneration({
+          siteId: activeSite.id,
+          deployHobby,
+          topics,
+          slots: activeSlots,
+          productContext,
+          startIndex,
+        });
+
+        appendLog(
+          createdCount > 0
+            ? `Created ${createdCount} new posts. Publishing...`
+            : "All posts ready. Publishing..."
+        );
+        await publishSite(activeSite.id, activeSite.slug);
+        deployRunning.current = false;
+        return;
+      }
+
+      setPhase("setup");
+      setProgress(0);
+      setSite(null);
+      setPostSlots([]);
+
+      appendLog("Creating cash asset record...");
+      bumpProgress(8);
+
+      const createRes = await fetch("/api/blog/create-site", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hobby: hobby.trim() || niche,
+          territory: niche,
+          armedLinks,
+        }),
+      });
+      const createData = await createRes.json();
+      if (!createRes.ok) throw new Error(createData.error || "Failed to create site");
+
+      activeSite = createData.site as BlogSite;
+      setSite(activeSite);
+      bumpProgress(15);
+
+      const deployHobby = activeSite.hobby || hobby.trim() || niche;
+      const topics = buildClusterTopics(deployHobby);
+      activeSlots = initSlots(topics);
+      setPostSlots(activeSlots);
+
+      const affiliateUrl = armedLinks[0]?.url;
+      if (affiliateUrl) {
+        appendLog("Scanning affiliate offer page...");
+        try {
+          const scrapeRes = await fetch("/api/blog/scrape", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: affiliateUrl }),
+          });
+          const scrapeData = await scrapeRes.json();
+          if (scrapeRes.ok && scrapeData.data) {
+            productContext = `${scrapeData.data.title}. ${scrapeData.data.description}`;
+          }
+        } catch {
+          // Non-fatal
+        }
+      }
+
+      bumpProgress(20);
+      appendLog("Site ready — generating posts in pipeline...");
+      setPhase("generating");
+
+      const createdCount = await runPostGeneration({
+        siteId: activeSite.id,
+        deployHobby,
+        topics,
+        slots: activeSlots,
+        productContext,
+        startIndex: 0,
+      });
+
       appendLog(
         createdCount > 0
           ? `Created ${createdCount} new posts. Publishing...`
           : "All posts ready. Publishing..."
       );
-
-      const pubRes = await fetch("/api/blog/publish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId }),
-      });
-      const pubData = await pubRes.json();
-      if (!pubRes.ok) throw new Error(pubData.error || "Publish failed");
-
-      bumpProgress(100);
-      appendLog("Money site is live — traffic routing enabled.");
-      markDeployed(siteId, createdSite.slug);
-      setPhase("complete");
-      setGenerating(false);
+      await publishSite(activeSite.id, activeSite.slug);
     } catch (e) {
       clearSlotProgressTimer();
       let msg = e instanceof Error ? e.message : "Deploy failed";
@@ -239,10 +378,12 @@ export default function DeployAssetPage() {
       setError(msg);
       setPhase("error");
       setGenerating(false);
+    } finally {
+      deployRunning.current = false;
     }
   };
 
-  if (!sessionLoaded) {
+  if (!sessionLoaded || !deployLoaded) {
     return <p className="text-[#6b7280] text-sm animate-pulse">Loading your deploy session...</p>;
   }
 
@@ -256,7 +397,13 @@ export default function DeployAssetPage() {
           : "idle";
 
   const completedPosts = postSlots.filter((s) => s.status === "complete").length;
-  const showResults = site && (phase === "generating" || phase === "publishing" || phase === "complete");
+  const showResults =
+    site &&
+    (phase === "generating" ||
+      phase === "publishing" ||
+      phase === "complete" ||
+      (phase === "idle" && canResume) ||
+      (phase === "error" && postSlots.length > 0));
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full">
@@ -267,7 +414,8 @@ export default function DeployAssetPage() {
         </h1>
         <p className="text-[#6b7280] text-sm sm:text-base max-w-2xl leading-relaxed">
           The system will generate your pillar post, six cluster articles, images, SEO metadata, and
-          weave in your armed links — then publish your money site live.
+          weave in your armed links — then publish your money site live. All progress is saved to
+          your account on our servers — nothing is stored in your browser.
         </p>
       </div>
 
@@ -327,14 +475,32 @@ export default function DeployAssetPage() {
         </p>
       )}
 
-      {phase === "idle" && (
+      {phase === "idle" && !canResume && (
         <GenerationTerminal phase="idle" progress={0} logLines={generationLog} />
       )}
 
-      {phase === "idle" && (
+      {phase === "idle" && canResume && (
         <motion.button
           type="button"
-          onClick={deploy}
+          onClick={() => deploy(true)}
+          whileHover={{ scale: 1.01 }}
+          className="w-full max-w-lg mx-auto py-4 sm:py-5 px-4 sm:px-8 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10]"
+          style={{
+            background: "linear-gradient(135deg, #D4AF37 0%, #b8942a 100%)",
+            boxShadow: "0 0 40px rgba(212, 175, 55, 0.35)",
+          }}
+        >
+          <span className="flex items-center justify-center gap-3">
+            <RotateCcw size={20} />
+            {resumeLabel || "Continue Deployment"}
+          </span>
+        </motion.button>
+      )}
+
+      {phase === "idle" && !canResume && (
+        <motion.button
+          type="button"
+          onClick={() => deploy(false)}
           whileHover={{ scale: 1.01 }}
           className="w-full max-w-lg mx-auto py-4 sm:py-5 px-4 sm:px-8 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10]"
           style={{
@@ -373,7 +539,7 @@ export default function DeployAssetPage() {
       {phase === "error" && (
         <motion.button
           type="button"
-          onClick={deploy}
+          onClick={() => deploy(canResume || postSlots.some((s) => s.status === "complete"))}
           whileHover={{ scale: 1.01 }}
           className="w-full max-w-lg mx-auto py-4 sm:py-5 px-4 sm:px-8 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10] border border-[#45A29E]/40"
           style={{

@@ -47,3 +47,13 @@ export interface ClusterTopic {
   slug: string;
   isPillar: boolean;
 }
+
+export type PostSlotStatus = "queued" | "generating" | "complete" | "error";
+
+export interface PostSlotState {
+  topic: ClusterTopic;
+  status: PostSlotStatus;
+  progress: number;
+  post?: BlogPost;
+  error?: string;
+}

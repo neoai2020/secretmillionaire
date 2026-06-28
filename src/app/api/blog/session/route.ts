@@ -15,6 +15,8 @@ const defaultSession = {
   deployed: false,
   site_id: null as string | null,
   site_slug: null as string | null,
+  is_generating: false,
+  generation_log: [] as string[],
 };
 
 export async function GET() {
@@ -57,6 +59,12 @@ export async function PUT(request: Request) {
     deployed: Boolean(body.deployed),
     site_id: typeof body.siteId === "string" ? body.siteId : body.site_id ?? null,
     site_slug: typeof body.siteSlug === "string" ? body.siteSlug : body.site_slug ?? null,
+    is_generating: Boolean(body.isGenerating ?? body.is_generating ?? defaultSession.is_generating),
+    generation_log: Array.isArray(body.generationLog)
+      ? body.generationLog
+      : Array.isArray(body.generation_log)
+        ? body.generation_log
+        : defaultSession.generation_log,
     updated_at: new Date().toISOString(),
   };
 

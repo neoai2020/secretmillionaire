@@ -6,6 +6,24 @@ import type { ArmedLink } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
 
+async function linkSiteToSession(
+  supabase: Awaited<ReturnType<typeof getApiUser>>["supabase"],
+  userId: string,
+  siteId: string,
+  siteSlug: string
+) {
+  await supabase.from("blog_builder_sessions").upsert(
+    {
+      user_id: userId,
+      site_id: siteId,
+      site_slug: siteSlug,
+      step: 2,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+}
+
 export async function POST(request: Request) {
   const guard = featureApiGuard("blog-builder");
   if (guard) return guard;
@@ -25,12 +43,6 @@ export async function POST(request: Request) {
   const baseSlug = slugify(territory) || slugify(hobby) || "site";
   const slug = `${baseSlug}-${user.id.slice(0, 8)}`;
 
-  const { data: existing } = await supabase
-    .from("sites")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
   const payload = {
     user_id: user.id,
     hobby,
@@ -41,6 +53,12 @@ export async function POST(request: Request) {
     status: "draft" as const,
   };
 
+  const { data: existing } = await supabase
+    .from("sites")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
   if (existing?.id) {
     const { data, error } = await supabase
       .from("sites")
@@ -49,10 +67,12 @@ export async function POST(request: Request) {
       .select()
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await linkSiteToSession(supabase, user.id, data.id, data.slug);
     return NextResponse.json({ site: data });
   }
 
   const { data, error } = await supabase.from("sites").insert(payload).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await linkSiteToSession(supabase, user.id, data.id, data.slug);
   return NextResponse.json({ site: data });
 }

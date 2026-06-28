@@ -1,0 +1,58 @@
+import { NextResponse } from "next/server";
+import { featureApiGuard } from "@/lib/feature-api-guard";
+import { getApiUser } from "@/lib/api-auth";
+import { NO_STORE_HEADERS } from "@/lib/api-cache-headers";
+import { buildDeploySlots } from "@/features/blog-builder/lib/deploy-slots";
+import type { BlogPost } from "@/features/blog-builder/types";
+
+export const dynamic = "force-dynamic";
+
+/** Server-side deploy snapshot — site, posts, and wizard session (no client storage). */
+export async function GET() {
+  const guard = featureApiGuard("blog-builder");
+  if (guard) return guard;
+
+  const { supabase, user } = await getApiUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
+  }
+
+  const [{ data: session }, { data: site }] = await Promise.all([
+    supabase.from("blog_builder_sessions").select("*").eq("user_id", user.id).maybeSingle(),
+    supabase.from("sites").select("*").eq("user_id", user.id).maybeSingle(),
+  ]);
+
+  let posts: unknown[] = [];
+  if (site?.id) {
+    const { data } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("site_id", site.id)
+      .order("is_pillar", { ascending: false })
+      .order("created_at", { ascending: true });
+    posts = data ?? [];
+  }
+
+  const slots = site?.hobby ? buildDeploySlots(site.hobby, (posts ?? []) as BlogPost[]) : [];
+
+  const completedCount = slots.filter((s) => s.status === "complete").length;
+  const totalCount = slots.length;
+  const canResume =
+    Boolean(site) &&
+    !session?.deployed &&
+    completedCount > 0 &&
+    completedCount < totalCount;
+
+  return NextResponse.json(
+    {
+      session,
+      site,
+      posts,
+      slots,
+      completedCount,
+      totalCount,
+      canResume,
+    },
+    { headers: NO_STORE_HEADERS }
+  );
+}

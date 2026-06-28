@@ -3,17 +3,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, FileText, Loader2, Sparkles } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
-import type { BlogPost, ClusterTopic } from "../types";
+import type { BlogPost, ClusterTopic, PostSlotState } from "../types";
 
-export type PostSlotStatus = "queued" | "generating" | "complete" | "error";
-
-export interface PostSlotState {
-  topic: ClusterTopic;
-  status: PostSlotStatus;
-  progress: number;
-  post?: BlogPost;
-  error?: string;
-}
+export type { PostSlotStatus } from "../types";
+export type { PostSlotState };
 
 interface DeployPostSlotProps {
   slot: PostSlotState;
