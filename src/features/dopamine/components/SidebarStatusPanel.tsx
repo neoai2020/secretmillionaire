@@ -6,12 +6,16 @@ import { Circle, Users, Radio, ShieldCheck } from "lucide-react";
 import { socialProof } from "@/config/social-proof.config";
 import { brand } from "@/config/brand.config";
 import { isFeatureEnabled } from "@/config/features.config";
-import { useExtraction } from "@/features/extraction-workflow/context/ExtractionContext";
+import {
+  AWAITING_STATUS_LABEL,
+  SECURED_STATUS_LABEL,
+  useSecuredConnection,
+} from "@/features/extraction-workflow/hooks/useSecuredConnection";
 
 export function SidebarStatusPanel() {
   const showDopamine = isFeatureEnabled("dopamine");
   const showExtraction = isFeatureEnabled("extraction-workflow");
-  const { connected } = useExtraction();
+  const secured = useSecuredConnection();
 
   const [index, setIndex] = useState(0);
   const messages = [...socialProof.ticker.messages];
@@ -129,20 +133,20 @@ export function SidebarStatusPanel() {
             <ShieldCheck
               size={12}
               className="shrink-0"
-              style={{ color: connected ? green : brand.colors.textMuted }}
+              style={{ color: secured ? green : brand.colors.textMuted }}
             />
             <span className="text-[10px] font-medium text-[#C5C6C7] leading-snug">
               Server:{" "}
-              <span style={{ color: connected ? green : brand.colors.textMuted }}>
-                {connected ? "Encrypted & Active" : "Awaiting Connection"}
+              <span style={{ color: secured ? green : brand.colors.textMuted }}>
+                {secured ? SECURED_STATUS_LABEL : AWAITING_STATUS_LABEL}
               </span>
             </span>
             <Circle
               size={5}
-              className={`ml-auto shrink-0 ${connected ? "animate-pulse" : ""}`}
+              className={`ml-auto shrink-0 ${secured ? "animate-pulse" : ""}`}
               style={{
-                color: connected ? green : brand.colors.textMuted,
-                fill: connected ? green : brand.colors.textMuted,
+                color: secured ? green : brand.colors.textMuted,
+                fill: secured ? green : brand.colors.textMuted,
               }}
             />
           </div>
