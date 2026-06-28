@@ -13,6 +13,7 @@ export const onboardingContent = {
     title: "Welcome, Initiate",
     body: "Your private extraction terminal is ready. You now have access to the same data streams used by elite wealth managers — simplified into three clicks.",
     continueCta: "Enter Command Center",
+    noThanksCta: "No thanks, go to dashboard →",
   },
   preparing: {
     title: "Establishing secure connection",
@@ -34,7 +35,7 @@ export const onboardingContent = {
     continueCta: "Continue",
   },
   partnerOffer: {
-    enabled: true,
+    enabled: false,
     badge: "OPTIONAL PARTNER OFFER",
     headline: "Exclusive Partner Opportunity",
     subcopy: `This is separate from your ${ONBOARDING_PRODUCT_NAME} membership — completely optional.`,
