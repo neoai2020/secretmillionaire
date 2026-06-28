@@ -61,8 +61,16 @@ export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl
 
     const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password') || pathname.startsWith('/auth/callback')
+    const isStaticAsset = /\.(?:png|jpe?g|gif|svg|webp|ico|woff2?|ttf|otf|mp4|txt|xml)$/i.test(pathname)
     const isPublicBlogRoute = pathname.startsWith('/sites/')
-    const isPublicRoute = pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname === '/favicon.ico' || pathname === '/robots.txt' || pathname === '/sitemap.xml' || isPublicBlogRoute
+    const isPublicRoute =
+        pathname.startsWith('/_next') ||
+        pathname.startsWith('/api') ||
+        pathname === '/favicon.ico' ||
+        pathname === '/robots.txt' ||
+        pathname === '/sitemap.xml' ||
+        isStaticAsset ||
+        isPublicBlogRoute
     const isOnboardingRoute = pathname === '/onboarding' || pathname.startsWith('/onboarding/')
 
     if (isDevAuthBypassEnabled()) {
