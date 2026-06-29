@@ -30,26 +30,28 @@ async function loadTemplate(
   admin: SupabaseClient,
   productId: number
 ): Promise<{ site: BlogSite; posts: BlogPost[] } | null> {
-  const { data: site } = await admin
+  // limit(1) (not maybeSingle) so a stray duplicate never throws; we reuse the
+  // earliest template site and return it even when it's still empty/mid-fill so
+  // seeding tops it up instead of creating another one.
+  const { data: sites } = await admin
     .from("sites")
     .select("*")
     .eq("is_template", true)
     .eq("template_key", templateKeyFor(productId))
-    .maybeSingle();
+    .order("created_at", { ascending: true })
+    .limit(1);
 
+  const site = (sites ?? [])[0] as BlogSite | undefined;
   if (!site) return null;
 
   const { data: posts } = await admin
     .from("posts")
     .select("*")
-    .eq("site_id", (site as BlogSite).id)
+    .eq("site_id", site.id)
     .order("is_pillar", { ascending: false })
     .order("created_at", { ascending: true });
 
-  const list = (posts ?? []) as BlogPost[];
-  if (list.length === 0) return null;
-
-  return { site: site as BlogSite, posts: list };
+  return { site, posts: (posts ?? []) as BlogPost[] };
 }
 
 /**
@@ -261,7 +263,7 @@ export async function getWebsiteForUser(params: {
   const { admin, userId, product, affiliateUrl } = params;
 
   const template = await loadTemplate(admin, product.id);
-  if (template) {
+  if (template && template.posts.length > 0) {
     const site = await cloneTemplate(admin, template, userId, product, affiliateUrl);
     return { site, mode: "cloned" };
   }
