@@ -55,6 +55,7 @@ export function GenerationTerminal({ phase, progress, logLines = [] }: Generatio
         <AiLoadingBar
           label="AI deploying your money site"
           progress={progress}
+          active={phase === "running"}
           className="px-3 sm:px-4 pt-3 sm:pt-4"
         />
       )}

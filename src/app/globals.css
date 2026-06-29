@@ -287,6 +287,16 @@
   50% { opacity: 1; }
 }
 
+@keyframes ai-loading-pulse-dot {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes ai-loading-fill-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
 @layer components {
   .promo-shimmer::after {
     content: "";
@@ -392,12 +402,42 @@
     animation: ai-loading-sweep 1.75s ease-in-out infinite;
   }
 
+  .ai-loading-beam--overlay {
+    width: 38%;
+    z-index: 2;
+    opacity: 0.92;
+    mix-blend-mode: screen;
+  }
+
+  .ai-loading-pulse-dot {
+    animation: ai-loading-pulse-dot 1.4s ease-in-out infinite;
+  }
+
   .ai-loading-fill {
     background: linear-gradient(90deg, #2d7a76 0%, #45A29E 45%, #D4AF37 100%);
     box-shadow:
       0 0 10px rgba(69, 162, 158, 0.75),
       0 0 18px rgba(212, 175, 55, 0.35);
     transition: width 0.45s ease-out;
+    z-index: 1;
+  }
+
+  .ai-loading-fill--active {
+    overflow: hidden;
+  }
+
+  .ai-loading-fill--active::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 100%
+    );
+    animation: ai-loading-fill-shimmer 2.2s ease-in-out infinite;
+    pointer-events: none;
   }
 
   .sms-post-preview h2 {

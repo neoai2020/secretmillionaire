@@ -85,7 +85,36 @@ export default function DeployAssetPage() {
   const [quota, setQuota] = useState<GenerationQuota | null>(null);
   const [previewPostId, setPreviewPostId] = useState<string | null>(null);
   const slotProgressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressCreepTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const deployRunning = useRef(false);
+
+  const clearProgressCreepTimer = () => {
+    if (progressCreepTimer.current) {
+      clearInterval(progressCreepTimer.current);
+      progressCreepTimer.current = null;
+    }
+  };
+
+  const isActiveDeployPhase =
+    phase === "setup" || phase === "generating" || phase === "publishing";
+
+  useEffect(() => {
+    if (!isActiveDeployPhase) {
+      clearProgressCreepTimer();
+      return;
+    }
+
+    clearProgressCreepTimer();
+    progressCreepTimer.current = setInterval(() => {
+      setProgress((current) => {
+        if (current >= 97) return current;
+        const increment = current < 70 ? 0.22 : current < 90 ? 0.12 : 0.05;
+        return Math.min(97, current + increment);
+      });
+    }, 700);
+
+    return clearProgressCreepTimer;
+  }, [isActiveDeployPhase]);
 
   useEffect(() => {
     if (sessionLoaded && !linksArmed) router.replace("/arm-links");
@@ -94,6 +123,7 @@ export default function DeployAssetPage() {
   useEffect(() => {
     return () => {
       if (slotProgressTimer.current) clearInterval(slotProgressTimer.current);
+      clearProgressCreepTimer();
     };
   }, []);
 
@@ -582,6 +612,7 @@ export default function DeployAssetPage() {
                   : `Generating content — ${completedPosts}/${postSlots.length} posts`
               }
               progress={progress}
+              active
             />
           )}
 
