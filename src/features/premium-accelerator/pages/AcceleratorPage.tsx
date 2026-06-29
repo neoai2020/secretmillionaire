@@ -16,7 +16,50 @@ import {
   Globe,
   ArrowRight,
   Sparkles,
+  Search,
+  BookOpen,
+  Clock,
+  MessageCircle,
 } from "lucide-react";
+
+const POSTING_GUIDE = [
+  {
+    icon: Search,
+    title: "Find the right groups",
+    points: [
+      "In the Facebook search bar, type buyer-intent keywords for your niche — e.g. \"<niche> tips\", \"<niche> for beginners\", \"<niche> deals\", or \"<niche> support\".",
+      "Click the Groups tab to filter results to groups only.",
+      "Join 10–15 active groups with 5,000+ members that have fresh posts every day — bigger, busier groups = more eyeballs.",
+    ],
+  },
+  {
+    icon: BookOpen,
+    title: "Check the group rules first",
+    points: [
+      "Open the group's About / rules section before posting. Many groups ban links or self-promo.",
+      "If links aren't allowed: post the story without the link, then drop your link in a comment or DM people who engage.",
+      "Respect 'promo day only' rules and admin approval — getting banned kills the group as a traffic source.",
+    ],
+  },
+  {
+    icon: Clock,
+    title: "Post naturally & consistently",
+    points: [
+      "Aim for 3–5 posts per day spread across different groups — never spam the same group repeatedly.",
+      "Rotate which post you use so your content doesn't look copy-pasted.",
+      "Best engagement windows: 7–9am, 12–1pm, and 7–9pm in your audience's time zone.",
+    ],
+  },
+  {
+    icon: MessageCircle,
+    title: "Engage, don't just drop links",
+    points: [
+      "Reply to comments and be genuinely helpful — a little trust massively boosts clicks.",
+      "Answer questions in the group even when you're not posting; people check your profile.",
+      "Consistency wins: a few posts every day beats a big burst once a week.",
+    ],
+  },
+];
 
 interface SiteOption {
   id: string;
@@ -241,6 +284,51 @@ export default function AcceleratorPage() {
             )}
           </>
         )}
+      </div>
+
+      {/* How & where to post */}
+      <div className="glass-card p-5 sm:p-7 flex flex-col gap-5">
+        <div className="flex items-center gap-2">
+          <Facebook size={18} className="text-accent" />
+          <h2 className="brand-font text-lg text-text-heading">Where &amp; How to Post on Facebook</h2>
+        </div>
+        <p className="text-sm text-text-muted -mt-2">
+          Generated posts only earn when real people see them. Use this playbook to find the right
+          groups and post without getting flagged.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {POSTING_GUIDE.map((section) => {
+            const Icon = section.icon;
+            return (
+              <div key={section.title} className="rounded-xl bg-white/[0.02] border border-white/5 p-4 sm:p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+                    <Icon size={16} className="text-accent" />
+                  </div>
+                  <h3 className="text-sm font-bold text-text-heading">{section.title}</h3>
+                </div>
+                <ul className="flex flex-col gap-2">
+                  {section.points.map((point, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Check className="w-3.5 h-3.5 text-green-400 shrink-0 mt-0.5" />
+                      <span className="text-xs text-text-secondary leading-relaxed">{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="rounded-xl border border-[#D4AF37]/20 bg-[#D4AF37]/5 p-4 flex items-start gap-3">
+          <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+          <p className="text-xs text-text-secondary leading-relaxed">
+            <span className="font-bold text-[#D4AF37]">Pro tip:</span> generate a fresh batch above for
+            each money site, then work through 3–5 groups a day. The more quality posts you have
+            circulating, the more traffic flows back to your sites.
+          </p>
+        </div>
       </div>
     </div>
   );
