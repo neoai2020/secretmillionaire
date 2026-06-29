@@ -244,4 +244,35 @@
       0 0 18px rgba(212, 175, 55, 0.35);
     transition: width 0.45s ease-out;
   }
+
+  .sms-post-preview h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #c5c6c7;
+    margin: 1.25rem 0 0.75rem;
+  }
+
+  .sms-post-preview p {
+    color: #9ca3af;
+    line-height: 1.7;
+    margin: 0.75rem 0;
+  }
+
+  .sms-post-preview ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+    margin: 0.75rem 0;
+    color: #9ca3af;
+  }
+
+  .sms-post-preview a {
+    color: #45a29e;
+    text-decoration: underline;
+  }
+
+  .sms-post-preview img {
+    max-width: 100%;
+    border-radius: 0.75rem;
+    margin: 1rem 0;
+  }
 }

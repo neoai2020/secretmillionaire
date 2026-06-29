@@ -9,9 +9,11 @@ import { useBlogBuilder } from "../context/BlogBuilderContext";
 import { GenerationTerminal } from "../components/GenerationTerminal";
 import { DeploySitePreview } from "../components/DeploySitePreview";
 import { DeployPostGrid, type PostSlotState } from "../components/DeployPostGrid";
+import { PostPreviewModal } from "../components/PostPreviewModal";
 import { buildClusterTopics } from "../lib/templates";
 import { buildDeploySlots, firstQueuedSlotIndex } from "../lib/deploy-slots";
 import { getSiteTerritory } from "../lib/site-territory";
+import { IMAGE_BATCH_CONCURRENCY } from "../lib/generation-pipeline";
 import type { BlogPost, BlogSite } from "../types";
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
@@ -47,6 +49,7 @@ export default function DeployAssetPage() {
   const [deployLoaded, setDeployLoaded] = useState(false);
   const [canResume, setCanResume] = useState(false);
   const [resumeLabel, setResumeLabel] = useState("");
+  const [previewPostId, setPreviewPostId] = useState<string | null>(null);
   const slotProgressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const deployRunning = useRef(false);
 
@@ -155,6 +158,14 @@ export default function DeployAssetPage() {
     );
   };
 
+  const updatePostInSlots = (updated: BlogPost) => {
+    setPostSlots((prev) =>
+      prev.map((s) =>
+        s.post?.id === updated.id ? { ...s, post: updated } : s
+      )
+    );
+  };
+
   const runPostGeneration = useCallback(
     async (params: {
       siteId: string;
@@ -163,28 +174,23 @@ export default function DeployAssetPage() {
       startIndex?: number;
     }) => {
       const { siteId, topics, productContext, startIndex = 0 } = params;
-      let createdCount = 0;
       const pending = topics.slice(startIndex).map((_, offset) => startIndex + offset);
 
       if (pending.length === 0) return 0;
 
-      appendLog(`Generating ${pending.length} posts in parallel...`);
+      appendLog(`Phase 1: writing ${pending.length} articles in parallel...`);
       bumpProgress(25);
       pending.forEach((i) => setSlotGenerating(i));
 
-      let finished = 0;
-      const onFinished = () => {
-        finished += 1;
-        bumpProgress(20 + Math.round((finished / topics.length) * 65));
-      };
+      let textFinished = 0;
+      const generatedPosts: BlogPost[] = [];
 
-      const generateOne = async (i: number): Promise<boolean> => {
+      const generateText = async (i: number): Promise<boolean> => {
         const topic = topics[i];
-
         const postRes = await fetch("/api/blog/generate-one-post", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ siteId, topic, productContext }),
+          body: JSON.stringify({ siteId, topic, productContext, skipImage: true }),
         });
         const postData = await postRes.json();
 
@@ -193,16 +199,46 @@ export default function DeployAssetPage() {
           throw new Error(postData.error || `Failed on: ${topic.title}`);
         }
 
-        setSlotComplete(i, postData.post as BlogPost);
-        appendLog(`Ready: ${topic.title}`);
-        onFinished();
+        const post = postData.post as BlogPost;
+        setSlotComplete(i, post);
+        generatedPosts.push(post);
+        textFinished += 1;
+        bumpProgress(20 + Math.round((textFinished / topics.length) * 45));
+        appendLog(`Text ready: ${topic.title}`);
         return !postData.skipped;
       };
 
-      const results = await Promise.all(pending.map((i) => generateOne(i)));
-      createdCount = results.filter(Boolean).length;
+      const textResults = await Promise.all(pending.map((i) => generateText(i)));
+      let createdCount = textResults.filter(Boolean).length;
+
+      const needsImage = generatedPosts.filter((p) => !p.image_url);
+      if (needsImage.length === 0) {
+        clearSlotProgressTimer();
+        bumpProgress(85);
+        return createdCount;
+      }
+
+      appendLog(`Phase 2: generating ${needsImage.length} hero images...`);
+      bumpProgress(70);
+
+      let imagesDone = 0;
+      for (let b = 0; b < needsImage.length; b += IMAGE_BATCH_CONCURRENCY) {
+        const batch = needsImage.slice(b, b + IMAGE_BATCH_CONCURRENCY);
+        await Promise.all(
+          batch.map(async (post) => {
+            const res = await fetch(`/api/blog/posts/${post.id}/image`, { method: "POST" });
+            const data = await res.json();
+            if (res.ok && data.post) {
+              updatePostInSlots(data.post as BlogPost);
+            }
+            imagesDone += 1;
+            bumpProgress(70 + Math.round((imagesDone / needsImage.length) * 15));
+          })
+        );
+      }
 
       clearSlotProgressTimer();
+      bumpProgress(85);
       return createdCount;
     },
     [appendLog]
@@ -452,7 +488,9 @@ export default function DeployAssetPage() {
             />
           )}
 
-          {postSlots.length > 0 && <DeployPostGrid slots={postSlots} />}
+          {postSlots.length > 0 && (
+            <DeployPostGrid slots={postSlots} onViewPost={setPreviewPostId} />
+          )}
 
           {phase === "publishing" && (
             <div className="rounded-xl border border-[#45A29E]/25 bg-black/40 p-4 font-mono text-xs text-[#45A29E]">
@@ -562,6 +600,12 @@ export default function DeployAssetPage() {
           </span>
         </motion.button>
       )}
+
+      <PostPreviewModal
+        postId={previewPostId}
+        onClose={() => setPreviewPostId(null)}
+        onSaved={updatePostInSlots}
+      />
     </div>
   );
 }

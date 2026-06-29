@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, FileText, ImageIcon, Loader2, Sparkles } from "lucide-react";
+import { CheckCircle2, Eye, FileText, ImageIcon, Loader2, Sparkles } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
-import type { BlogPost, ClusterTopic, PostSlotState } from "../types";
+import type { BlogPost, PostSlotState } from "../types";
 
 export type { PostSlotStatus } from "../types";
 export type { PostSlotState };
@@ -13,6 +13,7 @@ interface DeployPostSlotProps {
   slot: PostSlotState;
   index: number;
   isPillar?: boolean;
+  onViewPost?: (postId: string) => void;
 }
 
 function ShimmerBlock({ className = "" }: { className?: string }) {
@@ -26,10 +27,6 @@ function PostHeroImage({ src, alt }: { src: string; alt: string }) {
     return (
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-[#1e2128] to-[#0d1016] flex items-center justify-center">
         <ImageIcon className="text-[#45A29E]/40" size={40} />
-        <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-[#45A29E]/90 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0B0C10]">
-          <CheckCircle2 size={12} />
-          Ready
-        </div>
       </div>
     );
   }
@@ -43,16 +40,13 @@ function PostHeroImage({ src, alt }: { src: string; alt: string }) {
         className="h-full w-full object-cover"
         onError={() => setFailed(true)}
       />
-      <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-[#45A29E]/90 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0B0C10]">
-        <CheckCircle2 size={12} />
-        Ready
-      </div>
     </div>
   );
 }
 
-export function DeployPostSlot({ slot, index, isPillar }: DeployPostSlotProps) {
+export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPostSlotProps) {
   const { topic, status, progress, post } = slot;
+  const imagePending = Boolean(post && !post.image_url);
 
   return (
     <motion.div
@@ -79,18 +73,22 @@ export function DeployPostSlot({ slot, index, isPillar }: DeployPostSlotProps) {
             className="flex flex-col h-full"
           >
             {post.image_url ? (
-              <PostHeroImage src={post.image_url} alt={post.image_alt ?? post.title} />
-            ) : (
-              <div className="relative h-2 bg-[#45A29E]/20">
-                <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-[#45A29E]/90 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0B0C10]">
+              <div className="relative">
+                <PostHeroImage src={post.image_url} alt={post.image_alt ?? post.title} />
+                <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-[#45A29E]/90 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0B0C10]">
                   <CheckCircle2 size={12} />
                   Ready
                 </div>
               </div>
+            ) : (
+              <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#1e2128] flex flex-col items-center justify-center gap-2">
+                <Loader2 size={22} className="text-[#45A29E] animate-spin" />
+                <p className="text-[10px] uppercase tracking-wider text-[#6b7280]">Generating image...</p>
+              </div>
             )}
             <div className="p-4 flex flex-col gap-2 flex-1">
               <div className="flex items-start justify-between gap-2">
-                <div>
+                <div className="min-w-0">
                   {(post.is_pillar || isPillar) && (
                     <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
                       Pillar
@@ -104,7 +102,22 @@ export function DeployPostSlot({ slot, index, isPillar }: DeployPostSlotProps) {
               {post.excerpt && (
                 <p className="text-xs text-[#6b7280] line-clamp-2 leading-relaxed">{post.excerpt}</p>
               )}
-              <AiLoadingBar label="Generated" progress={100} className="mt-auto pt-2" />
+              <div className="mt-auto pt-2 flex flex-col gap-2">
+                <AiLoadingBar
+                  label={imagePending ? "Text ready — image loading" : "Generated"}
+                  progress={imagePending ? Math.max(progress, 85) : 100}
+                />
+                {onViewPost && (
+                  <button
+                    type="button"
+                    onClick={() => onViewPost(post.id)}
+                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-bold text-[#0B0C10] bg-[#45A29E] hover:opacity-90 transition-opacity"
+                  >
+                    <Eye size={14} />
+                    View article
+                  </button>
+                )}
+              </div>
             </div>
           </motion.div>
         ) : (
@@ -141,11 +154,7 @@ export function DeployPostSlot({ slot, index, isPillar }: DeployPostSlotProps) {
             </div>
 
             {status === "generating" && (
-              <AiLoadingBar
-                label="AI writing article"
-                progress={progress}
-                className="mt-auto"
-              />
+              <AiLoadingBar label="AI writing article" progress={progress} className="mt-auto" />
             )}
             {status === "queued" && (
               <p className="text-[10px] uppercase tracking-wider text-[#6b7280]/70 mt-auto">
@@ -164,9 +173,10 @@ export function DeployPostSlot({ slot, index, isPillar }: DeployPostSlotProps) {
 
 interface DeployPostGridProps {
   slots: PostSlotState[];
+  onViewPost?: (postId: string) => void;
 }
 
-export function DeployPostGrid({ slots }: DeployPostGridProps) {
+export function DeployPostGrid({ slots, onViewPost }: DeployPostGridProps) {
   const pillar = slots.find((s) => s.topic.isPillar);
   const clusters = slots.filter((s) => !s.topic.isPillar);
   const completed = slots.filter((s) => s.status === "complete").length;
@@ -182,17 +192,11 @@ export function DeployPostGrid({ slots }: DeployPostGridProps) {
         </p>
       </div>
 
-      {pillar && (
-        <DeployPostSlot
-          slot={pillar}
-          index={0}
-          isPillar
-        />
-      )}
+      {pillar && <DeployPostSlot slot={pillar} index={0} isPillar onViewPost={onViewPost} />}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {clusters.map((slot, i) => (
-          <DeployPostSlot key={slot.topic.slug} slot={slot} index={i + 1} />
+          <DeployPostSlot key={slot.topic.slug} slot={slot} index={i + 1} onViewPost={onViewPost} />
         ))}
       </div>
     </div>
