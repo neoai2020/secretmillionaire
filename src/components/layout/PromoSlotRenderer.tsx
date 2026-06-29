@@ -227,7 +227,7 @@ export function PromoSlotRenderer({ slot, onClose }: PromoSlotRendererProps) {
         href={content.ctaUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="group relative flex items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0A0D10] border border-[#1e2128] hover:border-[#45A29E]/45 hover:bg-[#12141a] transition-all duration-200 hover:shadow-[0_4px_24px_rgba(69,162,158,0.12)]"
+        className="group relative flex items-center justify-between gap-3 p-3.5 rounded-xl glass-tile hover:border-accent/40 transition-all duration-200 hover:shadow-[var(--glow-teal)]"
       >
         <div
           className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full opacity-70 group-hover:opacity-100 transition-opacity"

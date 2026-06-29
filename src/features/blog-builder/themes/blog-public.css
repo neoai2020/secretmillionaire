@@ -1,0 +1,219 @@
+/* Public money-site themes — isolated from the dark SMS app shell */
+
+.blog-public-root {
+  --blog-bg: #faf9f7;
+  --blog-surface: #ffffff;
+  --blog-text: #1a1a1a;
+  --blog-muted: #5c5c5c;
+  --blog-accent: #0d6e6a;
+  --blog-accent-hover: #095854;
+  --blog-border: #e8e4df;
+  --blog-pillar: #b8860b;
+  --blog-hero-overlay: rgba(13, 110, 106, 0.08);
+  --blog-font-heading: Georgia, serif;
+  --blog-font-body: system-ui, sans-serif;
+
+  min-height: 100dvh;
+  background: var(--blog-bg);
+  color: var(--blog-text);
+  font-family: var(--blog-font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.blog-public-root h1,
+.blog-public-root h2,
+.blog-public-root h3,
+.blog-public-root h4 {
+  font-family: var(--blog-font-heading);
+}
+
+.blog-prose {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--blog-text);
+}
+
+.blog-prose > *:first-child {
+  margin-top: 0;
+}
+
+.blog-prose h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 2.5rem 0 1rem;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.blog-prose h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+  line-height: 1.35;
+}
+
+.blog-prose p {
+  margin: 0 0 1.25rem;
+}
+
+.blog-prose ul,
+.blog-prose ol {
+  margin: 0 0 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.blog-prose li {
+  margin-bottom: 0.5rem;
+}
+
+.blog-prose ul li {
+  list-style-type: disc;
+}
+
+.blog-prose ol li {
+  list-style-type: decimal;
+}
+
+.blog-prose a {
+  color: var(--blog-accent);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.blog-prose a:hover {
+  color: var(--blog-accent-hover);
+}
+
+.blog-prose strong {
+  font-weight: 600;
+  color: var(--blog-text);
+}
+
+.blog-prose blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid var(--blog-accent);
+  background: var(--blog-hero-overlay);
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: var(--blog-muted);
+}
+
+.blog-prose table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.blog-prose th,
+.blog-prose td {
+  border: 1px solid var(--blog-border);
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  min-width: 120px;
+}
+
+.blog-prose th {
+  background: var(--blog-surface);
+  font-weight: 600;
+}
+
+.blog-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.blog-prose .affiliate-cta,
+.blog-prose .cta-box,
+.blog-prose .callout {
+  margin: 2rem 0;
+  padding: 1.25rem 1.5rem;
+  background: var(--blog-surface);
+  border: 1px solid var(--blog-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.blog-prose .affiliate-cta a,
+.blog-prose .cta-box a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+  margin-top: 0.75rem;
+  background: var(--blog-accent);
+  color: #fff !important;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.blog-prose .affiliate-cta a:hover,
+.blog-prose .cta-box a:hover {
+  background: var(--blog-accent-hover);
+}
+
+.blog-card {
+  background: var(--blog-surface);
+  border: 1px solid var(--blog-border);
+  border-radius: 0.875rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.blog-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.blog-link {
+  color: var(--blog-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.blog-link:hover {
+  color: var(--blog-accent-hover);
+  text-decoration: underline;
+}
+
+.blog-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  background: var(--blog-accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.blog-btn:hover {
+  background: var(--blog-accent-hover);
+}
+
+.blog-pillar-badge {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blog-pillar);
+}
+
+.blog-trust-strip {
+  background: var(--blog-hero-overlay);
+  border-bottom: 1px solid var(--blog-border);
+  font-size: 0.8125rem;
+  color: var(--blog-muted);
+}

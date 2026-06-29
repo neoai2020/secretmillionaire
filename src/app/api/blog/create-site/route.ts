@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
 import { slugify } from "@/features/blog-builder/lib/seo";
+import { pickThemeForSite } from "@/features/blog-builder/themes";
 import type { ArmedLink } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,9 @@ export async function POST(request: Request) {
   const baseSlug = slugify(territory) || slugify(hobby) || "site";
   const slug = `${baseSlug}-${user.id.slice(0, 8)}`;
 
-  const payload = {
+  const theme = pickThemeForSite(territory, user.id);
+
+  const basePayload = {
     user_id: user.id,
     hobby,
     territory,
@@ -69,7 +72,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from("sites")
-      .update(payload)
+      .update(basePayload)
       .eq("id", existing.id)
       .select()
       .single();
@@ -78,7 +81,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ site: data });
   }
 
-  const { data, error } = await supabase.from("sites").insert(payload).select().single();
+  const { data, error } = await supabase
+    .from("sites")
+    .insert({ ...basePayload, theme })
+    .select()
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await linkSiteToSession(supabase, user.id, data.id, data.slug);
   return NextResponse.json({ site: data });

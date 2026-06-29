@@ -1,0 +1,51 @@
+"use client";
+
+import { useEffect, type CSSProperties, type ReactNode } from "react";
+import type { ResolvedTheme } from "../types";
+
+interface PublicSiteRootProps {
+  theme: ResolvedTheme;
+  children: ReactNode;
+}
+
+export function PublicSiteRoot({ theme, children }: PublicSiteRootProps) {
+  useEffect(() => {
+    const prevBg = document.body.style.backgroundColor;
+    const prevColor = document.body.style.color;
+    const prevClass = document.body.className;
+
+    document.body.style.backgroundColor = theme.colors.bg;
+    document.body.style.color = theme.colors.text;
+    document.body.classList.remove("text-white");
+
+    return () => {
+      document.body.style.backgroundColor = prevBg;
+      document.body.style.color = prevColor;
+      document.body.className = prevClass;
+    };
+  }, [theme.colors.bg, theme.colors.text]);
+
+  const style = {
+    "--blog-bg": theme.colors.bg,
+    "--blog-surface": theme.colors.surface,
+    "--blog-text": theme.colors.text,
+    "--blog-muted": theme.colors.muted,
+    "--blog-accent": theme.colors.accent,
+    "--blog-accent-hover": theme.colors.accentHover,
+    "--blog-border": theme.colors.border,
+    "--blog-pillar": theme.colors.pillar,
+    "--blog-hero-overlay": theme.colors.heroOverlay,
+    "--blog-font-heading": theme.fonts.heading,
+    "--blog-font-body": theme.fonts.body,
+  } as CSSProperties;
+
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link rel="stylesheet" href={theme.fonts.googleUrl} />
+      <div className="blog-public-root" style={style}>
+        {children}
+      </div>
+    </>
+  );
+}

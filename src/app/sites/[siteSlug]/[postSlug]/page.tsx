@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { createPublicSupabaseClient } from "@/lib/supabase-public";
 import { buildArticleJsonLd } from "@/features/blog-builder/lib/seo";
+import { SitePostView } from "@/features/blog-builder/themes";
 import { getAppUrl } from "@/lib/brand-vars";
 import { notFound } from "next/navigation";
 
@@ -55,7 +55,7 @@ export default async function PostPage({ params }: Props) {
 
   const { data: site } = await supabase
     .from("sites")
-    .select("id, title, slug, hobby")
+    .select("id, title, slug, hobby, territory, tagline, theme")
     .eq("slug", siteSlug)
     .eq("status", "live")
     .maybeSingle();
@@ -72,6 +72,14 @@ export default async function PostPage({ params }: Props) {
 
   if (!post) notFound();
 
+  const { data: relatedPosts } = await supabase
+    .from("posts")
+    .select("title, slug, excerpt, is_pillar, created_at, image_url")
+    .eq("site_id", site.id)
+    .eq("status", "live")
+    .order("is_pillar", { ascending: false })
+    .limit(8);
+
   await supabase.rpc("increment_post_views", { post_id: post.id });
 
   const base = process.env.NEXT_PUBLIC_APP_URL || getAppUrl();
@@ -86,36 +94,12 @@ export default async function PostPage({ params }: Props) {
   });
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-[#1a1a1a]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <header className="border-b border-[#eee] bg-white">
-        <div className="max-w-3xl mx-auto px-4 py-6">
-          <Link
-            href={`/sites/${siteSlug}`}
-            className="text-sm text-[#45A29E] font-medium hover:underline"
-          >
-            ← {site.title}
-          </Link>
-          <h1 className="text-2xl sm:text-4xl font-bold text-[#111] mt-4 leading-tight">
-            {post.title}
-          </h1>
-          <p className="text-sm text-[#888] mt-2">{site.hobby}</p>
-        </div>
-      </header>
-      <article className="max-w-3xl mx-auto px-4 py-10">
-        <div
-          className="blog-content leading-relaxed text-[#333] [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-4 [&_p]:mb-4 [&_ul]:mb-4 [&_ul]:pl-6 [&_li]:mb-2"
-          dangerouslySetInnerHTML={{ __html: post.html }}
-        />
-      </article>
-      <footer className="border-t border-[#eee] py-8 text-center text-xs text-[#999]">
-        <Link href={`/sites/${siteSlug}`} className="text-[#45A29E] hover:underline">
-          More on {site.hobby}
-        </Link>
-      </footer>
-    </div>
+    <SitePostView
+      site={site}
+      siteSlug={siteSlug}
+      post={post}
+      relatedPosts={relatedPosts ?? []}
+      jsonLd={jsonLd}
+    />
   );
 }

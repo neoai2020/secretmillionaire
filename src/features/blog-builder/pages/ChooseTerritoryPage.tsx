@@ -74,7 +74,7 @@ export default function ChooseTerritoryPage() {
     <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full">
       <div className="flex flex-col gap-2">
         <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Click 1</p>
-        <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-[#C5C6C7] tracking-tight">
+        <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-text-heading tracking-tight">
           Choose Territory
         </h1>
         <p className="text-[#6b7280] text-sm sm:text-base max-w-2xl leading-relaxed">
@@ -101,7 +101,7 @@ export default function ChooseTerritoryPage() {
             }
           }}
           placeholder="e.g. fly fishing, yoga, crypto..."
-          className="w-full rounded-xl border border-[#1e2128] bg-[#12141a] px-4 py-4 text-[#C5C6C7] focus:outline-none focus:border-[#45A29E]/50"
+          className="input-base w-full py-4"
         />
         <button
           type="button"

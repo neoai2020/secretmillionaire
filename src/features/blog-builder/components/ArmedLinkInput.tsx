@@ -45,9 +45,9 @@ export function ArmedLinkInput({ links, onChange }: ArmedLinkInputProps) {
             key={i}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-[#1e2128] bg-[#12141a] p-4 flex flex-col gap-3"
+            className="glass-card p-4 flex flex-col gap-3"
           >
-            <label className="text-xs text-[#6b7280] uppercase tracking-widest font-bold">
+            <label className="text-xs text-text-muted uppercase tracking-widest font-bold">
               Armed Link {i + 1}
             </label>
             <input
@@ -55,7 +55,7 @@ export function ArmedLinkInput({ links, onChange }: ArmedLinkInputProps) {
               placeholder="Offer label (e.g. Best Starter Kit)"
               value={link.label}
               onChange={(e) => update(i, "label", e.target.value)}
-              className="w-full rounded-lg border border-[#1e2128] bg-[#0B0C10] px-4 py-3 text-[#C5C6C7] text-sm focus:outline-none focus:border-[#45A29E]/50"
+              className="input-base w-full"
             />
             <input
               type="text"
@@ -64,10 +64,8 @@ export function ArmedLinkInput({ links, onChange }: ArmedLinkInputProps) {
               value={link.url}
               onChange={(e) => update(i, "url", e.target.value)}
               onBlur={() => normalizeAt(i)}
-              className={`w-full rounded-lg border bg-[#0B0C10] px-4 py-3 text-[#C5C6C7] text-sm focus:outline-none ${
-                urlInvalid
-                  ? "border-amber-500/50 focus:border-amber-500/60"
-                  : "border-[#1e2128] focus:border-[#45A29E]/50"
+              className={`input-base w-full ${
+                urlInvalid ? "border-amber-500/50 focus:border-amber-500/60" : ""
               }`}
             />
             {urlInvalid && (
@@ -91,11 +89,11 @@ export function ArmedLinkInput({ links, onChange }: ArmedLinkInputProps) {
       <button
         type="button"
         onClick={add}
-        className="text-sm text-[#45A29E] font-medium self-start hover:underline"
+        className="text-sm text-accent font-medium self-start hover:underline"
       >
         + Add another armed link
       </button>
-      <p className="text-xs text-[#6b7280] leading-relaxed">
+      <p className="text-xs text-text-muted leading-relaxed">
         Paste your DigiStore affiliate URL (must include https://). Valid links save to Link Vault
         automatically.
       </p>

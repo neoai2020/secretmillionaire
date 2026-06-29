@@ -93,22 +93,22 @@ export default function AssetCommandPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-[#1e2128] bg-[#12141a] p-4 text-center">
-          <p className="text-[10px] uppercase tracking-widest text-[#6b7280]">Posts</p>
-          <p className="brand-font text-2xl text-[#C5C6C7]">{posts.length}</p>
+        <div className="glass-tile text-center">
+          <p className="text-[10px] uppercase tracking-widest text-text-muted">Posts</p>
+          <p className="brand-font text-2xl text-text-heading">{posts.length}</p>
         </div>
-        <div className="rounded-xl border border-[#1e2128] bg-[#12141a] p-4 text-center">
-          <p className="text-[10px] uppercase tracking-widest text-[#6b7280]">Clicks</p>
-          <p className="brand-font text-2xl text-[#D4AF37]">{clicks}</p>
+        <div className="glass-tile text-center">
+          <p className="text-[10px] uppercase tracking-widest text-text-muted">Clicks</p>
+          <p className="brand-font text-2xl text-accent-muted">{clicks}</p>
         </div>
-        <div className="rounded-xl border border-[#1e2128] bg-[#12141a] p-4 text-center col-span-2 sm:col-span-1">
-          <p className="text-[10px] uppercase tracking-widest text-[#6b7280]">Status</p>
-          <p className="brand-font text-lg text-[#45A29E] capitalize">{site.status}</p>
+        <div className="glass-tile text-center col-span-2 sm:col-span-1">
+          <p className="text-[10px] uppercase tracking-widest text-text-muted">Status</p>
+          <p className="brand-font text-lg text-accent capitalize">{site.status}</p>
         </div>
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="brand-font text-lg text-[#C5C6C7]">Published posts</h2>
+        <h2 className="brand-font text-lg text-text-heading">Published posts</h2>
         {posts.map((post) => (
           <PostCard key={post.id} post={post} siteSlug={site.slug} />
         ))}

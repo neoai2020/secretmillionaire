@@ -67,13 +67,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <Sidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <header className="lg:hidden sticky top-0 z-30 border-b border-[#1e2128] bg-page/95 backdrop-blur-md shrink-0 safe-top">
+        <header className="lg:hidden sticky top-0 z-30 mobile-header-glass shrink-0 safe-top">
           <div className="flex items-center gap-3 px-4 py-3">
             <button
               type="button"
               aria-label="Open menu"
               onClick={() => setSidebarOpen(true)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#1e2128] text-text-primary hover:bg-white/5"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 text-text-heading hover:bg-white/5"
             >
               <Menu size={20} />
             </button>
@@ -95,8 +95,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth relative">
-          <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 sm:pt-6 lg:pt-4 pb-10 sm:pb-12 lg:pb-16 max-w-5xl mx-auto min-h-full flex flex-col w-full">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth app-main-canvas">
+          <div className="app-glow-orb app-glow-orb-teal" aria-hidden />
+          <div className="app-glow-orb app-glow-orb-gold" aria-hidden />
+          <div className="app-glow-orb app-glow-orb-center" aria-hidden />
+          <div className="app-content-layer px-4 sm:px-6 md:px-10 lg:px-12 pt-4 sm:pt-6 lg:pt-6 pb-10 sm:pb-12 lg:pb-16 max-w-6xl mx-auto min-h-full flex flex-col gap-8 w-full">
             <GlobalTopPromo />
             {children}
             <div className="mt-auto pt-10 sm:pt-16">

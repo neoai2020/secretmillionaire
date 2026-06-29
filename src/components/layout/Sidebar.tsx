@@ -83,20 +83,22 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   return (
     <aside
       className={clsx(
-        "fixed inset-y-0 left-0 z-50 flex flex-col h-[100dvh] overflow-hidden border-r border-[#1e2128] shrink-0",
+        "sidebar-glass fixed inset-y-0 left-0 z-50 flex flex-col h-[100dvh] overflow-hidden shrink-0",
         "w-[min(18rem,88vw)] lg:static lg:w-72 lg:translate-x-0",
         "transition-transform duration-300 ease-out",
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}
-      style={{ backgroundColor: brand.colors.sidebar }}
     >
       {workflowSteps.length > 0 && (
-        <div className="absolute left-0 top-0 w-0.5 h-full bg-[#1e2128] z-0">
+        <div className="absolute left-0 top-0 w-0.5 h-full bg-white/5 z-0">
           <motion.div
             initial={{ height: 0 }}
             animate={{ height: `${progress}%` }}
             className="w-full"
-            style={{ backgroundColor: brand.colors.primary, boxShadow: "0 0 15px rgba(69,162,158,0.4)" }}
+            style={{
+              backgroundColor: brand.colors.primary,
+              boxShadow: "0 0 15px rgba(69,162,158,0.5), 0 0 30px rgba(212,175,55,0.15)",
+            }}
             transition={{ duration: 1, ease: "circOut" }}
           />
         </div>
@@ -111,7 +113,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             type="button"
             aria-label="Close menu"
             onClick={onMobileClose}
-            className="lg:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#1e2128] text-text-muted hover:text-text-primary"
+            className="lg:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-text-muted hover:text-text-heading hover:bg-white/5"
           >
             <X size={18} />
           </button>
@@ -120,7 +122,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         <nav className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar pb-6">
           {workflowSteps.length > 0 && (
             <>
-              <span className="text-[10px] font-black tracking-[0.25em] text-[#6b7280] uppercase px-3 sm:px-5 mb-2">
+              <span className="text-[10px] font-black tracking-[0.25em] text-text-muted uppercase px-3 sm:px-5 mb-2">
                 Extraction Protocol
               </span>
               {workflowSteps.map((step) => renderNavLink(step, workflowProgress))}
@@ -131,7 +133,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
 
           {coreResourceNav.length > 0 && (
             <>
-              <span className="text-[10px] font-black tracking-[0.25em] text-[#6b7280] uppercase px-3 sm:px-5 mt-4 mb-2">
+              <span className="text-[10px] font-black tracking-[0.25em] text-text-muted uppercase px-3 sm:px-5 mt-4 mb-2">
                 Resources
               </span>
               {coreResourceNav.map((step) => renderNavLink(step, workflowProgress))}

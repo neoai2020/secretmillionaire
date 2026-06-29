@@ -18,9 +18,9 @@ export function SuggestionGrid({
 }: SuggestionGridProps) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-[#1e2128] bg-[#12141a] p-6 flex flex-col gap-4">
+      <div className="glass-card p-6 flex flex-col gap-4">
         <AiLoadingBar label="Scanning profitable territories" />
-        <p className="text-xs text-[#6b7280] text-center">
+        <p className="text-xs text-text-muted text-center">
           This can take 10–30 seconds while AI maps your best angles.
         </p>
       </div>
@@ -29,7 +29,7 @@ export function SuggestionGrid({
 
   if (suggestions.length === 0) {
     return (
-      <p className="text-xs text-[#6b7280] text-center py-2">
+      <p className="text-xs text-text-muted text-center py-2">
         Territory suggestions will appear here after you click Suggest.
       </p>
     );
@@ -43,10 +43,10 @@ export function SuggestionGrid({
           type="button"
           whileHover={{ scale: 1.01 }}
           onClick={() => onSelect(s)}
-          className={`text-left rounded-xl border px-4 py-3 text-sm transition-colors ${
+          className={`text-left rounded-xl border px-4 py-3 text-sm transition-all ${
             selected === s
-              ? "border-[#45A29E] bg-[#45A29E]/10 text-[#C5C6C7]"
-              : "border-[#1e2128] bg-[#12141a] text-[#C5C6C7] hover:border-[#45A29E]/40"
+              ? "border-accent/50 glass-surface text-text-heading shadow-[var(--glow-teal)]"
+              : "glass-tile text-text-primary hover:border-accent/30"
           }`}
         >
           {s}

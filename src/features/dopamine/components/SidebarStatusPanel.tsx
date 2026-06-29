@@ -39,8 +39,8 @@ export function SidebarStatusPanel() {
 
   return (
     <div
-      className="relative mx-1 rounded-[14px] border border-[#1e2128] bg-[#0A0D10] p-3.5 flex flex-col gap-3 shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
-      style={{ boxShadow: `0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px ${green}0D` }}
+      className="relative mx-1 rounded-2xl glass-surface p-3.5 flex flex-col gap-3"
+      style={{ boxShadow: `var(--shadow-glass), 0 0 0 1px ${green}0D` }}
     >
       <div
         className="absolute inset-x-0 top-0 h-px rounded-t-[14px] opacity-80"
@@ -127,15 +127,13 @@ export function SidebarStatusPanel() {
             </div>
           </div>
 
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#1e2128] bg-[#0B0C10]"
-          >
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl glass-tile">
             <ShieldCheck
               size={12}
               className="shrink-0"
               style={{ color: secured ? green : brand.colors.textMuted }}
             />
-            <span className="text-[10px] font-medium text-[#C5C6C7] leading-snug">
+            <span className="text-[10px] font-medium text-text-primary leading-snug">
               Server:{" "}
               <span style={{ color: secured ? green : brand.colors.textMuted }}>
                 {secured ? SECURED_STATUS_LABEL : AWAITING_STATUS_LABEL}

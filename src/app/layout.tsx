@@ -21,10 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className="text-white selection:bg-accent/30 antialiased"
-        style={{ backgroundColor: brand.colors.page }}
-      >
+      <body className="text-text-primary selection:bg-accent/30 antialiased">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

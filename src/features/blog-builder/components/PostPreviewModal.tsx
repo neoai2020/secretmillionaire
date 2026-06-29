@@ -108,14 +108,14 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            className="relative z-10 flex flex-col w-full sm:max-w-3xl max-h-[92vh] sm:max-h-[88vh] rounded-t-2xl sm:rounded-2xl border border-[#45A29E]/30 bg-[#0B0C10] shadow-2xl overflow-hidden"
+            className="relative z-10 flex flex-col w-full sm:max-w-3xl max-h-[92vh] sm:max-h-[88vh] rounded-t-2xl sm:rounded-2xl border border-accent/30 glass-surface shadow-2xl overflow-hidden"
           >
-            <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-[#1e2128] bg-[#12141a]">
+            <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-white/10 glass-tile rounded-none">
               <div className="flex items-center gap-2 min-w-0">
-                <Eye size={18} className="text-[#45A29E] shrink-0" />
+                <Eye size={18} className="text-accent shrink-0" />
                 <p
                   id="post-preview-title"
-                  className="text-sm font-semibold text-[#C5C6C7] truncate"
+                  className="text-sm font-semibold text-text-heading truncate"
                 >
                   {editing ? "Edit article" : "Article preview"}
                 </p>
@@ -125,7 +125,7 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
                   <button
                     type="button"
                     onClick={() => setEditing(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#0B0C10] bg-[#D4AF37] hover:opacity-90"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-on-accent bg-accent-muted hover:opacity-90"
                   >
                     <Pencil size={14} />
                     Edit
@@ -136,7 +136,7 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
                     type="button"
                     onClick={save}
                     disabled={saving}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#0B0C10] bg-[#45A29E] hover:opacity-90 disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-on-accent bg-accent hover:opacity-90 disabled:opacity-60"
                   >
                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                     Save
@@ -145,7 +145,7 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#C5C6C7] hover:bg-[#1e2128]"
+                  className="p-1.5 rounded-lg text-text-muted hover:text-text-heading hover:bg-white/5"
                   aria-label="Close"
                 >
                   <X size={18} />
@@ -155,7 +155,7 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
 
             <div className="flex-1 overflow-y-auto p-4 sm:p-5">
               {loading && (
-                <p className="text-sm text-[#6b7280] animate-pulse py-8 text-center">Loading from server...</p>
+                <p className="text-sm text-text-muted animate-pulse py-8 text-center">Loading from server...</p>
               )}
 
               {error && (
@@ -167,25 +167,25 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
               {!loading && post && !editing && (
                 <div className="flex flex-col gap-4">
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-1">Title</p>
-                    <h2 className="brand-font text-xl text-[#C5C6C7]">{post.title}</h2>
+                    <p className="text-[10px] uppercase tracking-widest text-accent-muted mb-1">Title</p>
+                    <h2 className="brand-font text-xl text-text-heading">{post.title}</h2>
                   </div>
                   {post.excerpt && (
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-[#6b7280] mb-1">Excerpt</p>
-                      <p className="text-sm text-[#9ca3af]">{post.excerpt}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Excerpt</p>
+                      <p className="text-sm text-text-secondary">{post.excerpt}</p>
                     </div>
                   )}
                   {post.meta_description && (
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-[#6b7280] mb-1">Meta description</p>
-                      <p className="text-xs text-[#6b7280]">{post.meta_description}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Meta description</p>
+                      <p className="text-xs text-text-muted">{post.meta_description}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#6b7280] mb-2">Content</p>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Content</p>
                     <div
-                      className="sms-post-preview rounded-xl border border-[#1e2128] bg-[#12141a] p-4 sm:p-5 text-[#C5C6C7]"
+                      className="sms-post-preview glass-tile p-4 sm:p-5"
                       dangerouslySetInnerHTML={{ __html: post.html }}
                     />
                   </div>
@@ -195,38 +195,38 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
               {!loading && post && editing && (
                 <div className="flex flex-col gap-4">
                   <label className="flex flex-col gap-1.5">
-                    <span className="text-[10px] uppercase tracking-widest text-[#D4AF37]">Title</span>
+                    <span className="text-[10px] uppercase tracking-widest text-accent-muted">Title</span>
                     <input
                       value={draft.title}
                       onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-                      className="w-full rounded-lg border border-[#1e2128] bg-[#12141a] px-3 py-2 text-sm text-[#C5C6C7] focus:border-[#45A29E]/50 outline-none"
+                      className="input-base w-full"
                     />
                   </label>
                   <label className="flex flex-col gap-1.5">
-                    <span className="text-[10px] uppercase tracking-widest text-[#6b7280]">Excerpt</span>
+                    <span className="text-[10px] uppercase tracking-widest text-text-muted">Excerpt</span>
                     <textarea
                       value={draft.excerpt}
                       onChange={(e) => setDraft((d) => ({ ...d, excerpt: e.target.value }))}
                       rows={2}
-                      className="w-full rounded-lg border border-[#1e2128] bg-[#12141a] px-3 py-2 text-sm text-[#C5C6C7] focus:border-[#45A29E]/50 outline-none resize-none"
+                      className="input-base w-full resize-none"
                     />
                   </label>
                   <label className="flex flex-col gap-1.5">
-                    <span className="text-[10px] uppercase tracking-widest text-[#6b7280]">Meta description</span>
+                    <span className="text-[10px] uppercase tracking-widest text-text-muted">Meta description</span>
                     <textarea
                       value={draft.meta_description}
                       onChange={(e) => setDraft((d) => ({ ...d, meta_description: e.target.value }))}
                       rows={2}
-                      className="w-full rounded-lg border border-[#1e2128] bg-[#12141a] px-3 py-2 text-sm text-[#C5C6C7] focus:border-[#45A29E]/50 outline-none resize-none"
+                      className="input-base w-full resize-none"
                     />
                   </label>
                   <label className="flex flex-col gap-1.5">
-                    <span className="text-[10px] uppercase tracking-widest text-[#6b7280]">HTML body</span>
+                    <span className="text-[10px] uppercase tracking-widest text-text-muted">HTML body</span>
                     <textarea
                       value={draft.html}
                       onChange={(e) => setDraft((d) => ({ ...d, html: e.target.value }))}
                       rows={14}
-                      className="w-full rounded-lg border border-[#1e2128] bg-[#12141a] px-3 py-2 text-xs font-mono text-[#C5C6C7] focus:border-[#45A29E]/50 outline-none"
+                      className="input-base w-full text-xs font-mono resize-none"
                     />
                   </label>
                 </div>

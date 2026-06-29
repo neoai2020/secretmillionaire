@@ -17,7 +17,7 @@ interface DeployPostSlotProps {
 }
 
 function ShimmerBlock({ className = "" }: { className?: string }) {
-  return <div className={`rounded-md bg-[#1e2128] animate-pulse ${className}`} />;
+  return <div className={`rounded-md bg-white/5 animate-pulse ${className}`} />;
 }
 
 function PostHeroImage({ src, alt }: { src: string; alt: string }) {
@@ -25,14 +25,14 @@ function PostHeroImage({ src, alt }: { src: string; alt: string }) {
 
   if (failed) {
     return (
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-[#1e2128] to-[#0d1016] flex items-center justify-center">
-        <ImageIcon className="text-[#45A29E]/40" size={40} />
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-white/5 to-transparent flex items-center justify-center">
+        <ImageIcon className="text-accent/40" size={40} />
       </div>
     );
   }
 
   return (
-    <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#1e2128]">
+    <div className="relative aspect-[16/9] w-full overflow-hidden bg-white/5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
@@ -42,6 +42,13 @@ function PostHeroImage({ src, alt }: { src: string; alt: string }) {
       />
     </div>
   );
+}
+
+function slotShellClass(status: PostSlotState["status"]) {
+  if (status === "complete") return "glass-card border-accent/40";
+  if (status === "generating") return "glass-card border-accent/50 shadow-[var(--glow-teal)]";
+  if (status === "error") return "glass-card border-red-500/40";
+  return "glass-tile";
 }
 
 export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPostSlotProps) {
@@ -54,15 +61,9 @@ export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPost
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
-      className={`rounded-xl border overflow-hidden flex flex-col ${
-        status === "complete"
-          ? "border-[#45A29E]/40 bg-[#12141a]"
-          : status === "generating"
-            ? "border-[#45A29E]/50 bg-[#0d1016] shadow-[0_0_24px_rgba(69,162,158,0.12)]"
-            : status === "error"
-              ? "border-red-500/40 bg-[#12141a]"
-              : "border-[#1e2128] bg-[#0a0b0e]"
-      } ${isPillar ? "sm:col-span-2" : ""}`}
+      className={`rounded-2xl border overflow-hidden flex flex-col ${slotShellClass(status)} ${
+        isPillar ? "sm:col-span-2" : ""
+      }`}
     >
       <AnimatePresence mode="wait">
         {status === "complete" && post ? (
@@ -75,32 +76,30 @@ export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPost
             {post.image_url ? (
               <div className="relative">
                 <PostHeroImage src={post.image_url} alt={post.image_alt ?? post.title} />
-                <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-[#45A29E]/90 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0B0C10]">
+                <div className="absolute top-2 right-2 status-pill-active">
                   <CheckCircle2 size={12} />
                   Ready
                 </div>
               </div>
             ) : (
-              <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#1e2128] flex flex-col items-center justify-center gap-2">
-                <Loader2 size={22} className="text-[#45A29E] animate-spin" />
-                <p className="text-[10px] uppercase tracking-wider text-[#6b7280]">Generating image...</p>
+              <div className="relative aspect-[16/9] w-full overflow-hidden bg-white/5 flex flex-col items-center justify-center gap-2">
+                <Loader2 size={22} className="text-accent animate-spin" />
+                <p className="text-[10px] uppercase tracking-wider text-text-muted">Generating image...</p>
               </div>
             )}
             <div className="p-4 flex flex-col gap-2 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   {(post.is_pillar || isPillar) && (
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
-                      Pillar
-                    </span>
+                    <span className="status-pill-gold mb-1">Pillar</span>
                   )}
-                  <h3 className="brand-font text-[#C5C6C7] text-sm sm:text-base leading-snug">
+                  <h3 className="brand-font text-text-heading text-sm sm:text-base leading-snug">
                     {post.title}
                   </h3>
                 </div>
               </div>
               {post.excerpt && (
-                <p className="text-xs text-[#6b7280] line-clamp-2 leading-relaxed">{post.excerpt}</p>
+                <p className="text-xs text-text-muted line-clamp-2 leading-relaxed">{post.excerpt}</p>
               )}
               <div className="mt-auto pt-2 flex flex-col gap-2">
                 <AiLoadingBar
@@ -111,7 +110,7 @@ export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPost
                   <button
                     type="button"
                     onClick={() => onViewPost(post.id)}
-                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-bold text-[#0B0C10] bg-[#45A29E] hover:opacity-90 transition-opacity"
+                    className="btn-primary w-full text-xs py-2.5"
                   >
                     <Eye size={14} />
                     View article
@@ -130,19 +129,15 @@ export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPost
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                {isPillar && (
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]/70">
-                    Pillar
-                  </span>
-                )}
-                <p className="text-sm text-[#C5C6C7]/90 font-medium truncate">{topic.title}</p>
+                {isPillar && <span className="status-pill-gold mb-1 opacity-80">Pillar</span>}
+                <p className="text-sm text-text-primary font-medium truncate">{topic.title}</p>
               </div>
               {status === "generating" ? (
-                <Loader2 size={16} className="text-[#45A29E] animate-spin shrink-0" />
+                <Loader2 size={16} className="text-accent animate-spin shrink-0" />
               ) : status === "queued" ? (
-                <FileText size={16} className="text-[#6b7280]/50 shrink-0" />
+                <FileText size={16} className="text-text-muted/50 shrink-0" />
               ) : (
-                <Sparkles size={16} className="text-[#D4AF37] shrink-0" />
+                <Sparkles size={16} className="text-accent-muted shrink-0" />
               )}
             </div>
 
@@ -157,7 +152,7 @@ export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPost
               <AiLoadingBar label="AI writing article" progress={progress} className="mt-auto" />
             )}
             {status === "queued" && (
-              <p className="text-[10px] uppercase tracking-wider text-[#6b7280]/70 mt-auto">
+              <p className="text-[10px] uppercase tracking-wider text-text-muted/70 mt-auto">
                 Queued — waiting to generate
               </p>
             )}
@@ -184,10 +179,10 @@ export function DeployPostGrid({ slots, onViewPost }: DeployPostGridProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#45A29E]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
           Content pipeline
         </p>
-        <p className="text-xs text-[#6b7280] tabular-nums">
+        <p className="text-xs text-text-muted tabular-nums">
           {completed}/{slots.length} posts ready
         </p>
       </div>
