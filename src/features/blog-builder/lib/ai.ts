@@ -94,13 +94,30 @@ async function callGpt4(
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    throw new Error(`AI request failed: ${response.status}${detail ? ` — ${detail.slice(0, 120)}` : ""}`);
+    const err = new Error(
+      `AI request failed: ${response.status}${detail ? ` — ${detail.slice(0, 200)}` : ""}`
+    );
+    (err as Error & { status?: number }).status = response.status;
+    throw err;
   }
 
   const data: ChatResponse = await response.json();
   const text = extractResponseText(data);
   if (!text) throw new Error("Empty AI response");
   return text;
+}
+
+function isRateLimitError(err: Error): boolean {
+  const msg = err.message.toLowerCase();
+  const status = (err as Error & { status?: number }).status;
+  return status === 429 || msg.includes("429") || msg.includes("rate limit");
+}
+
+function retryDelayMs(attempt: number, err: Error): number {
+  if (isRateLimitError(err)) {
+    return Math.min(2500 * 2 ** attempt, 20_000);
+  }
+  return 1000 * (attempt + 1);
 }
 
 export async function generateWithGPT(
@@ -112,7 +129,7 @@ export async function generateWithGPT(
     throw new Error("RAPIDAPI_KEY is not configured");
   }
 
-  const maxRetries = options?.maxRetries ?? 2;
+  const maxRetries = options?.maxRetries ?? 3;
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -125,9 +142,10 @@ export async function generateWithGPT(
         options ?? {}
       );
     } catch (err) {
-      lastError = err instanceof Error ? err : new Error("Unknown AI error");
+      const error = err instanceof Error ? err : new Error("Unknown AI error");
+      lastError = error;
       if (attempt < maxRetries - 1) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        await new Promise((r) => setTimeout(r, retryDelayMs(attempt, error)));
       }
     }
   }
@@ -146,7 +164,7 @@ export async function generateStructuredJSON<T>(params: {
 }): Promise<T> {
   const opts: GptCallOptions = {
     temperature: 0.35,
-    maxRetries: 2,
+    maxRetries: 4,
     ...params.options,
   };
 

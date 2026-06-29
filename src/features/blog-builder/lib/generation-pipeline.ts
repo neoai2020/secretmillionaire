@@ -7,7 +7,8 @@ import { getSiteTerritory } from "./site-territory";
 import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
 import type { ArmedLink, BlogPost, BlogSite, ClusterTopic } from "../types";
 
-export const IMAGE_BATCH_CONCURRENCY = 3;
+export const IMAGE_BATCH_CONCURRENCY = 2;
+export const TEXT_GENERATION_STAGGER_MS = 1500;
 
 export async function loadOwnedSite(
   supabase: SupabaseClient,

@@ -33,7 +33,7 @@ export async function generateBlogPostContent(params: {
       if (!raw || typeof raw !== "object") return null;
       return normalizeArticleContent(raw as Partial<GeneratedPostContent>, params.topic);
     },
-    options: { temperature: 0.35, maxRetries: 2 },
+    options: { temperature: 0.35, maxRetries: 4 },
   });
 }
 

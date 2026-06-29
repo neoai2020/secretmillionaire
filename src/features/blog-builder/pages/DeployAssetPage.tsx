@@ -13,7 +13,7 @@ import { PostPreviewModal } from "../components/PostPreviewModal";
 import { buildClusterTopics } from "../lib/templates";
 import { buildDeploySlots, firstQueuedSlotIndex } from "../lib/deploy-slots";
 import { getSiteTerritory } from "../lib/site-territory";
-import { IMAGE_BATCH_CONCURRENCY } from "../lib/generation-pipeline";
+import { IMAGE_BATCH_CONCURRENCY, TEXT_GENERATION_STAGGER_MS } from "../lib/generation-pipeline";
 import type { ArmedLink, BlogPost, BlogSite } from "../types";
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
@@ -229,38 +229,64 @@ export default function DeployAssetPage() {
 
       if (pending.length === 0) return 0;
 
-      appendLog(`Phase 1: writing ${pending.length} articles in parallel...`);
+      appendLog(`Phase 1: writing ${pending.length} articles (one at a time)...`);
       bumpProgress(25);
-      pending.forEach((i) => setSlotGenerating(i));
 
       let textFinished = 0;
       const generatedPosts: BlogPost[] = [];
+      let failedCount = 0;
 
       const generateText = async (i: number): Promise<boolean> => {
         const topic = topics[i];
-        const postRes = await fetch("/api/blog/generate-one-post", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ siteId, topic, productContext, skipImage: true }),
-        });
-        const postData = await postRes.json();
+        setSlotGenerating(i);
 
-        if (!postRes.ok) {
-          setSlotError(i, postData.error || "Generation failed");
-          throw new Error(postData.error || `Failed on: ${topic.title}`);
+        try {
+          const postRes = await fetch("/api/blog/generate-one-post", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ siteId, topic, productContext, skipImage: true }),
+          });
+          const postData = await postRes.json();
+
+          if (!postRes.ok) {
+            const msg = postData.error || "Generation failed";
+            setSlotError(i, msg);
+            failedCount += 1;
+            appendLog(`Failed: ${topic.title}`);
+            return false;
+          }
+
+          const post = postData.post as BlogPost;
+          setSlotComplete(i, post);
+          generatedPosts.push(post);
+          textFinished += 1;
+          bumpProgress(20 + Math.round((textFinished / topics.length) * 45));
+          appendLog(`Text ready: ${topic.title}`);
+          return !postData.skipped;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Generation failed";
+          setSlotError(i, msg);
+          failedCount += 1;
+          appendLog(`Failed: ${topic.title}`);
+          return false;
         }
-
-        const post = postData.post as BlogPost;
-        setSlotComplete(i, post);
-        generatedPosts.push(post);
-        textFinished += 1;
-        bumpProgress(20 + Math.round((textFinished / topics.length) * 45));
-        appendLog(`Text ready: ${topic.title}`);
-        return !postData.skipped;
       };
 
-      const textResults = await Promise.all(pending.map((i) => generateText(i)));
-      let createdCount = textResults.filter(Boolean).length;
+      for (let idx = 0; idx < pending.length; idx++) {
+        await generateText(pending[idx]);
+        if (idx < pending.length - 1) {
+          await new Promise((r) => setTimeout(r, TEXT_GENERATION_STAGGER_MS));
+        }
+      }
+
+      if (failedCount > 0) {
+        clearSlotProgressTimer();
+        throw new Error(
+          `${failedCount} article${failedCount === 1 ? "" : "s"} failed (API rate limit). Click Try Deploy Again to resume the remaining posts.`
+        );
+      }
+
+      let createdCount = generatedPosts.filter(Boolean).length;
 
       const needsImage = generatedPosts.filter((p) => !p.image_url);
       if (needsImage.length === 0) {
