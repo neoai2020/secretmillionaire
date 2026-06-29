@@ -12,6 +12,7 @@ import {
   ImagePlus,
   Loader2,
 } from "lucide-react";
+import { uploadBlogImage } from "../lib/upload-client";
 
 interface RichTextEditorProps {
   value: string;
@@ -23,15 +24,6 @@ type ToolbarAction = {
   label: string;
   run: () => void;
 };
-
-async function uploadImage(file: File): Promise<string> {
-  const form = new FormData();
-  form.append("file", file);
-  const res = await fetch("/api/blog/upload-image", { method: "POST", body: form });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Upload failed");
-  return data.url as string;
-}
 
 /**
  * Visual-first article editor. Users edit the rendered content directly
@@ -106,7 +98,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
     setUploading(true);
     setError(null);
     try {
-      const url = await uploadImage(file);
+      const url = await uploadBlogImage(file);
       const target = replaceTargetRef.current;
 
       if (target) {

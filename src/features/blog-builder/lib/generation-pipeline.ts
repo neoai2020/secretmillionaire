@@ -177,6 +177,8 @@ export interface PostUpdatePayload {
   excerpt?: string | null;
   meta_description?: string | null;
   html?: string;
+  image_url?: string | null;
+  image_alt?: string | null;
 }
 
 export function validatePostUpdate(body: PostUpdatePayload): PostUpdatePayload | null {
@@ -204,6 +206,19 @@ export function validatePostUpdate(body: PostUpdatePayload): PostUpdatePayload |
     const h = body.html.trim();
     if (h.length < 100) return null;
     out.html = h;
+  }
+
+  if (body.image_url === null || typeof body.image_url === "string") {
+    const u = body.image_url?.trim() ?? "";
+    if (u && !/^https?:\/\//i.test(u)) return null;
+    if (u.length > 2048) return null;
+    out.image_url = u || null;
+  }
+
+  if (body.image_alt === null || typeof body.image_alt === "string") {
+    const a = body.image_alt?.trim() ?? "";
+    if (a.length > 300) return null;
+    out.image_alt = a || null;
   }
 
   if (Object.keys(out).length === 0) return null;

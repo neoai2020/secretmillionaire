@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Eye, Pencil, Save, Loader2 } from "lucide-react";
+import { X, Eye, Pencil, Save, Loader2, ImageUp, ImageOff } from "lucide-react";
 import type { BlogPost } from "../types";
 import { RichTextEditor } from "./RichTextEditor";
+import { uploadBlogImage } from "../lib/upload-client";
 
 interface PostPreviewModalProps {
   postId: string | null;
@@ -18,11 +19,15 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [post, setPost] = useState<BlogPost | null>(null);
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const heroInputRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState({
     title: "",
     excerpt: "",
     meta_description: "",
     html: "",
+    image_url: "",
+    image_alt: "",
   });
 
   const loadPost = useCallback(async (id: string) => {
@@ -39,6 +44,8 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
         excerpt: loaded.excerpt ?? "",
         meta_description: loaded.meta_description ?? "",
         html: loaded.html,
+        image_url: loaded.image_url ?? "",
+        image_alt: loaded.image_alt ?? "",
       });
       setEditing(false);
     } catch (e) {
@@ -71,6 +78,8 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
           excerpt: draft.excerpt || null,
           meta_description: draft.meta_description || null,
           html: draft.html,
+          image_url: draft.image_url || null,
+          image_alt: draft.image_alt || null,
         }),
       });
       const data = await res.json();
@@ -83,6 +92,26 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleHeroSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingHero(true);
+    setError(null);
+    try {
+      const url = await uploadBlogImage(file);
+      setDraft((d) => ({
+        ...d,
+        image_url: url,
+        image_alt: d.image_alt || file.name.replace(/\.[^.]+$/, ""),
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingHero(false);
     }
   };
 
@@ -167,6 +196,16 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
 
               {!loading && post && !editing && (
                 <div className="flex flex-col gap-4">
+                  {post.image_url && (
+                    <div className="overflow-hidden rounded-xl border border-white/10">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={post.image_url}
+                        alt={post.image_alt || post.title}
+                        className="block w-full aspect-[16/9] object-cover"
+                      />
+                    </div>
+                  )}
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-accent-muted mb-1">Title</p>
                     <h2 className="brand-font text-xl text-text-heading">{post.title}</h2>
@@ -195,6 +234,56 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
 
               {!loading && post && editing && (
                 <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] uppercase tracking-widest text-accent-muted">Featured image</span>
+                    <input
+                      ref={heroInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+                      className="hidden"
+                      onChange={handleHeroSelected}
+                    />
+                    <div className="relative overflow-hidden rounded-xl border border-white/10 glass-tile">
+                      {draft.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={draft.image_url}
+                          alt={draft.image_alt || draft.title}
+                          className="block w-full aspect-[16/9] object-cover"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-1 aspect-[16/9] text-text-muted">
+                          <ImageOff size={22} />
+                          <span className="text-xs">No featured image</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => heroInputRef.current?.click()}
+                        disabled={uploadingHero}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-on-accent bg-accent-muted hover:opacity-90 disabled:opacity-60"
+                      >
+                        {uploadingHero ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <ImageUp size={14} />
+                        )}
+                        {draft.image_url ? "Replace image" : "Upload image"}
+                      </button>
+                      {draft.image_url && (
+                        <button
+                          type="button"
+                          onClick={() => setDraft((d) => ({ ...d, image_url: "" }))}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-text-muted hover:text-text-heading hover:bg-white/5"
+                        >
+                          <ImageOff size={14} />
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <label className="flex flex-col gap-1.5">
                     <span className="text-[10px] uppercase tracking-widest text-accent-muted">Title</span>
                     <input
