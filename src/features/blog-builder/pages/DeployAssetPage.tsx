@@ -16,8 +16,6 @@ import type { BlogPost, BlogSite } from "../types";
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
 
-const GENERATION_CONCURRENCY = 2;
-
 function initSlots(topics: ReturnType<typeof buildClusterTopics>): PostSlotState[] {
   return topics.map((topic) => ({
     topic,
@@ -166,11 +164,22 @@ export default function DeployAssetPage() {
     }) => {
       const { siteId, topics, productContext, startIndex = 0 } = params;
       let createdCount = 0;
+      const pending = topics.slice(startIndex).map((_, offset) => startIndex + offset);
+
+      if (pending.length === 0) return 0;
+
+      appendLog(`Generating ${pending.length} posts in parallel...`);
+      bumpProgress(25);
+      pending.forEach((i) => setSlotGenerating(i));
+
+      let finished = 0;
+      const onFinished = () => {
+        finished += 1;
+        bumpProgress(20 + Math.round((finished / topics.length) * 65));
+      };
 
       const generateOne = async (i: number): Promise<boolean> => {
         const topic = topics[i];
-        appendLog(`Writing ${i + 1}/${topics.length}: ${topic.title}...`);
-        setSlotGenerating(i);
 
         const postRes = await fetch("/api/blog/generate-one-post", {
           method: "POST",
@@ -181,20 +190,17 @@ export default function DeployAssetPage() {
 
         if (!postRes.ok) {
           setSlotError(i, postData.error || "Generation failed");
-          throw new Error(postData.error || `Failed on post ${i + 1}`);
+          throw new Error(postData.error || `Failed on: ${topic.title}`);
         }
 
         setSlotComplete(i, postData.post as BlogPost);
+        appendLog(`Ready: ${topic.title}`);
+        onFinished();
         return !postData.skipped;
       };
 
-      for (let i = startIndex; i < topics.length; i += GENERATION_CONCURRENCY) {
-        const batch = topics.slice(i, Math.min(i + GENERATION_CONCURRENCY, topics.length));
-        bumpProgress(20 + Math.round((i / topics.length) * 65));
-        const results = await Promise.all(batch.map((_, batchIdx) => generateOne(i + batchIdx)));
-        createdCount += results.filter(Boolean).length;
-        bumpProgress(20 + Math.round(((i + batch.length) / topics.length) * 65));
-      }
+      const results = await Promise.all(pending.map((i) => generateOne(i)));
+      createdCount = results.filter(Boolean).length;
 
       clearSlotProgressTimer();
       return createdCount;
