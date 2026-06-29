@@ -8,24 +8,61 @@ interface PostListProps {
   excludeSlug?: string;
 }
 
+/**
+ * Content-sized magazine layout: a featured card on the left whose height follows
+ * its own content, a stacked side column of up to two cards, then a responsive
+ * grid for the rest. Cards never stretch to fill empty space.
+ */
+function FeatureLayout({
+  list,
+  siteSlug,
+  withHead,
+}: {
+  list: PublicPostSummary[];
+  siteSlug: string;
+  withHead?: boolean;
+}) {
+  const [featuredPost, ...others] = list;
+  const side = others.slice(0, 2);
+  const rest = others.slice(2);
+
+  return (
+    <section className="blog-section">
+      {withHead && (
+        <div className="blog-section-head">
+          <h2 className="blog-section-title">Latest guides</h2>
+          <span className="blog-meta">{list.length} articles</span>
+        </div>
+      )}
+      <div className="blog-feature-row">
+        {featuredPost && (
+          <PostCard post={featuredPost} siteSlug={siteSlug} layout="bento" featured />
+        )}
+        {side.length > 0 && (
+          <div className="blog-feature-side">
+            {side.map((post) => (
+              <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="bento" />
+            ))}
+          </div>
+        )}
+      </div>
+      {rest.length > 0 && (
+        <div className="blog-bento blog-feature-rest">
+          {rest.map((post) => (
+            <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="bento" />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function PostList({ posts, siteSlug, variant, excludeSlug }: PostListProps) {
   const list = excludeSlug ? posts.filter((p) => p.slug !== excludeSlug) : posts;
   if (list.length === 0) return null;
 
   if (variant === "bento") {
-    return (
-      <section className="blog-section">
-        <div className="blog-section-head">
-          <h2 className="blog-section-title">Latest guides</h2>
-          <span className="blog-meta">{list.length} articles</span>
-        </div>
-        <div className="blog-bento">
-          {list.map((post, i) => (
-            <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="bento" featured={i === 0} />
-          ))}
-        </div>
-      </section>
-    );
+    return <FeatureLayout list={list} siteSlug={siteSlug} withHead />;
   }
 
   if (variant === "horizontal") {
@@ -61,17 +98,7 @@ export function PostList({ posts, siteSlug, variant, excludeSlug }: PostListProp
   }
 
   if (variant === "magazine-mix") {
-    const [first, ...rest] = list;
-    return (
-      <section className="blog-section">
-        <div className="blog-bento">
-          {first && <PostCard post={first} siteSlug={siteSlug} layout="bento" featured />}
-          {rest.map((post) => (
-            <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="bento" />
-          ))}
-        </div>
-      </section>
-    );
+    return <FeatureLayout list={list} siteSlug={siteSlug} />;
   }
 
   return (

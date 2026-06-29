@@ -18,15 +18,15 @@ export function PostCard({ post, siteSlug, layout, featured }: PostCardProps) {
 
   if (layout === "bento") {
     return (
-      <article className={`blog-bento-item blog-card flex flex-col h-full ${featured ? "" : ""}`}>
-        <PostThumb href={href} imageUrl={post.image_url} alt={post.title} className="flex-shrink-0" />
-        <div className="blog-card-body flex-1">
+      <article className={`blog-bento-item blog-card flex flex-col ${featured ? "blog-bento-featured" : ""}`}>
+        <PostThumb href={href} imageUrl={post.image_url} alt={post.title} />
+        <div className="blog-card-body">
           {post.is_pillar && <span className="blog-chip-gold blog-chip mb-2">Main guide</span>}
           <h2 className="blog-card-title">
             <Link href={href}>{post.title}</Link>
           </h2>
           {post.excerpt && <p className="blog-meta line-clamp-3">{post.excerpt}</p>}
-          <p className="blog-meta mt-auto pt-2">{formatDate(post.created_at)}</p>
+          <p className="blog-meta pt-2">{formatDate(post.created_at)}</p>
         </div>
       </article>
     );

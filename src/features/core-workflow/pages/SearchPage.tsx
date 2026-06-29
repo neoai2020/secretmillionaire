@@ -138,7 +138,7 @@ export default function SearchPage() {
             {/* How it works — inline help */}
             <div className="w-full border-t border-border-dim/30 pt-6">
                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3">How it works</p>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     {[
                         { step: "1", text: "Type a topic" },
                         { step: "2", text: "We find ads" },
