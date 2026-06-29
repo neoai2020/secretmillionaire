@@ -31,9 +31,17 @@
 .blog-public-root h1,
 .blog-public-root h2,
 .blog-public-root h3,
-.blog-public-root h4 {
+.blog-public-root h4,
+.blog-public-root h5,
+.blog-public-root h6 {
   font-family: var(--blog-font-heading);
   letter-spacing: -0.02em;
+  color: var(--blog-text);
+}
+
+/* Override dark-app global heading / brand-font tokens inside public sites */
+.blog-public-root .brand-font {
+  color: var(--blog-text);
 }
 
 /* Sticky nav */
@@ -104,6 +112,7 @@
   font-weight: 700;
   line-height: 1.08;
   max-width: 16ch;
+  color: var(--blog-text);
 }
 
 .blog-hero-subtitle {
@@ -112,6 +121,27 @@
   line-height: 1.55;
   color: var(--blog-muted);
   max-width: 42rem;
+}
+
+/* CTA / section headings on light backgrounds */
+.blog-public-root .blog-cta-hero h2,
+.blog-public-root .blog-section-head h2 {
+  color: var(--blog-text);
+}
+
+.blog-public-root strong {
+  color: var(--blog-text);
+}
+
+.blog-public-root p,
+.blog-public-root li,
+.blog-public-root span:not(.blog-chip):not(.blog-chip-gold) {
+  color: inherit;
+}
+
+.blog-footer-inner .font-bold,
+.blog-footer-inner p.font-bold {
+  color: var(--blog-text);
 }
 
 .blog-hero-featured {
@@ -154,10 +184,11 @@
   font-size: clamp(1.35rem, 3vw, 2rem);
   font-weight: 700;
   line-height: 1.15;
+  color: var(--blog-text);
 }
 
 .blog-hero-featured-title a {
-  color: inherit;
+  color: var(--blog-text);
   text-decoration: none;
 }
 
@@ -233,10 +264,11 @@
   font-size: 1.0625rem;
   font-weight: 700;
   line-height: 1.35;
+  color: var(--blog-text);
 }
 
 .blog-card-title a {
-  color: inherit;
+  color: var(--blog-text);
   text-decoration: none;
 }
 
@@ -340,6 +372,10 @@
 }
 
 /* Chips & badges */
+.blog-cta-hero-title {
+  color: var(--blog-text);
+}
+
 .blog-chip {
   display: inline-flex;
   align-items: center;
@@ -445,6 +481,7 @@
   font-weight: 700;
   line-height: 1.12;
   margin-bottom: 1rem;
+  color: var(--blog-text);
 }
 
 .blog-article-featured {
@@ -629,6 +666,7 @@
 .blog-home-split h1 {
   font-size: clamp(2rem, 4.5vw, 3rem);
   line-height: 1.1;
+  color: var(--blog-text);
 }
 
 .blog-home-centered {
@@ -641,6 +679,7 @@
 .blog-home-centered h1 {
   font-size: clamp(2rem, 5vw, 3.25rem);
   line-height: 1.08;
+  color: var(--blog-text);
 }
 
 .blog-home-centered p {

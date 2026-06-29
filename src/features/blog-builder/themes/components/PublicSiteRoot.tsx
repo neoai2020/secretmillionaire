@@ -17,6 +17,7 @@ export function PublicSiteRoot({ theme, children }: PublicSiteRootProps) {
     document.body.style.backgroundColor = theme.colors.bg;
     document.body.style.color = theme.colors.text;
     document.body.classList.remove("text-white");
+    document.body.classList.add("blog-public-page");
 
     return () => {
       document.body.style.backgroundColor = prevBg;

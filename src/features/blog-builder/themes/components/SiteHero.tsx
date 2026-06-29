@@ -22,7 +22,7 @@ export function SiteHero({ variant, site, siteSlug, posts }: SiteHeroProps) {
         <div className="blog-cta-hero-inner">
           <div className="max-w-2xl">
             <span className="blog-chip mb-3">Editor&apos;s pick</span>
-            <h2 className="text-xl sm:text-2xl font-bold leading-snug mt-2">
+            <h2 className="blog-cta-hero-title text-xl sm:text-2xl font-bold leading-snug mt-2">
               Start with our most-read {brand.category.toLowerCase()} guide
             </h2>
             <p className="blog-meta mt-2">
