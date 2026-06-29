@@ -80,7 +80,7 @@ export function buildArticleUserPrompt(params: {
     getAngleInstructions(params.angle),
     "",
     "Output requirements:",
-    "- html: 450-650 words, 3-4 <h2> sections, mix of <p> and <ul>/<li> where useful",
+    "- html: 300-450 words, 3 <h2> sections, mix of <p> and <ul>/<li> where useful",
     "- title: compelling, includes primary niche keywords, max ~70 chars",
     "- excerpt: 2 sentences, buyer-focused, max 200 chars",
     "- metaDescription: max 155 chars, primary keyword in first half",
@@ -161,7 +161,7 @@ export function normalizeArticleContent(
   }
 
   const wordCount = html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
-  if (wordCount < 120) return null;
+  if (wordCount < 80) return null;
 
   const plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 

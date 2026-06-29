@@ -13,10 +13,7 @@ import { PostPreviewModal } from "../components/PostPreviewModal";
 import { buildClusterTopics } from "../lib/templates";
 import { buildDeploySlots, firstQueuedSlotIndex } from "../lib/deploy-slots";
 import { getSiteTerritory } from "../lib/site-territory";
-import {
-  POST_GENERATION_ATTEMPTS,
-  TEXT_GENERATION_STAGGER_MS,
-} from "../lib/generation-pipeline";
+import { POST_GENERATION_ATTEMPTS } from "../lib/generation-pipeline";
 import type { ArmedLink, BlogPost, BlogSite } from "../types";
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
@@ -250,6 +247,23 @@ export default function DeployAssetPage() {
     );
   };
 
+  const attachImagesInBackground = useCallback((posts: BlogPost[]) => {
+    const needsImage = posts.filter((p) => !p.image_url);
+    if (needsImage.length === 0) return;
+
+    appendLog(`Adding ${needsImage.length} hero images in the background...`);
+
+    void Promise.allSettled(
+      needsImage.map(async (post) => {
+        const res = await fetch(`/api/blog/posts/${post.id}/image`, { method: "POST" });
+        const data = await res.json();
+        if (res.ok && data.post) {
+          updatePostInSlots(data.post as BlogPost);
+        }
+      })
+    );
+  }, [appendLog]);
+
   const runPostGeneration = useCallback(
     async (params: {
       siteId: string;
@@ -260,80 +274,56 @@ export default function DeployAssetPage() {
       const { siteId, topics, productContext, startIndex = 0 } = params;
       const pending = topics.slice(startIndex).map((_, offset) => startIndex + offset);
 
-      if (pending.length === 0) return 0;
+      if (pending.length === 0) return [];
 
-      appendLog(`Writing ${pending.length} articles (text + images, one at a time)...`);
+      pending.forEach((i) => setSlotGenerating(i));
+      appendLog(`Writing ${pending.length} articles on server (text first, images after publish)...`);
       bumpProgress(25);
 
-      let textFinished = 0;
-      let failedCount = 0;
+      const batchRes = await fetch("/api/blog/generate-deploy-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ siteId, productContext, startIndex }),
+      });
+      const batchData = await batchRes.json();
 
-      const generateText = async (i: number): Promise<boolean> => {
-        const topic = topics[i];
-        setSlotGenerating(i);
+      if (!batchRes.ok) {
+        throw new Error(batchData.error || "Batch generation failed");
+      }
 
-        try {
-          const postRes = await fetch("/api/blog/generate-one-post", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ siteId, topic, productContext, fastImage: true }),
-          });
-          const postData = await postRes.json();
+      const results = (Array.isArray(batchData.results) ? batchData.results : []) as Array<{
+        index: number;
+        post?: BlogPost;
+        error?: string;
+      }>;
+      let finished = 0;
 
-          if (!postRes.ok) {
-            const msg = postData.error || "Generation failed";
-            setSlotError(i, msg);
-            return false;
-          }
+      for (const row of results) {
+        const i = typeof row.index === "number" ? row.index : -1;
+        if (i < 0) continue;
 
-          const post = postData.post as BlogPost;
-          setSlotComplete(i, post);
-          textFinished += 1;
-          bumpProgress(20 + Math.round((textFinished / topics.length) * 65));
-          appendLog(`Ready: ${topic.title}`);
-          return !postData.skipped;
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : "Generation failed";
-          setSlotError(i, msg);
-          return false;
-        }
-      };
-
-      for (let idx = 0; idx < pending.length; idx++) {
-        const slotIndex = pending[idx];
-        let success = false;
-
-        for (let attempt = 0; attempt < POST_GENERATION_ATTEMPTS; attempt++) {
-          if (attempt > 0) {
-            appendLog(`Retry ${attempt + 1}/${POST_GENERATION_ATTEMPTS}: ${topics[slotIndex].title}`);
-            await new Promise((r) => setTimeout(r, 2500 * attempt));
-            setSlotGenerating(slotIndex);
-          }
-
-          success = await generateText(slotIndex);
-          if (success) break;
-        }
-
-        if (!success) {
-          failedCount += 1;
-          appendLog(`Failed: ${topics[slotIndex].title}`);
-        }
-
-        if (idx < pending.length - 1) {
-          await new Promise((r) => setTimeout(r, TEXT_GENERATION_STAGGER_MS));
+        if (row.post) {
+          setSlotComplete(i, row.post as BlogPost);
+          finished += 1;
+          bumpProgress(20 + Math.round((finished / topics.length) * 65));
+        } else if (row.error) {
+          setSlotError(i, String(row.error));
         }
       }
 
-      if (failedCount > 0) {
+      const failures = Array.isArray(batchData.failures) ? batchData.failures : [];
+      if (failures.length > 0) {
         clearSlotProgressTimer();
         throw new Error(
-          `${failedCount} article${failedCount === 1 ? "" : "s"} failed after ${POST_GENERATION_ATTEMPTS} tries. Click Try Deploy Again to resume.`
+          `${failures.length} article${failures.length === 1 ? "" : "s"} failed after ${POST_GENERATION_ATTEMPTS} tries. Click Try Deploy Again to resume.`
         );
       }
 
       clearSlotProgressTimer();
       bumpProgress(85);
-      return pending.length;
+
+      const posts = results.filter((r) => r.post).map((r) => r.post as BlogPost);
+      return posts;
     },
     [appendLog]
   );
@@ -424,7 +414,7 @@ export default function DeployAssetPage() {
           }
         }
 
-        const createdCount = await runPostGeneration({
+        const generatedPosts = await runPostGeneration({
           siteId: activeSite.id,
           topics,
           productContext,
@@ -432,11 +422,12 @@ export default function DeployAssetPage() {
         });
 
         appendLog(
-          createdCount > 0
-            ? `Created ${createdCount} new posts. Publishing...`
+          generatedPosts.length > 0
+            ? `Created ${generatedPosts.length} new posts. Publishing...`
             : "All posts ready. Publishing..."
         );
         await publishSite(activeSite.id, activeSite.slug);
+        attachImagesInBackground(generatedPosts);
         deployRunning.current = false;
         return;
       }
@@ -495,7 +486,7 @@ export default function DeployAssetPage() {
       appendLog("Site ready — generating posts in pipeline...");
       setPhase("generating");
 
-      const createdCount = await runPostGeneration({
+      const generatedPosts = await runPostGeneration({
         siteId: activeSite.id,
         topics,
         productContext,
@@ -503,11 +494,12 @@ export default function DeployAssetPage() {
       });
 
       appendLog(
-        createdCount > 0
-          ? `Created ${createdCount} new posts. Publishing...`
+        generatedPosts.length > 0
+          ? `Created ${generatedPosts.length} new posts. Publishing...`
           : "All posts ready. Publishing..."
       );
       await publishSite(activeSite.id, activeSite.slug);
+      attachImagesInBackground(generatedPosts);
     } catch (e) {
       clearSlotProgressTimer();
       let msg = e instanceof Error ? e.message : "Deploy failed";

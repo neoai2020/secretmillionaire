@@ -10,8 +10,6 @@ import type { ArmedLink, BlogPost, BlogSite, ClusterTopic } from "../types";
 /** GPT text calls share one RapidAPI quota — one at a time avoids 429 bursts. */
 export const TEXT_GENERATION_CONCURRENCY = 1;
 export const POST_GENERATION_ATTEMPTS = 3;
-/** Gap between sequential post generations (ms). */
-export const TEXT_GENERATION_STAGGER_MS = 600;
 
 export async function loadOwnedSite(
   supabase: SupabaseClient,

@@ -1,7 +1,7 @@
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? "";
 const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST ?? "chatgpt-42.p.rapidapi.com";
 
-const DEFAULT_TIMEOUT_MS = 55_000;
+const DEFAULT_TIMEOUT_MS = 42_000;
 
 interface ChatResponse {
   result?: string;
@@ -172,7 +172,7 @@ export async function generateStructuredJSON<T>(params: {
   const parsed = params.validate(extractJsonFromText(raw));
   if (parsed) return parsed;
 
-  for (let repair = 0; repair < 3; repair++) {
+  for (let repair = 0; repair < 2; repair++) {
     const repairRaw = await generateWithGPT(
       params.systemPrompt,
       `${params.userPrompt}
