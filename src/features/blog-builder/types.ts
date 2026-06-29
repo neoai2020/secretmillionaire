@@ -68,3 +68,9 @@ export interface PostSlotState {
   post?: BlogPost;
   error?: string;
 }
+
+export interface GenerationQuota {
+  limit: number;
+  usedToday: number;
+  remaining: number;
+}

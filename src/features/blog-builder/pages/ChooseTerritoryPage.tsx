@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Loader2, MapPin, ArrowRight, Sparkles } from "lucide-react";
 import { useBlogBuilder } from "../context/BlogBuilderContext";
 import { SuggestionGrid } from "../components/SuggestionGrid";
+import { GenerationQuotaWidget } from "../components/GenerationQuotaWidget";
 import { localTerritorySuggestions } from "../lib/local-territory-suggestions";
 
 export default function ChooseTerritoryPage() {
@@ -82,6 +83,8 @@ export default function ChooseTerritoryPage() {
           can rank for.
         </p>
       </div>
+
+      <GenerationQuotaWidget />
 
       <div className="flex flex-col gap-3">
         <label className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">
