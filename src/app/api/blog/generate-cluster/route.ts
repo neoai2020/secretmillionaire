@@ -76,6 +76,7 @@ export async function POST(request: Request) {
       subject: territory,
       userId: user.id,
       supabase,
+      fast: true,
     });
 
     const postId = crypto.randomUUID();

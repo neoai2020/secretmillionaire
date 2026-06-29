@@ -7,15 +7,11 @@ import { getSiteTerritory } from "./site-territory";
 import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
 import type { ArmedLink, BlogPost, BlogSite, ClusterTopic } from "../types";
 
-/** Hero images use a different API — safe to run a few in parallel. */
-export const IMAGE_BATCH_CONCURRENCY = 3;
-
-/** GPT text calls share one RapidAPI quota — small batches avoid 429 bursts. */
-export const TEXT_GENERATION_CONCURRENCY = 2;
-/** Offset between starts within a batch (ms) so two requests don't land same second. */
-export const TEXT_GENERATION_STAGGER_MS = 350;
-/** Brief pause between batches before the next pair starts. */
-export const TEXT_GENERATION_BATCH_DELAY_MS = 500;
+/** GPT text calls share one RapidAPI quota — one at a time avoids 429 bursts. */
+export const TEXT_GENERATION_CONCURRENCY = 1;
+export const POST_GENERATION_ATTEMPTS = 3;
+/** Gap between sequential post generations (ms). */
+export const TEXT_GENERATION_STAGGER_MS = 600;
 
 export async function loadOwnedSite(
   supabase: SupabaseClient,
@@ -51,14 +47,17 @@ export interface GeneratePostParams {
   site: BlogSite;
   topic: ClusterTopic;
   productContext?: string;
-  /** Text-only first — faster/cheaper; attach image in a second pass. */
+  /** Text-only — image attached in a second pass. */
   skipImage?: boolean;
+  /** Fast Pollinations/picsum only (skip NanoBanana). Used during deploy. */
+  fastImage?: boolean;
 }
 
 export async function generateAndSavePost(
   params: GeneratePostParams
 ): Promise<{ post: BlogPost; skipped: boolean }> {
-  const { supabase, userId, site, topic, productContext = "", skipImage = false } = params;
+  const { supabase, userId, site, topic, productContext = "", skipImage = false, fastImage = false } =
+    params;
 
   const { data: existing } = await supabase
     .from("posts")
@@ -94,6 +93,7 @@ export async function generateAndSavePost(
       subject: territory,
       userId,
       supabase,
+      fast: fastImage,
     });
     imageUrl = image.url || null;
     imageAlt = image.alt;
@@ -134,6 +134,7 @@ export async function attachImageToPost(params: {
   supabase: SupabaseClient;
   userId: string;
   postId: string;
+  fast?: boolean;
 }): Promise<BlogPost> {
   const post = await loadOwnedPost(params.supabase, params.userId, params.postId);
   if (!post) throw new Error("Post not found");
@@ -149,6 +150,7 @@ export async function attachImageToPost(params: {
     subject: territory,
     userId: params.userId,
     supabase: params.supabase,
+    fast: params.fast ?? true,
   });
 
   if (!image.url) return post;

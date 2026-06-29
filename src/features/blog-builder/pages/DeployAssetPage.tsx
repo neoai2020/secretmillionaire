@@ -14,9 +14,7 @@ import { buildClusterTopics } from "../lib/templates";
 import { buildDeploySlots, firstQueuedSlotIndex } from "../lib/deploy-slots";
 import { getSiteTerritory } from "../lib/site-territory";
 import {
-  IMAGE_BATCH_CONCURRENCY,
-  TEXT_GENERATION_BATCH_DELAY_MS,
-  TEXT_GENERATION_CONCURRENCY,
+  POST_GENERATION_ATTEMPTS,
   TEXT_GENERATION_STAGGER_MS,
 } from "../lib/generation-pipeline";
 import type { ArmedLink, BlogPost, BlogSite } from "../types";
@@ -264,20 +262,13 @@ export default function DeployAssetPage() {
 
       if (pending.length === 0) return 0;
 
-      appendLog(
-        `Phase 1: writing ${pending.length} articles (${TEXT_GENERATION_CONCURRENCY} at a time)...`
-      );
+      appendLog(`Writing ${pending.length} articles (text + images, one at a time)...`);
       bumpProgress(25);
 
       let textFinished = 0;
-      const generatedPosts: BlogPost[] = [];
       let failedCount = 0;
 
-      const generateText = async (i: number, slotInBatch: number): Promise<boolean> => {
-        if (slotInBatch > 0) {
-          await new Promise((r) => setTimeout(r, TEXT_GENERATION_STAGGER_MS * slotInBatch));
-        }
-
+      const generateText = async (i: number): Promise<boolean> => {
         const topic = topics[i];
         setSlotGenerating(i);
 
@@ -285,80 +276,64 @@ export default function DeployAssetPage() {
           const postRes = await fetch("/api/blog/generate-one-post", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ siteId, topic, productContext, skipImage: true }),
+            body: JSON.stringify({ siteId, topic, productContext, fastImage: true }),
           });
           const postData = await postRes.json();
 
           if (!postRes.ok) {
             const msg = postData.error || "Generation failed";
             setSlotError(i, msg);
-            failedCount += 1;
-            appendLog(`Failed: ${topic.title}`);
             return false;
           }
 
           const post = postData.post as BlogPost;
           setSlotComplete(i, post);
-          generatedPosts.push(post);
           textFinished += 1;
-          bumpProgress(20 + Math.round((textFinished / topics.length) * 45));
-          appendLog(`Text ready: ${topic.title}`);
+          bumpProgress(20 + Math.round((textFinished / topics.length) * 65));
+          appendLog(`Ready: ${topic.title}`);
           return !postData.skipped;
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Generation failed";
           setSlotError(i, msg);
-          failedCount += 1;
-          appendLog(`Failed: ${topic.title}`);
           return false;
         }
       };
 
-      for (let batchStart = 0; batchStart < pending.length; batchStart += TEXT_GENERATION_CONCURRENCY) {
-        const batch = pending.slice(batchStart, batchStart + TEXT_GENERATION_CONCURRENCY);
-        await Promise.all(batch.map((slotIndex, slotInBatch) => generateText(slotIndex, slotInBatch)));
-        if (batchStart + TEXT_GENERATION_CONCURRENCY < pending.length) {
-          await new Promise((r) => setTimeout(r, TEXT_GENERATION_BATCH_DELAY_MS));
+      for (let idx = 0; idx < pending.length; idx++) {
+        const slotIndex = pending[idx];
+        let success = false;
+
+        for (let attempt = 0; attempt < POST_GENERATION_ATTEMPTS; attempt++) {
+          if (attempt > 0) {
+            appendLog(`Retry ${attempt + 1}/${POST_GENERATION_ATTEMPTS}: ${topics[slotIndex].title}`);
+            await new Promise((r) => setTimeout(r, 2500 * attempt));
+            setSlotGenerating(slotIndex);
+          }
+
+          success = await generateText(slotIndex);
+          if (success) break;
+        }
+
+        if (!success) {
+          failedCount += 1;
+          appendLog(`Failed: ${topics[slotIndex].title}`);
+        }
+
+        if (idx < pending.length - 1) {
+          await new Promise((r) => setTimeout(r, TEXT_GENERATION_STAGGER_MS));
         }
       }
 
       if (failedCount > 0) {
         clearSlotProgressTimer();
         throw new Error(
-          `${failedCount} article${failedCount === 1 ? "" : "s"} failed (API rate limit). Click Try Deploy Again to resume the remaining posts.`
-        );
-      }
-
-      let createdCount = generatedPosts.filter(Boolean).length;
-
-      const needsImage = generatedPosts.filter((p) => !p.image_url);
-      if (needsImage.length === 0) {
-        clearSlotProgressTimer();
-        bumpProgress(85);
-        return createdCount;
-      }
-
-      appendLog(`Phase 2: generating ${needsImage.length} hero images...`);
-      bumpProgress(70);
-
-      let imagesDone = 0;
-      for (let b = 0; b < needsImage.length; b += IMAGE_BATCH_CONCURRENCY) {
-        const batch = needsImage.slice(b, b + IMAGE_BATCH_CONCURRENCY);
-        await Promise.all(
-          batch.map(async (post) => {
-            const res = await fetch(`/api/blog/posts/${post.id}/image`, { method: "POST" });
-            const data = await res.json();
-            if (res.ok && data.post) {
-              updatePostInSlots(data.post as BlogPost);
-            }
-            imagesDone += 1;
-            bumpProgress(70 + Math.round((imagesDone / needsImage.length) * 15));
-          })
+          `${failedCount} article${failedCount === 1 ? "" : "s"} failed after ${POST_GENERATION_ATTEMPTS} tries. Click Try Deploy Again to resume.`
         );
       }
 
       clearSlotProgressTimer();
       bumpProgress(85);
-      return createdCount;
+      return pending.length;
     },
     [appendLog]
   );

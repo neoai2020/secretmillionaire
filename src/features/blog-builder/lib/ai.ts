@@ -154,7 +154,7 @@ export async function generateWithGPT(
 }
 
 /**
- * Request JSON from GPT with validation, normalization, and one repair attempt.
+ * Request JSON from GPT with validation, normalization, and repair attempts.
  */
 export async function generateStructuredJSON<T>(params: {
   systemPrompt: string;
@@ -163,7 +163,7 @@ export async function generateStructuredJSON<T>(params: {
   options?: GptCallOptions;
 }): Promise<T> {
   const opts: GptCallOptions = {
-    temperature: 0.35,
+    temperature: 0.3,
     maxRetries: 4,
     ...params.options,
   };
@@ -172,16 +172,18 @@ export async function generateStructuredJSON<T>(params: {
   const parsed = params.validate(extractJsonFromText(raw));
   if (parsed) return parsed;
 
-  const repairRaw = await generateWithGPT(
-    params.systemPrompt,
-    `${params.userPrompt}
+  for (let repair = 0; repair < 3; repair++) {
+    const repairRaw = await generateWithGPT(
+      params.systemPrompt,
+      `${params.userPrompt}
 
-Your previous response was invalid or incomplete JSON. Return ONLY corrected JSON with all required fields. No markdown fences.`,
-    { ...opts, maxRetries: 1 }
-  );
+Your previous response was invalid or incomplete JSON. Return ONLY valid JSON with keys title, excerpt, metaDescription, html. The html must include at least three <h2> sections and several <p> paragraphs. No markdown fences.`,
+      { ...opts, maxRetries: 3, temperature: 0.2 }
+    );
 
-  const repaired = params.validate(extractJsonFromText(repairRaw));
-  if (repaired) return repaired;
+    const repaired = params.validate(extractJsonFromText(repairRaw));
+    if (repaired) return repaired;
+  }
 
   throw new Error("AI returned invalid structured output");
 }

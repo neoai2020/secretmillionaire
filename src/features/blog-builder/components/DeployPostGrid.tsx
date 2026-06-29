@@ -105,6 +105,7 @@ export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPost
                 <AiLoadingBar
                   label={imagePending ? "Text ready — image loading" : "Generated"}
                   progress={imagePending ? Math.max(progress, 85) : 100}
+                  active={imagePending}
                 />
                 {onViewPost && (
                   <button
@@ -149,7 +150,7 @@ export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPost
             </div>
 
             {status === "generating" && (
-              <AiLoadingBar label="AI writing article" progress={progress} className="mt-auto" />
+              <AiLoadingBar label="AI writing article" progress={progress} active className="mt-auto" />
             )}
             {status === "queued" && (
               <p className="text-[10px] uppercase tracking-wider text-text-muted/70 mt-auto">

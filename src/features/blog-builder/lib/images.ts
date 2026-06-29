@@ -6,8 +6,10 @@ const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? "";
 const RAPIDAPI_IMAGE_HOST =
   process.env.RAPIDAPI_IMAGE_HOST ?? "google-nano-banana4.p.rapidapi.com";
 
-const NANO_TIMEOUT_MS = 18_000;
-const POLLINATIONS_TIMEOUT_MS = 14_000;
+const NANO_TIMEOUT_MS = 12_000;
+const POLLINATIONS_TIMEOUT_MS = 10_000;
+const FAST_POLLINATIONS_TIMEOUT_MS = 7_000;
+const FAST_PICSUM_TIMEOUT_MS = 4_000;
 
 export function pollinationsImageUrl(title: string, subject: string): string {
   const prompt = buildHeroImagePrompt(title, subject);
@@ -126,16 +128,24 @@ export async function resolvePostImage(params: {
   subject: string;
   userId: string;
   supabase: SupabaseClient;
+  /** Skip slow NanoBanana during bulk deploy — Pollinations + picsum only. */
+  fast?: boolean;
 }): Promise<{ url: string; alt: string }> {
   const alt = `${params.title} — ${params.subject}`;
   const prompt = buildHeroImagePrompt(params.title, params.subject);
   const negative = buildHeroImageNegativePrompt();
+  const pollinations = pollinationsImageUrl(params.title, params.subject);
 
-  const sources: Array<() => Promise<Buffer | null>> = [
-    () => callNanoBanana(prompt, negative),
-    () => fetchImageBuffer(pollinationsImageUrl(params.title, params.subject), POLLINATIONS_TIMEOUT_MS),
-    () => fetchImageBuffer(picsumFallbackUrl(params.title), 8_000),
-  ];
+  const sources: Array<() => Promise<Buffer | null>> = params.fast
+    ? [
+        () => fetchImageBuffer(pollinations, FAST_POLLINATIONS_TIMEOUT_MS),
+        () => fetchImageBuffer(picsumFallbackUrl(params.title), FAST_PICSUM_TIMEOUT_MS),
+      ]
+    : [
+        () => callNanoBanana(prompt, negative),
+        () => fetchImageBuffer(pollinations, POLLINATIONS_TIMEOUT_MS),
+        () => fetchImageBuffer(picsumFallbackUrl(params.title), 8_000),
+      ];
 
   for (const load of sources) {
     const buffer = await load();

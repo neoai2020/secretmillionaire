@@ -28,6 +28,7 @@ export async function POST(request: Request) {
   const topic = parseTopic(body.topic);
   const productContext = typeof body.productContext === "string" ? body.productContext : "";
   const skipImage = body.skipImage === true;
+  const fastImage = body.fastImage !== false;
 
   if (!siteId || !topic) {
     return NextResponse.json({ error: "siteId and topic are required" }, { status: 400 });
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
       topic,
       productContext,
       skipImage,
+      fastImage: skipImage ? false : fastImage,
     });
     return NextResponse.json(result);
   } catch (e) {
