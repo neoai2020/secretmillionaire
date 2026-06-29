@@ -8,6 +8,7 @@ import {
 } from "@/features/blog-builder/lib/generation-pipeline";
 import { buildClusterTopics } from "@/features/blog-builder/lib/templates";
 import { getSiteTerritory } from "@/features/blog-builder/lib/site-territory";
+import type { ClusterTopic } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
