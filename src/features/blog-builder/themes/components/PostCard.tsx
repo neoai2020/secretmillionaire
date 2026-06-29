@@ -1,40 +1,68 @@
 import Link from "next/link";
+import { PostThumb } from "./PostThumb";
 import type { PublicPostSummary } from "../types";
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
 interface PostCardProps {
   post: PublicPostSummary;
   siteSlug: string;
-  layout: "stack" | "grid" | "magazine";
+  layout: "stack" | "grid" | "magazine" | "horizontal" | "bento";
   featured?: boolean;
 }
 
 export function PostCard({ post, siteSlug, layout, featured }: PostCardProps) {
   const href = `/sites/${siteSlug}/${post.slug}`;
 
-  if (layout === "magazine" && featured) {
+  if (layout === "bento") {
     return (
-      <article className="blog-card overflow-hidden md:col-span-2 grid md:grid-cols-2 gap-0">
-        {post.image_url && (
-          <Link href={href} className="relative aspect-[16/10] md:aspect-auto md:min-h-[220px] block bg-neutral-100">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={post.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          </Link>
-        )}
-        <div className="p-6 flex flex-col justify-center">
-          {post.is_pillar && <span className="blog-pillar-badge mb-2">Pillar guide</span>}
-          <h2 className="text-xl sm:text-2xl font-bold leading-snug">
-            <Link href={href} className="hover:opacity-80 transition-opacity">
-              {post.title}
-            </Link>
+      <article className={`blog-bento-item blog-card flex flex-col h-full ${featured ? "" : ""}`}>
+        <PostThumb href={href} imageUrl={post.image_url} alt={post.title} className="flex-shrink-0" />
+        <div className="blog-card-body flex-1">
+          {post.is_pillar && <span className="blog-chip-gold blog-chip mb-2">Main guide</span>}
+          <h2 className="blog-card-title">
+            <Link href={href}>{post.title}</Link>
           </h2>
-          {post.excerpt && (
-            <p className="mt-2 text-sm leading-relaxed line-clamp-3" style={{ color: "var(--blog-muted)" }}>
-              {post.excerpt}
-            </p>
-          )}
-          <Link href={href} className="blog-link text-sm mt-4 inline-block">
+          {post.excerpt && <p className="blog-meta line-clamp-3">{post.excerpt}</p>}
+          <p className="blog-meta mt-auto pt-2">{formatDate(post.created_at)}</p>
+        </div>
+      </article>
+    );
+  }
+
+  if (layout === "horizontal") {
+    return (
+      <article className="blog-card blog-card-horizontal">
+        <PostThumb href={href} imageUrl={post.image_url} alt={post.title} />
+        <div className="blog-card-body">
+          <div className="flex flex-wrap items-center gap-2">
+            {post.is_pillar && <span className="blog-chip-gold blog-chip">Main guide</span>}
+            <span className="blog-meta">{formatDate(post.created_at)}</span>
+          </div>
+          <h2 className="blog-card-title text-lg sm:text-xl">
+            <Link href={href}>{post.title}</Link>
+          </h2>
+          {post.excerpt && <p className="blog-meta line-clamp-2">{post.excerpt}</p>}
+          <Link href={href} className="blog-link text-sm mt-1 w-fit">
             Read article →
           </Link>
+        </div>
+      </article>
+    );
+  }
+
+  if (layout === "magazine" && featured) {
+    return (
+      <article className="blog-card overflow-hidden md:col-span-2 grid md:grid-cols-2">
+        <PostThumb href={href} imageUrl={post.image_url} alt={post.title} className="min-h-[14rem] md:min-h-full" />
+        <div className="blog-card-body">
+          {post.is_pillar && <span className="blog-chip-gold blog-chip mb-2">Main guide</span>}
+          <h2 className="blog-card-title text-xl sm:text-2xl">
+            <Link href={href}>{post.title}</Link>
+          </h2>
+          {post.excerpt && <p className="blog-meta line-clamp-4">{post.excerpt}</p>}
         </div>
       </article>
     );
@@ -43,48 +71,32 @@ export function PostCard({ post, siteSlug, layout, featured }: PostCardProps) {
   if (layout === "grid") {
     return (
       <article className="blog-card overflow-hidden flex flex-col h-full">
-        {post.image_url && (
-          <Link href={href} className="relative aspect-[16/10] block bg-neutral-100">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={post.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          </Link>
-        )}
-        <div className="p-5 flex flex-col flex-1">
-          {post.is_pillar && <span className="blog-pillar-badge mb-2">Pillar</span>}
-          <h2 className="text-lg font-bold leading-snug flex-1">
-            <Link href={href} className="hover:opacity-80 transition-opacity">
-              {post.title}
-            </Link>
+        <PostThumb href={href} imageUrl={post.image_url} alt={post.title} />
+        <div className="blog-card-body flex-1">
+          {post.is_pillar && <span className="blog-chip-gold blog-chip mb-2">Main guide</span>}
+          <h2 className="blog-card-title flex-1">
+            <Link href={href}>{post.title}</Link>
           </h2>
-          {post.excerpt && (
-            <p className="mt-2 text-sm leading-relaxed line-clamp-2" style={{ color: "var(--blog-muted)" }}>
-              {post.excerpt}
-            </p>
-          )}
-          <Link href={href} className="blog-link text-sm mt-3 inline-block">
-            Read more →
-          </Link>
+          {post.excerpt && <p className="blog-meta line-clamp-2">{post.excerpt}</p>}
+          <p className="blog-meta mt-2">{formatDate(post.created_at)}</p>
         </div>
       </article>
     );
   }
 
   return (
-    <article className="blog-card p-6 sm:p-7">
-      {post.is_pillar && <span className="blog-pillar-badge mb-2">Pillar guide</span>}
-      <h2 className="text-xl font-bold leading-snug">
-        <Link href={href} className="hover:opacity-80 transition-opacity">
-          {post.title}
-        </Link>
+    <article className="blog-card blog-card-body">
+      {post.is_pillar && <span className="blog-chip-gold blog-chip mb-2">Main guide</span>}
+      <h2 className="blog-card-title text-lg">
+        <Link href={href}>{post.title}</Link>
       </h2>
-      {post.excerpt && (
-        <p className="mt-2 text-sm sm:text-base leading-relaxed" style={{ color: "var(--blog-muted)" }}>
-          {post.excerpt}
-        </p>
-      )}
-      <Link href={href} className="blog-link text-sm mt-4 inline-block">
-        Read more →
-      </Link>
+      {post.excerpt && <p className="blog-meta">{post.excerpt}</p>}
+      <div className="flex items-center justify-between mt-2">
+        <span className="blog-meta">{formatDate(post.created_at)}</span>
+        <Link href={href} className="blog-link text-sm">
+          Read →
+        </Link>
+      </div>
     </article>
   );
 }

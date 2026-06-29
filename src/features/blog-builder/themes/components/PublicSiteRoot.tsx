@@ -35,6 +35,9 @@ export function PublicSiteRoot({ theme, children }: PublicSiteRootProps) {
     "--blog-border": theme.colors.border,
     "--blog-pillar": theme.colors.pillar,
     "--blog-hero-overlay": theme.colors.heroOverlay,
+    "--blog-gradient-from": theme.colors.gradientFrom,
+    "--blog-gradient-to": theme.colors.gradientTo,
+    "--blog-accent-soft": theme.colors.accentSoft,
     "--blog-font-heading": theme.fonts.heading,
     "--blog-font-body": theme.fonts.body,
   } as CSSProperties;
@@ -43,7 +46,7 @@ export function PublicSiteRoot({ theme, children }: PublicSiteRootProps) {
     <>
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href={theme.fonts.googleUrl} />
-      <div className="blog-public-root" style={style}>
+      <div className="blog-public-root flex flex-col min-h-dvh" style={style}>
         {children}
       </div>
     </>

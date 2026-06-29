@@ -1,4 +1,5 @@
 import { PublicSiteRoot } from "./components/PublicSiteRoot";
+import { SiteNav } from "./components/SiteNav";
 import { SiteHeader } from "./components/SiteHeader";
 import { SiteHero } from "./components/SiteHero";
 import { PostList } from "./components/PostList";
@@ -17,19 +18,14 @@ export function SiteHomeView({ site, siteSlug, posts }: SiteHomeViewProps) {
   const pillar = posts.find((p) => p.is_pillar);
   const heroShowsPillar = theme.modules.hero === "featured-pillar";
   const excludeSlug = heroShowsPillar ? pillar?.slug : undefined;
+  const showHomeHeader = theme.modules.hero !== "featured-pillar" || theme.modules.header !== "minimal";
 
   return (
     <PublicSiteRoot theme={theme}>
-      {theme.modules.header !== "minimal" && (
-        <div className="blog-trust-strip">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2 text-center">
-            Independent research · Updated guides · No fluff
-          </div>
-        </div>
-      )}
-      <SiteHeader site={site} siteSlug={siteSlug} variant={theme.modules.header} />
+      <SiteNav site={site} siteSlug={siteSlug} />
+      {showHomeHeader && <SiteHeader site={site} variant={theme.modules.header} />}
       <SiteHero variant={theme.modules.hero} site={site} siteSlug={siteSlug} posts={posts} />
-      <main>
+      <main className="flex-1">
         <PostList
           posts={posts}
           siteSlug={siteSlug}

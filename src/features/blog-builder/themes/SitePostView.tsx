@@ -1,5 +1,5 @@
 import { PublicSiteRoot } from "./components/PublicSiteRoot";
-import { SiteHeader } from "./components/SiteHeader";
+import { SiteNav } from "./components/SiteNav";
 import { ArticleLayout } from "./components/ArticleLayout";
 import { SiteFooter } from "./components/SiteFooter";
 import { resolveTheme } from "./resolve-theme";
@@ -20,15 +20,8 @@ export function SitePostView({ site, siteSlug, post, relatedPosts, jsonLd }: Sit
   return (
     <PublicSiteRoot theme={theme}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <SiteHeader
-        site={site}
-        siteSlug={siteSlug}
-        variant={theme.modules.header}
-        backHref={homeHref}
-        backLabel={site.title}
-        postTitle={post.title}
-      />
-      <main>
+      <SiteNav site={site} siteSlug={siteSlug} backHref={homeHref} />
+      <main className="flex-1">
         <ArticleLayout
           site={site}
           siteSlug={siteSlug}

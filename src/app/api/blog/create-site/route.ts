@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
 import { slugify } from "@/features/blog-builder/lib/seo";
-import { pickThemeForSite } from "@/features/blog-builder/themes";
+import { pickThemeForSite, buildSiteTitle, buildSiteTagline } from "@/features/blog-builder/themes";
 import type { ArmedLink } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
   if (!hobby) return NextResponse.json({ error: "hobby is required" }, { status: 400 });
 
-  const title = `${territory} Money Site`;
+  const title = buildSiteTitle(hobby);
   const baseSlug = slugify(territory) || slugify(hobby) || "site";
   const slug = `${baseSlug}-${user.id.slice(0, 8)}`;
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     hobby,
     territory,
     title,
-    tagline: `Your private cash asset for ${territory}`,
+    tagline: buildSiteTagline(hobby),
     slug,
     armed_links: armedLinks,
     status: "draft" as const,

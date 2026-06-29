@@ -1,6 +1,6 @@
 export type HeaderModule = "centered" | "split" | "minimal";
 export type HeroModule = "featured-pillar" | "none" | "cta-banner";
-export type HomeListModule = "stack" | "grid-2" | "magazine-mix";
+export type HomeListModule = "stack" | "grid-2" | "magazine-mix" | "bento" | "horizontal";
 export type PostLayoutModule = "narrow" | "wide" | "sidebar";
 export type FooterModule = "simple" | "rich";
 
@@ -22,6 +22,9 @@ export interface ThemeColors {
   border: string;
   pillar: string;
   heroOverlay: string;
+  gradientFrom: string;
+  gradientTo: string;
+  accentSoft: string;
 }
 
 export interface ThemeFonts {

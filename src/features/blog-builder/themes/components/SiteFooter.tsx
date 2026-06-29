@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getPublicBrand } from "../public-branding";
 import type { FooterModule, PublicPostSummary, PublicSite } from "../types";
 
 interface SiteFooterProps {
@@ -16,27 +17,26 @@ export function SiteFooter({
   relatedPosts = [],
   currentSlug,
 }: SiteFooterProps) {
+  const brand = getPublicBrand(site);
   const homeHref = `/sites/${siteSlug}`;
-  const category = site.territory ?? site.hobby;
   const related = relatedPosts.filter((p) => p.slug !== currentSlug).slice(0, 4);
 
   if (variant === "rich") {
     return (
-      <footer className="border-t mt-auto" style={{ borderColor: "var(--blog-border)", background: "var(--blog-surface)" }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <footer className="blog-footer mt-auto">
+        <div className="blog-footer-inner grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           <div>
-            <p className="font-bold text-lg">{site.title}</p>
-            {site.tagline && (
-              <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--blog-muted)" }}>
-                {site.tagline}
-              </p>
-            )}
+            <p className="font-bold text-lg">{brand.name}</p>
+            <p className="mt-2 text-sm leading-relaxed blog-meta">{brand.tagline}</p>
+            <p className="blog-disclosure">
+              We may earn a commission when you buy through links on this site. This helps support
+              our research at no extra cost to you. We only recommend products we believe offer
+              genuine value.
+            </p>
           </div>
           {related.length > 0 && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--blog-muted)" }}>
-                More guides
-              </p>
+              <p className="blog-section-title mb-3">More guides</p>
               <ul className="space-y-2">
                 {related.map((post) => (
                   <li key={post.slug}>
@@ -49,33 +49,31 @@ export function SiteFooter({
             </div>
           )}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--blog-muted)" }}>
-              Explore
-            </p>
+            <p className="blog-section-title mb-3">Explore</p>
             <Link href={homeHref} className="blog-link text-sm font-normal">
-              All {category} articles
+              All {brand.category} articles
             </Link>
           </div>
         </div>
-        <div
-          className="border-t py-5 text-center text-xs"
-          style={{ borderColor: "var(--blog-border)", color: "var(--blog-muted)" }}
-        >
-          © {new Date().getFullYear()} {site.title}. Independent editorial content.
+        <div className="border-t py-5 text-center text-xs blog-meta" style={{ borderColor: "var(--blog-border)" }}>
+          © {new Date().getFullYear()} {brand.name}. Independent editorial content.
         </div>
       </footer>
     );
   }
 
   return (
-    <footer
-      className="border-t py-8 text-center text-xs mt-auto"
-      style={{ borderColor: "var(--blog-border)", color: "var(--blog-muted)" }}
-    >
-      <Link href={homeHref} className="blog-link font-normal">
-        More on {category}
-      </Link>
-      <p className="mt-3">© {new Date().getFullYear()} {site.title}</p>
+    <footer className="blog-footer mt-auto">
+      <div className="blog-footer-inner text-center">
+        <p className="blog-disclosure text-left">
+          We may earn a commission from qualifying purchases. Recommendations are based on independent
+          research.
+        </p>
+        <Link href={homeHref} className="blog-link font-normal text-sm mt-4 inline-block">
+          More {brand.category} guides
+        </Link>
+        <p className="mt-3 text-xs blog-meta">© {new Date().getFullYear()} {brand.name}</p>
+      </div>
     </footer>
   );
 }

@@ -5,25 +5,53 @@ interface PostListProps {
   posts: PublicPostSummary[];
   siteSlug: string;
   variant: HomeListModule;
-  /** Posts already shown in hero — exclude from list. */
   excludeSlug?: string;
 }
 
 export function PostList({ posts, siteSlug, variant, excludeSlug }: PostListProps) {
   const list = excludeSlug ? posts.filter((p) => p.slug !== excludeSlug) : posts;
-
   if (list.length === 0) return null;
 
-  const maxWidth =
-    variant === "stack" ? "max-w-3xl" : variant === "magazine-mix" ? "max-w-6xl" : "max-w-6xl";
+  if (variant === "bento") {
+    return (
+      <section className="blog-section">
+        <div className="blog-section-head">
+          <h2 className="blog-section-title">Latest guides</h2>
+          <span className="blog-meta">{list.length} articles</span>
+        </div>
+        <div className="blog-bento">
+          {list.map((post, i) => (
+            <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="bento" featured={i === 0} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (variant === "horizontal") {
+    return (
+      <section className="blog-section">
+        <div className="blog-section-head">
+          <h2 className="blog-section-title">All guides</h2>
+          <span className="blog-meta">{list.length} articles</span>
+        </div>
+        <div className="blog-stack">
+          {list.map((post) => (
+            <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="horizontal" />
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   if (variant === "grid-2") {
     return (
-      <section className={`${maxWidth} mx-auto px-4 sm:px-6 py-10 sm:py-12`}>
-        <h2 className="text-sm font-semibold uppercase tracking-widest mb-6" style={{ color: "var(--blog-muted)" }}>
-          All guides
-        </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+      <section className="blog-section">
+        <div className="blog-section-head">
+          <h2 className="blog-section-title">Browse guides</h2>
+          <span className="blog-meta">{list.length} articles</span>
+        </div>
+        <div className="blog-grid-3">
           {list.map((post) => (
             <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="grid" />
           ))}
@@ -33,16 +61,13 @@ export function PostList({ posts, siteSlug, variant, excludeSlug }: PostListProp
   }
 
   if (variant === "magazine-mix") {
-    const filtered = list;
-    const [first, ...rest] = filtered;
+    const [first, ...rest] = list;
     return (
-      <section className={`${maxWidth} mx-auto px-4 sm:px-6 py-10 sm:py-12`}>
-        <div className="grid md:grid-cols-2 gap-5 sm:gap-6">
-          {first && (
-            <PostCard post={first} siteSlug={siteSlug} layout="magazine" featured />
-          )}
+      <section className="blog-section">
+        <div className="blog-bento">
+          {first && <PostCard post={first} siteSlug={siteSlug} layout="bento" featured />}
           {rest.map((post) => (
-            <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="grid" />
+            <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="bento" />
           ))}
         </div>
       </section>
@@ -50,10 +75,15 @@ export function PostList({ posts, siteSlug, variant, excludeSlug }: PostListProp
   }
 
   return (
-    <section className={`${maxWidth} mx-auto px-4 sm:px-6 py-10 sm:py-12 flex flex-col gap-5`}>
-      {list.map((post) => (
-        <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="stack" />
-      ))}
+    <section className="blog-section">
+      <div className="blog-section-head">
+        <h2 className="blog-section-title">Articles</h2>
+      </div>
+      <div className="blog-stack max-w-3xl">
+        {list.map((post) => (
+          <PostCard key={post.slug} post={post} siteSlug={siteSlug} layout="stack" />
+        ))}
+      </div>
     </section>
   );
 }

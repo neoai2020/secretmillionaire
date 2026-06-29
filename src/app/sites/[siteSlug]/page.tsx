@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createPublicSupabaseClient } from "@/lib/supabase-public";
-import { SiteHomeView } from "@/features/blog-builder/themes";
+import { SiteHomeView, getPublicBrand } from "@/features/blog-builder/themes";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +19,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!site) return { title: "Not found" };
 
-  const topic = site.territory ?? site.hobby;
+  const brand = getPublicBrand(site);
   return {
-    title: site.title,
-    description: site.tagline ?? `Expert guides and tips about ${topic}`,
-    openGraph: { title: site.title, description: site.tagline ?? undefined },
+    title: brand.name,
+    description: brand.tagline,
+    openGraph: { title: brand.name, description: brand.tagline },
   };
 }
 

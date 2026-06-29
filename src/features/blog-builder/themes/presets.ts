@@ -1,62 +1,75 @@
 import type { ThemePreset } from "./types";
 
-/** Five modular presets inspired by editorial, magazine, minimal reader, authority review, and affiliate-pro layouts. */
+/**
+ * Five 2026 high-performer blog templates:
+ * editorial = publication hero + horizontal cards
+ * magazine = bento grid hub
+ * minimal = distraction-free reader
+ * authority = review-site grid + sidebar articles
+ * affiliate-pro = conversion-first cards + CTA hero
+ */
 export const THEME_PRESETS: Record<string, ThemePreset> = {
   editorial: {
     id: "editorial",
     name: "Editorial",
-    tagline: "Serif headlines, featured guide hero, readable stack",
+    tagline: "Modern publication — hero feature + horizontal cards",
     fonts: {
-      heading: "'Source Serif 4', Georgia, serif",
-      body: "'Inter', system-ui, sans-serif",
+      heading: "'Instrument Serif', Georgia, serif",
+      body: "'DM Sans', system-ui, sans-serif",
       googleUrl:
-        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap",
+        "https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap",
     },
     colors: {
-      bg: "#faf9f7",
+      bg: "#f7f5f2",
       surface: "#ffffff",
-      text: "#1a1a1a",
-      muted: "#5c5c5c",
-      accent: "#0d6e6a",
-      accentHover: "#095854",
-      border: "#e8e4df",
-      pillar: "#b8860b",
-      heroOverlay: "rgba(13, 110, 106, 0.08)",
+      text: "#141414",
+      muted: "#6b6560",
+      accent: "#0f766e",
+      accentHover: "#0d635c",
+      border: "rgba(20, 20, 20, 0.08)",
+      pillar: "#b45309",
+      heroOverlay: "rgba(15, 118, 110, 0.06)",
+      gradientFrom: "#0f766e",
+      gradientTo: "#134e4a",
+      accentSoft: "rgba(15, 118, 110, 0.1)",
     },
     modules: {
-      header: "centered",
+      header: "split",
       hero: "featured-pillar",
-      homeList: "stack",
+      homeList: "horizontal",
       postLayout: "narrow",
-      footer: "simple",
+      footer: "rich",
     },
   },
 
   magazine: {
     id: "magazine",
     name: "Magazine",
-    tagline: "Image-forward grid, split header, wide article canvas",
+    tagline: "2026 bento grid — image-first modular hub",
     fonts: {
       heading: "'Fraunces', Georgia, serif",
-      body: "'DM Sans', system-ui, sans-serif",
+      body: "'Manrope', system-ui, sans-serif",
       googleUrl:
-        "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap",
+        "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap",
     },
     colors: {
-      bg: "#f4f2ef",
+      bg: "#f3f1ec",
       surface: "#ffffff",
-      text: "#121212",
-      muted: "#666666",
-      accent: "#c45c26",
-      accentHover: "#a34a1e",
-      border: "#e0dcd6",
-      pillar: "#c45c26",
-      heroOverlay: "rgba(196, 92, 38, 0.12)",
+      text: "#171717",
+      muted: "#737373",
+      accent: "#ea580c",
+      accentHover: "#c2410c",
+      border: "rgba(23, 23, 23, 0.08)",
+      pillar: "#ea580c",
+      heroOverlay: "rgba(234, 88, 12, 0.08)",
+      gradientFrom: "#fb923c",
+      gradientTo: "#9a3412",
+      accentSoft: "rgba(234, 88, 12, 0.1)",
     },
     modules: {
-      header: "split",
+      header: "minimal",
       hero: "featured-pillar",
-      homeList: "magazine-mix",
+      homeList: "bento",
       postLayout: "wide",
       footer: "rich",
     },
@@ -65,23 +78,26 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
   minimal: {
     id: "minimal",
     name: "Minimal Reader",
-    tagline: "Distraction-free Substack-style reading experience",
+    tagline: "Substack-style — typography-first, zero clutter",
     fonts: {
-      heading: "'Literata', Georgia, serif",
+      heading: "'Newsreader', Georgia, serif",
       body: "'Inter', system-ui, sans-serif",
       googleUrl:
-        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Literata:opsz,wght@7..72,600;7..72,700&display=swap",
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap",
     },
     colors: {
       bg: "#ffffff",
       surface: "#ffffff",
-      text: "#111111",
+      text: "#0a0a0a",
       muted: "#737373",
       accent: "#2563eb",
       accentHover: "#1d4ed8",
-      border: "#eeeeee",
+      border: "rgba(10, 10, 10, 0.08)",
       pillar: "#2563eb",
       heroOverlay: "transparent",
+      gradientFrom: "#3b82f6",
+      gradientTo: "#1e40af",
+      accentSoft: "rgba(37, 99, 235, 0.08)",
     },
     modules: {
       header: "minimal",
@@ -95,23 +111,26 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
   authority: {
     id: "authority",
     name: "Authority",
-    tagline: "Trust-first review site with sidebar navigation",
+    tagline: "Wirecutter-style trust + review grid + sticky sidebar",
     fonts: {
       heading: "'Plus Jakarta Sans', system-ui, sans-serif",
       body: "'Plus Jakarta Sans', system-ui, sans-serif",
       googleUrl:
-        "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+        "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
     },
     colors: {
       bg: "#f8fafc",
       surface: "#ffffff",
       text: "#0f172a",
       muted: "#64748b",
-      accent: "#0284c7",
-      accentHover: "#0369a1",
-      border: "#e2e8f0",
-      pillar: "#0284c7",
-      heroOverlay: "rgba(2, 132, 199, 0.06)",
+      accent: "#0369a1",
+      accentHover: "#075985",
+      border: "rgba(15, 23, 42, 0.08)",
+      pillar: "#0369a1",
+      heroOverlay: "rgba(3, 105, 161, 0.06)",
+      gradientFrom: "#0ea5e9",
+      gradientTo: "#0369a1",
+      accentSoft: "rgba(3, 105, 161, 0.08)",
     },
     modules: {
       header: "split",
@@ -125,23 +144,26 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
   "affiliate-pro": {
     id: "affiliate-pro",
     name: "Affiliate Pro",
-    tagline: "Conversion-focused cards, CTA hero, scannable wide layout",
+    tagline: "Conversion hub — bold type, CTA hero, card grid",
     fonts: {
-      heading: "'Outfit', system-ui, sans-serif",
+      heading: "'Syne', system-ui, sans-serif",
       body: "'Inter', system-ui, sans-serif",
       googleUrl:
-        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700&display=swap",
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@600;700;800&display=swap",
     },
     colors: {
-      bg: "#f5f5f4",
+      bg: "#fafaf9",
       surface: "#ffffff",
       text: "#1c1917",
-      muted: "#57534e",
+      muted: "#78716c",
       accent: "#059669",
       accentHover: "#047857",
-      border: "#e7e5e4",
+      border: "rgba(28, 25, 23, 0.08)",
       pillar: "#d97706",
-      heroOverlay: "rgba(5, 150, 105, 0.1)",
+      heroOverlay: "rgba(5, 150, 105, 0.08)",
+      gradientFrom: "#10b981",
+      gradientTo: "#047857",
+      accentSoft: "rgba(5, 150, 105, 0.1)",
     },
     modules: {
       header: "centered",

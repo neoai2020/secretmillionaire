@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getPublicBrand } from "../public-branding";
+import { PostThumb } from "./PostThumb";
 import type { HeroModule, PublicPostSummary, PublicSite } from "../types";
 
 interface SiteHeroProps {
@@ -12,27 +14,24 @@ export function SiteHero({ variant, site, siteSlug, posts }: SiteHeroProps) {
   if (variant === "none") return null;
 
   const pillar = posts.find((p) => p.is_pillar) ?? posts[0];
-  const category = site.territory ?? site.hobby;
+  const brand = getPublicBrand(site);
 
   if (variant === "cta-banner") {
     return (
-      <section
-        className="border-b"
-        style={{ borderColor: "var(--blog-border)", background: "var(--blog-hero-overlay)" }}
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+      <section className="blog-cta-hero">
+        <div className="blog-cta-hero-inner">
           <div className="max-w-2xl">
-            <p className="blog-pillar-badge mb-2">Independent guides</p>
-            <h2 className="text-xl sm:text-2xl font-bold leading-snug">
-              Honest, research-backed advice on {category}
+            <span className="blog-chip mb-3">Editor&apos;s pick</span>
+            <h2 className="text-xl sm:text-2xl font-bold leading-snug mt-2">
+              Start with our most-read {brand.category.toLowerCase()} guide
             </h2>
-            <p className="mt-2 text-sm sm:text-base" style={{ color: "var(--blog-muted)" }}>
-              Compare options, avoid common mistakes, and find what fits your budget.
+            <p className="blog-meta mt-2">
+              Research-backed comparisons, budget picks, and mistakes to avoid.
             </p>
           </div>
           {pillar && (
             <Link href={`/sites/${siteSlug}/${pillar.slug}`} className="blog-btn shrink-0">
-              Start with the main guide →
+              Read the main guide →
             </Link>
           )}
         </div>
@@ -43,30 +42,23 @@ export function SiteHero({ variant, site, siteSlug, posts }: SiteHeroProps) {
   if (!pillar) return null;
 
   return (
-    <section className="border-b" style={{ borderColor: "var(--blog-border)" }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <div className="blog-card overflow-hidden grid md:grid-cols-2 gap-0">
-          {pillar.image_url && (
-            <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[280px] bg-neutral-100">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={pillar.image_url}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="p-6 sm:p-8 flex flex-col justify-center">
-            <span className="blog-pillar-badge mb-3">Featured guide</span>
-            <h2 className="text-2xl sm:text-3xl font-bold leading-tight tracking-tight">
-              <Link href={`/sites/${siteSlug}/${pillar.slug}`} className="hover:opacity-80 transition-opacity">
-                {pillar.title}
-              </Link>
+    <section className="blog-hero">
+      <div className="blog-hero-inner">
+        <div className="blog-hero-featured">
+          <PostThumb
+            href={`/sites/${siteSlug}/${pillar.slug}`}
+            imageUrl={pillar.image_url}
+            alt={pillar.title}
+            className="blog-hero-featured-media min-h-[14rem] md:min-h-full"
+            large
+          />
+          <div className="blog-hero-featured-body">
+            <span className="blog-chip-gold blog-chip mb-3">Featured guide</span>
+            <h2 className="blog-hero-featured-title">
+              <Link href={`/sites/${siteSlug}/${pillar.slug}`}>{pillar.title}</Link>
             </h2>
             {pillar.excerpt && (
-              <p className="mt-3 text-sm sm:text-base leading-relaxed" style={{ color: "var(--blog-muted)" }}>
-                {pillar.excerpt}
-              </p>
+              <p className="blog-meta mt-3 text-base leading-relaxed line-clamp-4">{pillar.excerpt}</p>
             )}
             <Link href={`/sites/${siteSlug}/${pillar.slug}`} className="blog-btn mt-5 w-fit">
               Read the full guide
