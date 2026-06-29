@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Eye, Pencil, Save, Loader2 } from "lucide-react";
 import type { BlogPost } from "../types";
+import { RichTextEditor } from "./RichTextEditor";
 
 interface PostPreviewModalProps {
   postId: string | null;
@@ -220,15 +221,13 @@ export function PostPreviewModal({ postId, onClose, onSaved }: PostPreviewModalP
                       className="input-base w-full resize-none"
                     />
                   </label>
-                  <label className="flex flex-col gap-1.5">
-                    <span className="text-[10px] uppercase tracking-widest text-text-muted">HTML body</span>
-                    <textarea
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] uppercase tracking-widest text-text-muted">Content</span>
+                    <RichTextEditor
                       value={draft.html}
-                      onChange={(e) => setDraft((d) => ({ ...d, html: e.target.value }))}
-                      rows={14}
-                      className="input-base w-full text-xs font-mono resize-none"
+                      onChange={(html) => setDraft((d) => ({ ...d, html }))}
                     />
-                  </label>
+                  </div>
                 </div>
               )}
             </div>

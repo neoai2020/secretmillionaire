@@ -470,4 +470,20 @@
     border-radius: 0.75rem;
     margin: 1rem 0;
   }
+
+  .sms-post-preview figure {
+    margin: 1.25rem 0;
+  }
+
+  .sms-editable img {
+    cursor: pointer;
+    transition: outline-color 0.15s ease, opacity 0.15s ease;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+
+  .sms-editable img:hover {
+    outline-color: rgba(69, 162, 158, 0.7);
+    opacity: 0.92;
+  }
 }

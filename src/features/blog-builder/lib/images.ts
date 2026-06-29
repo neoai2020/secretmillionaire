@@ -311,6 +311,43 @@ async function uploadToBlogImages(
   return data.publicUrl;
 }
 
+const CONTENT_TYPE_EXT: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/avif": "avif",
+};
+
+export function isSupportedImageType(contentType: string): boolean {
+  return contentType.toLowerCase() in CONTENT_TYPE_EXT;
+}
+
+/**
+ * Persist a user-uploaded image to the `blog-images` bucket and return its
+ * public URL. Used by the manual image upload / replace flow in the editor.
+ */
+export async function uploadUserImage(params: {
+  supabase: SupabaseClient;
+  userId: string;
+  buffer: Buffer;
+  contentType: string;
+}): Promise<string | null> {
+  const ext = CONTENT_TYPE_EXT[params.contentType.toLowerCase()] ?? "jpg";
+  const fileName = `${params.userId}/uploads/${randomUUID()}.${ext}`;
+  const { error } = await params.supabase.storage
+    .from("blog-images")
+    .upload(fileName, params.buffer, {
+      contentType: params.contentType,
+      upsert: false,
+    });
+
+  if (error) return null;
+  const { data } = params.supabase.storage.from("blog-images").getPublicUrl(fileName);
+  return data.publicUrl;
+}
+
 /**
  * Always returns a Supabase-hosted URL (never a hotlinked Pollinations URL).
  */
