@@ -19,9 +19,10 @@ import type { ArmedLink, BlogPost, BlogSite } from "../types";
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
 
 interface GenerationQuota {
-  limit: number;
+  limit: number | null;
   usedToday: number;
-  remaining: number;
+  remaining: number | null;
+  unlimited?: boolean;
 }
 
 function linkFingerprint(links: ArmedLink[]): string {
@@ -557,8 +558,14 @@ export default function DeployAssetPage() {
         </p>
         {quota && (
           <p className="text-xs text-[#45A29E]/90">
-            {quota.remaining} of {quota.limit} new money sites remaining today ({quota.usedToday}{" "}
-            generated).
+            {quota.unlimited ? (
+              <>Unlimited money sites · {quota.usedToday} generated today.</>
+            ) : (
+              <>
+                {quota.remaining} of {quota.limit} new money sites remaining today (
+                {quota.usedToday} generated).
+              </>
+            )}
           </p>
         )}
       </div>
@@ -648,8 +655,8 @@ export default function DeployAssetPage() {
         <motion.button
           type="button"
           onClick={() => deploy(false)}
-          disabled={quota !== null && quota.remaining <= 0}
-          whileHover={{ scale: quota !== null && quota.remaining <= 0 ? 1 : 1.01 }}
+          disabled={!quota?.unlimited && quota !== null && (quota.remaining ?? 0) <= 0}
+          whileHover={{ scale: !quota?.unlimited && quota !== null && (quota.remaining ?? 0) <= 0 ? 1 : 1.01 }}
           className="w-full max-w-lg mx-auto py-4 sm:py-5 px-4 sm:px-8 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10] disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             background: "linear-gradient(135deg, #45A29E 0%, #2d7a76 100%)",
@@ -664,7 +671,7 @@ export default function DeployAssetPage() {
         </motion.button>
       )}
 
-      {phase === "complete" && quota && quota.remaining > 0 && (
+      {phase === "complete" && quota && (quota.unlimited || (quota.remaining ?? 0) > 0) && (
         <motion.button
           type="button"
           onClick={() => {
@@ -680,7 +687,9 @@ export default function DeployAssetPage() {
         >
           <span className="flex items-center justify-center gap-3">
             <Rocket size={20} />
-            Generate Another Site ({quota.remaining} left today)
+            {quota.unlimited
+              ? "Generate Another Site"
+              : `Generate Another Site (${quota.remaining} left today)`}
           </span>
         </motion.button>
       )}

@@ -70,7 +70,8 @@ export interface PostSlotState {
 }
 
 export interface GenerationQuota {
-  limit: number;
+  limit: number | null;
   usedToday: number;
-  remaining: number;
+  remaining: number | null;
+  unlimited?: boolean;
 }

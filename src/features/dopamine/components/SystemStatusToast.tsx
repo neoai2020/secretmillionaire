@@ -60,7 +60,7 @@ export function SystemStatusToast({ paused = false }: SystemStatusToastProps) {
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 32, scale: 0.98 }}
           transition={{ type: "spring", stiffness: 380, damping: 28 }}
-          className="fixed top-20 right-4 sm:right-6 z-[55] w-[min(calc(100vw-2rem),20rem)] pointer-events-none"
+          className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-[55] w-[min(calc(100vw-2rem),20rem)] pointer-events-none"
         >
           <div
             className="relative overflow-hidden rounded-xl border bg-[#0A0D10]/95 backdrop-blur-md p-4 shadow-[0_16px_48px_rgba(0,0,0,0.65)]"

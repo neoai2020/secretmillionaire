@@ -51,12 +51,27 @@ export default function ConnectDashboardPage() {
         disabled={isConnecting}
         whileHover={{ scale: isConnecting ? 1 : 1.01 }}
         whileTap={{ scale: isConnecting ? 1 : 0.99 }}
+        animate={
+          connected && !isConnecting
+            ? {
+                boxShadow: [
+                  "0 0 28px rgba(69,162,158,0.30)",
+                  "0 0 55px rgba(69,162,158,0.55)",
+                  "0 0 28px rgba(69,162,158,0.30)",
+                ],
+              }
+            : { boxShadow: "0 0 40px rgba(69,162,158,0.35)" }
+        }
+        transition={
+          connected && !isConnecting
+            ? { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
+            : { duration: 0.3 }
+        }
         className="relative w-full max-w-lg mx-auto py-4 sm:py-5 px-4 sm:px-8 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10] disabled:opacity-70 transition-all"
         style={{
           background: connected
             ? "linear-gradient(135deg, #45A29E 0%, #3d8f8b 100%)"
             : "linear-gradient(135deg, #45A29E 0%, #2d7a76 100%)",
-          boxShadow: "0 0 40px rgba(69, 162, 158, 0.35)",
         }}
       >
         <span className="flex items-center justify-center gap-2 sm:gap-3 text-center leading-snug">

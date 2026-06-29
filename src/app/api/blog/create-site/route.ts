@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const quota = await getDailyGenerationQuota(supabase, user.id);
-  if (quota.remaining <= 0) {
+  if (!quota.unlimited && (quota.remaining ?? 0) <= 0) {
     return NextResponse.json(
       {
         error: `Daily limit reached (${quota.limit} new money sites per day). Try again tomorrow.`,

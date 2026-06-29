@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import {
@@ -220,19 +221,24 @@ export default function RecurringWealthPage() {
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setSyncProduct(product)}
-                  disabled={isSynced}
-                  className={clsx(
-                    "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
-                    isSynced ? "bg-green-400/10 border border-green-400/30 text-green-400 cursor-default" : "btn-primary"
-                  )}
-                >
-                  {isSynced ? <><CheckCircle2 className="w-3.5 h-3.5" /> Armed</> : <><Rocket className="w-3.5 h-3.5" /> Arm This Offer</>}
-                </button>
                 <a href={product.productUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-text-muted uppercase tracking-wider hover:bg-white/10 hover:text-text-heading transition-all">
-                  <ExternalLink className="w-3.5 h-3.5" /> Check Offer
+                  <ExternalLink className="w-3.5 h-3.5" /> Check Product
                 </a>
+                {isSynced ? (
+                  <Link
+                    href="/territory"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-400/10 border border-green-400/30 text-green-400 text-xs font-bold uppercase tracking-wider hover:bg-green-400/20 transition-all"
+                  >
+                    <Rocket className="w-3.5 h-3.5" /> Deploy
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => setSyncProduct(product)}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider btn-primary"
+                  >
+                    <Rocket className="w-3.5 h-3.5" /> Arm This Offer
+                  </button>
+                )}
               </div>
             </motion.div>
           );

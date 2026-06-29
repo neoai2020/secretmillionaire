@@ -56,7 +56,14 @@ export async function proxy(request: NextRequest) {
         }
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
+    // Verify the session via getClaims(): with asymmetric JWT signing keys this
+    // validates the token locally (no network round-trip to Supabase Auth on
+    // every navigation), which is the main source of per-page load latency.
+    // Falls back to a network verify automatically on legacy symmetric keys.
+    const { data: claimsData } = await supabase.auth.getClaims()
+    const claims = (claimsData?.claims ?? null) as Record<string, unknown> | null
+    const userId = typeof claims?.sub === "string" ? claims.sub : null
+    const userMeta = (claims?.user_metadata ?? null) as Record<string, unknown> | null
 
     const { pathname } = request.nextUrl
 
@@ -84,20 +91,16 @@ export async function proxy(request: NextRequest) {
         return response
     }
 
-    if (!user && !isAuthRoute && !isPublicRoute) {
+    if (!userId && !isAuthRoute && !isPublicRoute) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    if (user && isAuthRoute) {
+    if (userId && isAuthRoute) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
-    if (user && !isPublicRoute) {
-        const gate = await resolveOnboardingGate(
-            supabase,
-            user.id,
-            (user.user_metadata ?? null) as Record<string, unknown> | null
-        )
+    if (userId && !isPublicRoute) {
+        const gate = await resolveOnboardingGate(supabase, userId, userMeta)
 
         if (gate.isComplete && isOnboardingRoute) {
             return NextResponse.redirect(new URL('/dashboard', request.url))

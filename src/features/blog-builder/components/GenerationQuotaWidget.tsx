@@ -30,8 +30,32 @@ export function GenerationQuotaWidget({ className = "" }: { className?: string }
 
   if (!quota) return null;
 
-  const pct = quota.limit > 0 ? Math.round((quota.remaining / quota.limit) * 100) : 0;
-  const depleted = quota.remaining <= 0;
+  if (quota.unlimited) {
+    return (
+      <div
+        className={`rounded-xl border border-[#D4AF37]/30 bg-gradient-to-br from-[#D4AF37]/10 to-[#0B0C10]/60 p-4 sm:p-5 flex items-center gap-4 ${className}`}
+        style={{ boxShadow: "0 0 32px rgba(212, 175, 55, 0.12)" }}
+      >
+        <div className="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center bg-[#D4AF37]/15 text-[#D4AF37]">
+          <Sparkles size={22} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">
+            Money-site generations
+          </p>
+          <p className="text-xl sm:text-2xl font-bold text-[#D4AF37]">Unlimited</p>
+          <p className="text-xs text-[#6b7280] leading-relaxed mt-0.5">
+            Society Upgrade active · {quota.usedToday} generated today.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const limit = quota.limit ?? 0;
+  const remaining = quota.remaining ?? 0;
+  const pct = limit > 0 ? Math.round((remaining / limit) * 100) : 0;
+  const depleted = remaining <= 0;
 
   return (
     <div
@@ -64,8 +88,8 @@ export function GenerationQuotaWidget({ className = "" }: { className?: string }
               depleted ? "text-amber-400" : "text-[#45A29E]"
             }`}
           >
-            {quota.remaining}
-            <span className="text-base font-medium text-[#6b7280]"> / {quota.limit}</span>
+            {remaining}
+            <span className="text-base font-medium text-[#6b7280]"> / {limit}</span>
           </p>
         </div>
 
@@ -80,10 +104,10 @@ export function GenerationQuotaWidget({ className = "" }: { className?: string }
 
         <p className="text-xs text-[#6b7280] leading-relaxed">
           {depleted ? (
-            <>You&apos;ve used all {quota.limit} generations today. Resets at midnight UTC.</>
+            <>You&apos;ve used all {limit} generations today. Resets at midnight UTC.</>
           ) : (
             <>
-              {quota.remaining} {quota.remaining === 1 ? "generation" : "generations"} left today
+              {remaining} {remaining === 1 ? "generation" : "generations"} left today
               {quota.usedToday > 0 && (
                 <>
                   {" "}
