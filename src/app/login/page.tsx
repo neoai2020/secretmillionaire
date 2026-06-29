@@ -126,15 +126,15 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <div className="flex flex-col items-center gap-4 border-t border-[#141414] pt-8">
-        <p className="text-[#475569] text-xs">New here?</p>
+      <div className="flex flex-col items-center gap-4 border-t border-white/10 pt-8">
+        <p className="text-text-muted text-xs">New here?</p>
         <Link href="/signup" className="brand-font text-accent text-xs font-bold tracking-wide hover:text-white transition-colors">
           Sign Up
         </Link>
       </div>
 
       {socialProof.enabled && socialProof.loginPage.activeMembers > 0 && (
-        <p className="text-center text-[11px] text-text-muted border-t border-[#1e2128] pt-6">
+        <p className="text-center text-[11px] text-text-muted border-t border-white/10 pt-6">
           Network capacity:{" "}
           <strong className="text-[#45A29E]">
             {socialProof.networkCapacity.current}/{socialProof.networkCapacity.max}

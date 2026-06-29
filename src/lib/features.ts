@@ -7,6 +7,7 @@ import {
   coreResourceNav,
   resourceNav,
   upgradeNav,
+  premiumNav,
   type NavItem,
 } from "@/config/navigation.config";
 
@@ -28,6 +29,10 @@ export function getVisibleBlogBuilderResourceNav(): NavItem[] {
 
 export function getCoreResourceNav(): NavItem[] {
   return coreResourceNav;
+}
+
+export function getVisiblePremiumNav(): NavItem[] {
+  return filterNav(premiumNav);
 }
 
 export function getVisibleResourceNav(): NavItem[] {

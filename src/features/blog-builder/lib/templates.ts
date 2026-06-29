@@ -2,8 +2,6 @@ import type { ClusterTopic } from "../types";
 import type { ArticleAngle } from "../types";
 import { slugify } from "./seo";
 
-export const CLUSTER_COUNT = 6;
-
 /** Territory-specific topics mapped to SEO search-intent angles. */
 export function buildClusterTopics(territory: string, hobby: string): ClusterTopic[] {
   const niche = territory.trim() || hobby.trim();
@@ -78,13 +76,3 @@ export function buildInternalLinks(
     <ul style="line-height:1.8;padding-left:1.25rem;">${links.join("")}</ul>
   </section>`;
 }
-
-/** @deprecated Use prompts.ts — kept for imports that referenced tone keys. */
-export const TONE_PROMPTS: Record<string, string> = {
-  authoritative: "authoritative",
-  conversational: "conversational",
-  bold: "bold",
-};
-
-/** @deprecated Use prompts.ts ARTICLE_SYSTEM_PROMPT. */
-export const BLOG_FORMAT_PROMPT = "See prompts.ts";

@@ -68,11 +68,11 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
         const fetchHistoryAndState = async () => {
             try {
                 // Restore from localStorage first for faster UI
-                const savedKeyword = localStorage.getItem("cashtap_current_keyword");
-                const savedVariations = localStorage.getItem("cashtap_current_variations");
-                const savedChip = localStorage.getItem("cashtap_current_chip");
-                const savedAffiliate = localStorage.getItem("cashtap_current_affiliate");
-                const savedSelected = localStorage.getItem("cashtap_selected_posts");
+                const savedKeyword = localStorage.getItem("sms_current_keyword");
+                const savedVariations = localStorage.getItem("sms_current_variations");
+                const savedChip = localStorage.getItem("sms_current_chip");
+                const savedAffiliate = localStorage.getItem("sms_current_affiliate");
+                const savedSelected = localStorage.getItem("sms_selected_posts");
 
                 if (savedKeyword) setKeyword(savedKeyword);
                 if (savedVariations) setVariations(JSON.parse(savedVariations));
@@ -102,13 +102,13 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
                         }
                     });
                     setHistory(uniqueKeywords);
-                    localStorage.setItem("cashtap_history", JSON.stringify(uniqueKeywords));
+                    localStorage.setItem("sms_history", JSON.stringify(uniqueKeywords));
 
                     // If we don't have a keyword in state, use the latest from history
                     if (!savedKeyword && uniqueKeywords[0]) {
                         const lastKeyword = uniqueKeywords[0];
                         setKeyword(lastKeyword);
-                        localStorage.setItem("cashtap_current_keyword", lastKeyword);
+                        localStorage.setItem("sms_current_keyword", lastKeyword);
 
                         // Also try to fetch variations for this last keyword
                         const { data: vData } = await supabase
@@ -120,17 +120,17 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
                         if (vData?.variations) {
                             setVariations(vData.variations);
                             setActiveChip(vData.variations[0]);
-                            localStorage.setItem("cashtap_current_variations", JSON.stringify(vData.variations));
-                            localStorage.setItem("cashtap_current_chip", vData.variations[0]);
+                            localStorage.setItem("sms_current_variations", JSON.stringify(vData.variations));
+                            localStorage.setItem("sms_current_chip", vData.variations[0]);
                         }
                     }
                 } else {
-                    const savedHistory = localStorage.getItem("cashtap_history");
+                    const savedHistory = localStorage.getItem("sms_history");
                     if (savedHistory) setHistory(JSON.parse(savedHistory));
                 }
             } catch (e) {
                 console.error("Error restoring state:", e);
-                const savedHistory = localStorage.getItem("cashtap_history");
+                const savedHistory = localStorage.getItem("sms_history");
                 if (savedHistory) setHistory(JSON.parse(savedHistory));
             }
         };
@@ -139,17 +139,17 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
 
     // Persist changes to localStorage
     useEffect(() => {
-        if (keyword) localStorage.setItem("cashtap_current_keyword", keyword);
-        if (variations.length > 0) localStorage.setItem("cashtap_current_variations", JSON.stringify(variations));
-        if (activeChip) localStorage.setItem("cashtap_current_chip", activeChip);
-        if (affiliateLink) localStorage.setItem("cashtap_current_affiliate", affiliateLink);
-        localStorage.setItem("cashtap_selected_posts", JSON.stringify(selectedAds));
+        if (keyword) localStorage.setItem("sms_current_keyword", keyword);
+        if (variations.length > 0) localStorage.setItem("sms_current_variations", JSON.stringify(variations));
+        if (activeChip) localStorage.setItem("sms_current_chip", activeChip);
+        if (affiliateLink) localStorage.setItem("sms_current_affiliate", affiliateLink);
+        localStorage.setItem("sms_selected_posts", JSON.stringify(selectedAds));
     }, [keyword, variations, activeChip, affiliateLink, selectedAds]);
 
     const addToHistory = async (k: string) => {
         const newHistory = [k, ...history.filter(h => h !== k)].slice(0, 5);
         setHistory(newHistory);
-        localStorage.setItem("cashtap_history", JSON.stringify(newHistory));
+        localStorage.setItem("sms_history", JSON.stringify(newHistory));
     };
 
     const resetSession = async () => {
@@ -164,8 +164,8 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
         setRepliesByPostId({});
         setSelectedAds([]);
         setHistory([]);
-        localStorage.removeItem("cashtap_history");
-        localStorage.removeItem("cashtap_selected_posts");
+        localStorage.removeItem("sms_history");
+        localStorage.removeItem("sms_selected_posts");
         await supabase.auth.signOut();
         window.location.href = "/login";
     };

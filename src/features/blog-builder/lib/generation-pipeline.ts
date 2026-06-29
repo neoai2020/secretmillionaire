@@ -5,6 +5,7 @@ import { resolvePostImage, resolveFastImageUrl, persistExternalImage } from "./i
 import { buildClusterTopics, buildInternalLinks } from "./templates";
 import { getSiteTerritory } from "./site-territory";
 import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
+import { mapWithConcurrency } from "./concurrency";
 import type { ArmedLink, BlogPost, BlogSite, ClusterTopic } from "../types";
 
 /**
@@ -85,6 +86,8 @@ export interface GeneratePostParams {
   site: BlogSite;
   topic: ClusterTopic;
   productContext?: string;
+  /** Niche trend angles, computed once per site and shared across the cluster. */
+  trendContext?: string;
   /** Text-only — image attached in a second pass. */
   skipImage?: boolean;
   /** Fast Pollinations/picsum only (skip NanoBanana). Used during deploy. */
@@ -94,8 +97,16 @@ export interface GeneratePostParams {
 export async function generateAndSavePost(
   params: GeneratePostParams
 ): Promise<{ post: BlogPost; skipped: boolean }> {
-  const { supabase, userId, site, topic, productContext = "", skipImage = false, fastImage = false } =
-    params;
+  const {
+    supabase,
+    userId,
+    site,
+    topic,
+    productContext = "",
+    trendContext = "",
+    skipImage = false,
+    fastImage = false,
+  } = params;
 
   const { data: existing } = await supabase
     .from("posts")
@@ -119,6 +130,7 @@ export async function generateAndSavePost(
     angle: topic.angle,
     affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
     productContext,
+    trendContext,
   });
 
   const postId = crypto.randomUUID();
@@ -198,9 +210,16 @@ export async function attachImageToPost(params: {
   if (!site) throw new Error("Site not found");
 
   const territory = getSiteTerritory(site);
-  // Resolve a direct URL fast and return it immediately so the image appears
-  // for the user; caching to Supabase happens in the background afterwards.
-  const image = await resolveFastImageUrl({ title: post.title, subject: territory });
+  // Resolve AND persist to Supabase before returning. This guarantees the public
+  // site stores a stable Supabase URL (or reliable picsum fallback) instead of a
+  // flaky hotlink that may 404 — the main reason some hero images never showed.
+  const image = await resolvePostImage({
+    title: post.title,
+    subject: territory,
+    userId: params.userId,
+    supabase: params.supabase,
+    fast: true,
+  });
 
   if (!image.url) return post;
 
@@ -221,14 +240,41 @@ export async function attachImageToPost(params: {
 
   if (error) throw new Error(error.message);
 
-  persistPostImageInBackground({
-    supabase: params.supabase,
-    userId: params.userId,
-    postId: post.id,
-    externalUrl: image.url,
+  return updated as BlogPost;
+}
+
+/**
+ * Server-side safety net: attach a hero image to every live/draft post in a site
+ * that is still missing one. Runs at publish so images no longer depend on the
+ * browser staying open after deploy (the previous fire-and-forget client step
+ * was the main cause of missing pictures). Best-effort — failures are logged.
+ */
+export async function backfillMissingPostImages(
+  supabase: SupabaseClient,
+  userId: string,
+  siteId: string
+): Promise<number> {
+  const { data: posts } = await supabase
+    .from("posts")
+    .select("id")
+    .eq("site_id", siteId)
+    .eq("user_id", userId)
+    .is("image_url", null);
+
+  const ids = (posts ?? []).map((p) => (p as { id: string }).id);
+  if (ids.length === 0) return 0;
+
+  let attached = 0;
+  await mapWithConcurrency(ids, 3, async (postId) => {
+    try {
+      const updated = await attachImageToPost({ supabase, userId, postId });
+      if (updated.image_url) attached += 1;
+    } catch (err) {
+      console.error("[image-backfill] failed for post", postId, err);
+    }
   });
 
-  return updated as BlogPost;
+  return attached;
 }
 
 export interface PostUpdatePayload {

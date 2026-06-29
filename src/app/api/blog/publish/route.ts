@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
+import { backfillMissingPostImages } from "@/features/blog-builder/lib/generation-pipeline";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const guard = featureApiGuard("blog-builder");
@@ -34,6 +36,14 @@ export async function POST(request: Request) {
 
   if (postsError) {
     return NextResponse.json({ error: postsError.message }, { status: 500 });
+  }
+
+  // Server-side safety net: make sure every post has a persisted hero image,
+  // rather than relying on the browser finishing the background attach.
+  try {
+    await backfillMissingPostImages(supabase, user.id, siteId);
+  } catch (err) {
+    console.error("[publish] image backfill failed", err);
   }
 
   await supabase

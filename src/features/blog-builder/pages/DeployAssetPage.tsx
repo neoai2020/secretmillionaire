@@ -406,8 +406,10 @@ export default function DeployAssetPage() {
               body: JSON.stringify({ url: affiliateUrl }),
             });
             const scrapeData = await scrapeRes.json();
-            if (scrapeRes.ok && scrapeData.data) {
-              productContext = `${scrapeData.data.title}. ${scrapeData.data.description}`;
+            if (scrapeRes.ok && (scrapeData.context || scrapeData.data)) {
+              productContext =
+                scrapeData.context ||
+                `${scrapeData.data.title}. ${scrapeData.data.description}`;
             }
           } catch {
             // Non-fatal
@@ -474,8 +476,10 @@ export default function DeployAssetPage() {
             body: JSON.stringify({ url: affiliateUrl }),
           });
           const scrapeData = await scrapeRes.json();
-          if (scrapeRes.ok && scrapeData.data) {
-            productContext = `${scrapeData.data.title}. ${scrapeData.data.description}`;
+          if (scrapeRes.ok && (scrapeData.context || scrapeData.data)) {
+            productContext =
+              scrapeData.context ||
+              `${scrapeData.data.title}. ${scrapeData.data.description}`;
           }
         } catch {
           // Non-fatal

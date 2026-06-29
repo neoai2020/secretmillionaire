@@ -10,6 +10,7 @@ import {
 import { buildClusterTopics } from "@/features/blog-builder/lib/templates";
 import { getSiteTerritory } from "@/features/blog-builder/lib/site-territory";
 import { mapWithConcurrency } from "@/features/blog-builder/lib/concurrency";
+import { fetchTrendingAngles } from "@/features/blog-builder/lib/trends";
 import type { ClusterTopic } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,9 @@ export async function POST(request: Request) {
   const topics = buildClusterTopics(territory, site.hobby);
   const pending = topics.slice(startIndex);
 
+  // Niche trend angles: computed once and shared across every post in the batch.
+  const trendContext = await fetchTrendingAngles(territory, site.hobby);
+
   // Generate posts in a bounded concurrency pool instead of one-at-a-time.
   // Each post keeps its own retry/backoff so a 429 only delays that worker.
   const results = await mapWithConcurrency(
@@ -63,6 +67,7 @@ export async function POST(request: Request) {
             site,
             topic,
             productContext,
+            trendContext,
             skipImage: true,
           });
           return { index, topic, post: result.post };

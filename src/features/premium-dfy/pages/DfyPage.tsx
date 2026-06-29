@@ -527,7 +527,7 @@ export default function DfyPage() {
                     ))}
                 </div>
                 <p className="text-[12px] text-text-muted font-medium">
-                    © 2026 CashTap AI. All rights reserved.
+                    © 2026 Secret Millionaire Society. All rights reserved.
                 </p>
             </footer>
         </motion.div>

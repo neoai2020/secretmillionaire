@@ -679,6 +679,23 @@
   text-decoration: underline !important;
 }
 
+/* FTC disclosure — placed above the fold for trust / E-E-A-T. */
+.blog-prose .affiliate-disclosure {
+  margin: 0 0 1.5rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--blog-muted);
+  background: var(--blog-accent-soft);
+  border-radius: 0.6rem;
+}
+
+/* Natural inline recommendation fallback paragraph. */
+.blog-prose .affiliate-pick {
+  border-left: 3px solid var(--blog-accent);
+  padding-left: 1rem;
+}
+
 /* Sidebar */
 .blog-sidebar-card {
   position: sticky;

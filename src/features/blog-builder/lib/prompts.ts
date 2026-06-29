@@ -4,21 +4,26 @@ export const ARTICLE_JSON_EXAMPLE = `{
   "title": "Best Wooden Chess Sets Under $50 (2026 Buyer's Guide)",
   "excerpt": "Two sentences that preview the buyer benefit and mention the niche keyword.",
   "metaDescription": "Under 155 chars. Primary keyword near the start. Clear benefit.",
-  "html": "<p>Opening hook...</p><h2>Section heading</h2><p>...</p>"
+  "html": "<p>Opening hook...</p><h2>How we'd evaluate these</h2><p>...<a href=\\"#offer\\">the kit we recommend starting with</a>...</p><h2>...</h2><ul><li>...</li></ul>"
 }`;
 
-export const ARTICLE_SYSTEM_PROMPT = `You are a senior SEO affiliate editor publishing buyer-intent content for a niche money site.
+export const ARTICLE_SYSTEM_PROMPT = `You are a senior SEO affiliate editor publishing buyer-intent content for a niche money site in 2026.
 
 Goals:
 - Match the search intent of the article angle (guide, comparison, mistakes, budget, review, how-to).
-- Demonstrate E-E-A-T: specific facts, comparisons, criteria, trade-offs — never vague filler.
-- Write for humans first; optimize naturally for Google (keywords in title, intro, one H2, meta).
+- Demonstrate E-E-A-T, with EXPERIENCE leading: write as someone who has actually used/tested products in this niche. Use concrete, first-hand-sounding observations ("in our testing", "what we noticed after a few weeks", "the thing reviews rarely mention"), specific criteria, numbers/ranges, trade-offs, and an honest balance of pros and cons.
+- Write for humans first; optimize naturally for Google (primary keyword in title, intro, one H2, and meta — never stuffed or repeated).
 - Sound like a knowledgeable enthusiast helping a friend buy — not a spammy sales page.
+
+Affiliate linking (IMPORTANT):
+- Include EXACTLY ONE inline recommendation link inside a body paragraph (ideally just after the first H2), written as natural prose where you'd genuinely point a reader to the product.
+- That link MUST use href="#offer" as a placeholder (the app swaps in the real tracked URL).
+- The anchor text must be descriptive and natural (3-7 words, e.g. "the starter kit we recommend"). NEVER use "click here", "buy now", or a raw URL as anchor text.
+- Do NOT add any other links, banners, buttons, or a closing CTA — the app appends the disclosure and the final CTA automatically.
 
 Hard rules:
 - Stay strictly inside the TERRITORY niche. Do not drift into generic hobby content.
-- Do NOT invent brand names, prices, or URLs unless provided in product context.
-- Do NOT include affiliate links or CTAs in html — the app injects those separately.
+- Do NOT invent specific brand names, exact prices, or URLs unless they appear in the product context. Use realistic ranges and use-cases instead.
 - Do NOT use <h1> (the page template supplies the title).
 - Do NOT use markdown, code fences, or commentary outside JSON.
 - Return ONLY valid JSON with keys: title, excerpt, metaDescription, html.`;
@@ -71,6 +76,7 @@ export function buildArticleUserPrompt(params: {
   angle: ArticleAngle;
   affiliateContext?: string;
   productContext?: string;
+  trendContext?: string;
 }): string {
   const parts = [
     `TERRITORY (exact niche — every paragraph must relate to this): ${params.territory}`,
@@ -80,16 +86,26 @@ export function buildArticleUserPrompt(params: {
     getAngleInstructions(params.angle),
     "",
     "Output requirements:",
-    "- html: 300-450 words, 3 <h2> sections, mix of <p> and <ul>/<li> where useful",
+    "- html: 650-950 words of genuinely useful content; 4-5 <h2> sections; mix of <p>, <ul>/<li>, and a short FAQ (2-3 buyer questions answered in prose or a final <h2>FAQ).",
+    "- Lead with experience: include at least two concrete, first-hand-sounding details and one honest trade-off or downside.",
+    "- Exactly ONE inline link with href=\"#offer\" and natural descriptive anchor text, placed in a body paragraph (no other links/CTAs).",
     "- title: compelling, includes primary niche keywords, max ~70 chars",
     "- excerpt: 2 sentences, buyer-focused, max 200 chars",
     "- metaDescription: max 155 chars, primary keyword in first half",
   ];
 
+  if (params.trendContext?.trim()) {
+    parts.push(
+      "",
+      "Trending buyer angles to address where relevant (what people in this niche are asking/buying right now — work these in naturally, do not list them verbatim):",
+      params.trendContext.trim()
+    );
+  }
+
   if (params.productContext?.trim()) {
     parts.push(
       "",
-      "Affiliate offer page context (use for accuracy — do not copy verbatim):",
+      "Affiliate offer page context (real product details scraped from the offer — use for accuracy, weave in naturally, do not copy verbatim or fabricate beyond it):",
       params.productContext.trim()
     );
   }
@@ -97,7 +113,7 @@ export function buildArticleUserPrompt(params: {
   if (params.affiliateContext?.trim()) {
     parts.push(
       "",
-      "Armed offers (for topical alignment only — do NOT paste URLs in html):",
+      "Armed offers (for topical alignment + the inline #offer link's intent — do NOT paste raw URLs in html):",
       params.affiliateContext.trim()
     );
   }
@@ -161,7 +177,7 @@ export function normalizeArticleContent(
   }
 
   const wordCount = html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
-  if (wordCount < 80) return null;
+  if (wordCount < 150) return null;
 
   const plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 

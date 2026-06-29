@@ -18,11 +18,17 @@ export default function LinkVaultPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const skipAutoSave = useRef(true);
+  // Hydrate the editor exactly once. Without this guard, the debounced
+  // auto-save writes the cleaned list back into context `armedLinks`, which
+  // would re-run this effect and wipe a freshly-added empty row (the flicker /
+  // "can't add another link" bug).
+  const hydrated = useRef(false);
 
   useEffect(() => {
-    if (!sessionLoaded) return;
+    if (!sessionLoaded || hydrated.current) return;
 
     if (armedLinks.length > 0) {
+      hydrated.current = true;
       setLinks(armedLinks);
       setLoading(false);
       skipAutoSave.current = false;
@@ -37,6 +43,7 @@ export default function LinkVaultPage() {
       })
       .catch(() => setError("Could not load link vault"))
       .finally(() => {
+        hydrated.current = true;
         setLoading(false);
         skipAutoSave.current = false;
       });

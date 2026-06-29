@@ -19,6 +19,9 @@ import {
   Link2,
   FileText,
   MapPin,
+  ShieldCheck,
+  Repeat,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import type { NavIconName } from "@/config/navigation.config";
@@ -44,6 +47,9 @@ const ICON_MAP: Record<NavIconName | "Target" | "Smartphone", LucideIcon> = {
   Link2,
   FileText,
   MapPin,
+  ShieldCheck,
+  Repeat,
+  Megaphone,
 };
 
 export function getNavIcon(name: string): LucideIcon {

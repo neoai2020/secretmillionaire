@@ -7,6 +7,10 @@ export const FEATURE_IDS = [
   "premium-dfy",
   "premium-instant",
   "premium-autopilot",
+  "premium-accelerator",
+  "premium-recurring",
+  "premium-social",
+  "premium-protector",
   "dopamine",
 ] as const;
 
@@ -16,6 +20,10 @@ export const enabledFeatures: FeatureId[] = [
   "extraction-workflow",
   "blog-builder",
   "training",
+  "premium-accelerator",
+  "premium-recurring",
+  "premium-social",
+  "premium-protector",
   "dopamine",
 ];
 

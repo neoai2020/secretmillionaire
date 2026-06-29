@@ -3,7 +3,16 @@ import { searchSocialData, sanitizePosts } from "@/features/core-workflow/lib/ra
 import { getApiUser } from "@/lib/api-auth";
 import { featureApiGuard } from "@/lib/feature-api-guard";
 
-const FALLBACK_POSTS: Record<string, any[]> = {
+interface FallbackPost {
+    id: string;
+    platform: string;
+    title: string;
+    text: string;
+    url: string;
+    engagement: number;
+}
+
+const FALLBACK_POSTS: Record<string, FallbackPost[]> = {
     "best natural appetite suppressant reddit 2024": [
         { id: "fb-appetite-1", platform: "Reddit", title: "L Tyrosine and L Theanine for appetite and cravings", text: "Has anyone tried L-Tyrosine and L-Theanine for reducing appetite? I've been reading about amino acid supplements that help with cravings and hunger without stimulants. Looking for real experiences.", url: "https://www.reddit.com/r/Supplements/comments/1oyicqr/l_tyrosine_and_l_theanine/", engagement: 342 },
         { id: "fb-appetite-2", platform: "Reddit", title: "Almonds for appetite control - largest study of its kind", text: "Australian researchers found that including almonds in an energy restricted diet helped people lose weight and improved cardiometabolic health. Nuts make you feel fuller for longer. Great natural appetite suppressant.", url: "https://www.reddit.com/r/intermittentfasting/comments/16mzi0l/in_the_largest_study_of_its_kind_australian/", engagement: 456 },
@@ -41,7 +50,7 @@ const FALLBACK_POSTS: Record<string, any[]> = {
     ],
 };
 
-function getFallbackPosts(keyword: string): any[] {
+function getFallbackPosts(keyword: string): FallbackPost[] {
     const key = Object.keys(FALLBACK_POSTS).find(k =>
         keyword.toLowerCase().includes(k) || k.includes(keyword.toLowerCase())
     );
@@ -71,8 +80,6 @@ export async function POST(req: Request) {
 
         if (!keyword) return NextResponse.json({ error: "Keyword required" }, { status: 400 });
 
-        console.log(">>> [API/JACKPOTS] Searching for:", keyword);
-
         // 1. Check Supabase cache for stored threads from a previous analysis
         const { data: existingAnalysis } = await supabase
             .from("analysis_results")
@@ -83,36 +90,31 @@ export async function POST(req: Request) {
             .limit(1);
 
         if (existingAnalysis?.[0]?.data?.threads?.length > 0) {
-            console.log(">>> [API/JACKPOTS] Cache HIT — using stored threads");
             const cleanThreads = sanitizePosts(existingAnalysis![0].data.threads);
             if (cleanThreads.length > 0) {
                 return NextResponse.json({ results: cleanThreads });
             }
-            console.log(">>> [API/JACKPOTS] Cached threads were all filtered out, fetching live");
         }
 
         // 2. Fetch live data with retry
-        console.log(">>> [API/JACKPOTS] Fetching live data...");
-        let results: any[] = [];
+        let results: Awaited<ReturnType<typeof searchSocialData>> = [];
 
         try {
             results = await searchSocialData(keyword);
-        } catch (e: any) {
-            console.warn(`>>> [API/JACKPOTS] Attempt 1 failed: ${e.message}`);
+        } catch (e) {
+            console.warn(`Jackpots live search failed: ${e instanceof Error ? e.message : e}`);
 
             const simplified = keyword.split(/\s+/).slice(0, 3).join(" ");
             if (simplified !== keyword) {
-                console.log(`>>> [API/JACKPOTS] Retrying with simplified keyword: "${simplified}"`);
                 try {
                     results = await searchSocialData(simplified);
-                } catch (e2: any) {
-                    console.warn(`>>> [API/JACKPOTS] Attempt 2 failed: ${e2.message}`);
+                } catch (e2) {
+                    console.warn(`Jackpots retry failed: ${e2 instanceof Error ? e2.message : e2}`);
                 }
             }
         }
 
         const cleanResults = sanitizePosts(results);
-        console.log(`>>> [API/JACKPOTS] Got ${cleanResults.length} clean results`);
 
         if (cleanResults.length > 0) {
             const { data: existingEntry } = await supabase
@@ -138,16 +140,15 @@ export async function POST(req: Request) {
         }
 
         // 3. Fallback to curated posts when live search returns nothing
-        console.log(">>> [API/JACKPOTS] Live search empty — using fallback posts");
         const fallback = getFallbackPosts(keyword);
         if (fallback.length > 0) {
-            console.log(`>>> [API/JACKPOTS] Fallback returned ${fallback.length} posts`);
             return NextResponse.json({ results: fallback });
         }
 
         return NextResponse.json({ results: cleanResults });
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to load jackpots";
         console.error("Jackpots Error:", error);
-        return NextResponse.json({ results: [], error: error.message }, { status: 500 });
+        return NextResponse.json({ results: [], error: message }, { status: 500 });
     }
 }

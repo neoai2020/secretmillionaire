@@ -18,7 +18,10 @@ export type NavIconName =
   | "Globe"
   | "Link2"
   | "FileText"
-  | "MapPin";
+  | "MapPin"
+  | "ShieldCheck"
+  | "Repeat"
+  | "Megaphone";
 
 export interface NavItem {
   path: string;
@@ -101,5 +104,18 @@ export const blogBuilderResourceNav: NavItem[] = [
 export const resourceNav: NavItem[] = [];
 
 export const upgradeNav: NavItem[] = [];
+
+/** Premium "Society Access" tools — high-value vaults unlocked for Initiates. */
+export const premiumNav: NavItem[] = [
+  { path: "/accelerator", label: "Accelerator", icon: "Rocket", feature: "premium-accelerator" },
+  {
+    path: "/recurring-wealth",
+    label: "Recurring Wealth",
+    icon: "Repeat",
+    feature: "premium-recurring",
+  },
+  { path: "/social-payouts", label: "Social Payouts", icon: "Megaphone", feature: "premium-social" },
+  { path: "/protector", label: "Wealth Protector", icon: "ShieldCheck", feature: "premium-protector" },
+];
 
 export const premiumSectionLabel = "Society Access";

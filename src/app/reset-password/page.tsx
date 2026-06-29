@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock, Target, Eye, EyeOff, CheckCircle2, ShieldCheck, AlertTriangle, Mail } from "lucide-react";
+import { Lock, Eye, EyeOff, CheckCircle2, ShieldCheck, AlertTriangle, Mail } from "lucide-react";
+import { AuthLayout } from "@/components/layout/AuthLayout";
 
 export default function ResetPasswordPage() {
     const [password, setPassword] = useState("");
@@ -215,7 +216,7 @@ export default function ResetPasswordPage() {
                 <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">New Password</label>
                     <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-[#D4AF37] transition-colors" size={18} />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-accent transition-colors" size={18} />
                         <input
                             type={showPassword ? "text" : "password"}
                             required
@@ -227,7 +228,7 @@ export default function ResetPasswordPage() {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#D4AF37] transition-colors"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#475569] hover:text-accent transition-colors"
                         >
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
@@ -237,7 +238,7 @@ export default function ResetPasswordPage() {
                 <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[#475569] ml-1">Confirm Password</label>
                     <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-[#D4AF37] transition-colors" size={18} />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#475569] group-focus-within:text-accent transition-colors" size={18} />
                         <input
                             type={showPassword ? "text" : "password"}
                             required
@@ -267,52 +268,33 @@ export default function ResetPasswordPage() {
         );
     };
 
+    const subtitle = success
+        ? "You can now log in with your new password"
+        : ready
+            ? "Enter your new password below"
+            : checking
+                ? "Verifying your reset link..."
+                : "Reset your password";
+
     return (
-        <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#D4AF37]/5 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#D4AF37]/5 rounded-full blur-[120px]" />
+        <AuthLayout subtitle={subtitle}>
+            {renderContent()}
+
+            {(ready || checking) && !success && (
+                <div className="flex flex-col items-center gap-4 border-t border-white/10 pt-6">
+                    <Link
+                        href="/login"
+                        className="text-xs text-text-muted hover:text-accent transition-colors"
+                    >
+                        Back to Login
+                    </Link>
+                </div>
+            )}
+
+            <div className="flex items-center justify-center gap-1 text-[10px] text-text-muted">
+                <ShieldCheck size={10} className="text-green-400" />
+                <span>256-bit Encrypted</span>
             </div>
-
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md relative z-10"
-            >
-                <div className="glass-card p-10 flex flex-col gap-8 border-[#141414] shadow-2xl">
-                    <div className="flex flex-col items-center gap-4 text-center">
-                        <div className="w-16 h-16 bg-accent flex items-center justify-center rounded-xl shadow-gold">
-                            <Target size={32} className="text-black" />
-                        </div>
-                        <div className="flex flex-col">
-                            <h1 className="brand-font text-[28px] text-text-primary leading-tight">
-                                {success ? "Password Updated" : ready ? "New Password" : checking ? "Verifying..." : "Reset Password"}
-                            </h1>
-                            <p className="text-sm text-text-secondary mt-1">
-                                {success ? "You can now log in with your new password" : ready ? "Enter your new password below" : checking ? "Please wait..." : ""}
-                            </p>
-                        </div>
-                    </div>
-
-                    {renderContent()}
-
-                    {(ready || checking) && !success && (
-                        <div className="flex flex-col items-center gap-4 border-t border-[#141414] pt-6">
-                            <Link
-                                href="/login"
-                                className="text-xs text-text-muted hover:text-accent transition-colors"
-                            >
-                                Back to Login
-                            </Link>
-                        </div>
-                    )}
-                </div>
-
-                <div className="mt-6 flex items-center justify-center gap-1 text-[10px] text-text-muted">
-                    <ShieldCheck size={10} className="text-green-400" />
-                    <span>256-bit Encrypted</span>
-                </div>
-            </motion.div>
-        </div>
+        </AuthLayout>
     );
 }

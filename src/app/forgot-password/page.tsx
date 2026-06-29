@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
         </form>
       )}
 
-      <div className="flex flex-col items-center gap-4 border-t border-[#141414] pt-6">
+      <div className="flex flex-col items-center gap-4 border-t border-white/10 pt-6">
         <Link href="/login" className="flex items-center gap-2 text-xs text-text-muted hover:text-accent transition-colors">
           <ArrowLeft size={14} />
           Back to Login

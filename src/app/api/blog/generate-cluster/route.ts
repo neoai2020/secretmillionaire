@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
 import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
-import { generateBlogPostContent } from "@/features/blog-builder/lib/generate-content";
-import { weaveAffiliateLinks } from "@/features/blog-builder/lib/affiliate";
-import { injectMidArticleFigure } from "@/features/blog-builder/lib/article-html";
-import { resolveFastImageUrl } from "@/features/blog-builder/lib/images";
-import { buildClusterTopics, buildInternalLinks } from "@/features/blog-builder/lib/templates";
+import { buildClusterTopics } from "@/features/blog-builder/lib/templates";
 import { getSiteTerritory } from "@/features/blog-builder/lib/site-territory";
-import { scrapePage } from "@/features/blog-builder/lib/scrape";
+import { scrapePage, buildProductContext } from "@/features/blog-builder/lib/scrape";
+import { fetchTrendingAngles } from "@/features/blog-builder/lib/trends";
 import { mapWithConcurrency } from "@/features/blog-builder/lib/concurrency";
 import {
+  generateAndSavePost,
   TEXT_GENERATION_CONCURRENCY,
-  persistPostImageInBackground,
 } from "@/features/blog-builder/lib/generation-pipeline";
 import type { ArmedLink, BlogSite } from "@/features/blog-builder/types";
 
@@ -41,88 +38,38 @@ export async function POST(request: Request) {
 
   const typedSite = site as BlogSite;
   const armedLinks = (typedSite.armed_links ?? []) as ArmedLink[];
-  const affiliateUrl = armedLinks[0]?.url ?? "";
-
-  let productContext = "";
-  if (affiliateUrl) {
-    const scraped = await scrapePage(affiliateUrl);
-    if (scraped) {
-      productContext = `${scraped.title}. ${scraped.description}`;
-    }
-  }
-
   const territory = getSiteTerritory(typedSite);
   const topics = buildClusterTopics(territory, typedSite.hobby);
 
-  // Generate the cluster in a bounded concurrency pool instead of serially.
+  // Real product details from the offer page + niche trend angles, both fetched
+  // once and reused across the whole cluster.
+  const affiliateUrl = armedLinks[0]?.url ?? "";
+  const [productContext, trendContext] = await Promise.all([
+    affiliateUrl
+      ? scrapePage(affiliateUrl).then((s) => (s ? buildProductContext(s) : ""))
+      : Promise.resolve(""),
+    fetchTrendingAngles(territory, typedSite.hobby),
+  ]);
+
+  // Generate the cluster in a bounded concurrency pool via the shared pipeline.
   const settled = await mapWithConcurrency(
     topics,
     TEXT_GENERATION_CONCURRENCY,
     async (topic) => {
-      const { data: existing } = await supabase
-        .from("posts")
-        .select("id")
-        .eq("site_id", siteId)
-        .eq("slug", topic.slug)
-        .maybeSingle();
-
-      if (existing) return { post: existing };
-
-      const content = await generateBlogPostContent({
-        topic: topic.title,
-        territory,
-        hobby: typedSite.hobby,
-        angle: topic.angle,
-        affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
-        productContext,
-      });
-
-      const image = await resolveFastImageUrl({
-        title: content.title,
-        subject: territory,
-      });
-
-      const postId = crypto.randomUUID();
-      let html = content.html;
-
-      if (image.url) {
-        html = injectMidArticleFigure(html, image.url, image.alt);
-      }
-
-      html = weaveAffiliateLinks(html, armedLinks, postId, siteId);
-      html += buildInternalLinks(topics, typedSite.slug, topic.slug);
-
-      const { data: post, error } = await supabase
-        .from("posts")
-        .insert({
-          id: postId,
-          site_id: siteId,
-          user_id: user.id,
-          title: content.title,
-          slug: topic.slug,
-          html,
-          excerpt: content.excerpt,
-          meta_description: content.metaDescription,
-          image_url: image.url || null,
-          image_alt: image.alt,
-          is_pillar: topic.isPillar,
-          status: "draft",
-        })
-        .select()
-        .single();
-
-      if (error) return { error: error.message };
-
-      if (image.url) {
-        persistPostImageInBackground({
+      try {
+        const { post } = await generateAndSavePost({
           supabase,
           userId: user.id,
-          postId,
-          externalUrl: image.url,
+          site: typedSite,
+          topic,
+          productContext,
+          trendContext,
+          fastImage: true,
         });
+        return { post };
+      } catch (err) {
+        return { error: err instanceof Error ? err.message : "Generation failed" };
       }
-
-      return { post };
     }
   );
 
@@ -132,8 +79,8 @@ export async function POST(request: Request) {
   }
 
   const createdPosts = settled
-    .filter((r): r is { post: unknown } => "post" in r && Boolean(r.post))
-    .map((r) => r.post);
+    .filter((r) => "post" in r && Boolean((r as { post?: unknown }).post))
+    .map((r) => (r as { post: unknown }).post);
 
   return NextResponse.json({ posts: createdPosts, count: createdPosts.length });
 }

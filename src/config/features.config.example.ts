@@ -1,15 +1,16 @@
 import type { FeatureId } from "./features.config";
 
 /**
- * Example: enable all CashTap-style features.
+ * Example: enable the full Society feature set.
  * Copy entries into enabledFeatures in features.config.ts
  */
-export const cashtapFeatures: FeatureId[] = [
-  "core-workflow",
+export const allFeatures: FeatureId[] = [
+  "extraction-workflow",
+  "blog-builder",
   "training",
-  "scale-upsell",
-  "premium-dfy",
-  "premium-instant",
-  "premium-autopilot",
+  "premium-accelerator",
+  "premium-recurring",
+  "premium-social",
+  "premium-protector",
   "dopamine",
 ];

@@ -1,5 +1,6 @@
 import type { ArmedLink } from "../types";
 import { normalizeAffiliateUrl } from "./affiliate-url";
+import { insertAfterH2 } from "./html-insert";
 
 function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -15,44 +16,52 @@ export function buildTrackUrl(postId: string, siteId: string, target: string): s
   return `/api/blog/track-click?${params.toString()}`;
 }
 
+const REL = 'target="_blank" rel="nofollow sponsored noopener"';
+
+/**
+ * The model is asked to place a single inline recommendation link using one of
+ * these placeholder hrefs. We rewrite them to the tracked affiliate URL so the
+ * link sits naturally inside the prose instead of in a bolted-on banner.
+ */
+const PLACEHOLDER_HREF_RE = /href=["'](?:#offer|#cta|#affiliate|OFFER_URL|AFFILIATE_URL)["']/gi;
+
 const AFFILIATE_BLOCK_RE =
   /<(?:aside|div|table)[^>]*class="(?:sms-affiliate-(?:banner|cta)|affiliate-(?:banner|cta)|sms-comparison)"[\s\S]*?<\/(?:aside|div|table)>/gi;
 
-/** Remove injected affiliate blocks (legacy or current) before re-weaving. */
+const DISCLOSURE_RE = /<p[^>]*class="affiliate-disclosure"[\s\S]*?<\/p>/gi;
+const PICK_PARAGRAPH_RE = /<p[^>]*class="affiliate-pick"[\s\S]*?<\/p>/gi;
+
+// Matches a tracked-click href so existing inline links can be detected/refreshed.
+const TRACKED_HREF_RE = /href=["'][^"']*\/api\/blog\/track-click[^"']*["']/gi;
+
+/**
+ * Strip every *block* artifact this module injects (disclosure, end CTA, banner,
+ * fallback pick paragraph) so weaving can be re-run safely. A natural inline
+ * link the model placed inside the prose is intentionally KEPT — it is the whole
+ * point — and only has its href refreshed during re-weave.
+ */
 export function stripAffiliateBlocks(html: string): string {
-  return html.replace(AFFILIATE_BLOCK_RE, "").trim();
+  return html
+    .replace(AFFILIATE_BLOCK_RE, "")
+    .replace(DISCLOSURE_RE, "")
+    .replace(PICK_PARAGRAPH_RE, "")
+    .trim();
+}
+
+function disclosureHtml(): string {
+  return `<p class="affiliate-disclosure"><em>Disclosure: some links below are affiliate links. If you buy through them we may earn a small commission at no extra cost to you — it never changes which products we recommend.</em></p>`;
 }
 
 export function renderCtaButton(label: string, href: string): string {
   return `<div class="affiliate-cta">
-  <a href="${href}" target="_blank" rel="nofollow sponsored noopener">${escapeHtml(label)}</a>
+  <a href="${href}" ${REL}>${escapeHtml(label)}</a>
 </div>`;
 }
 
-export function renderBanner(link: ArmedLink, href: string): string {
-  return `<aside class="affiliate-banner">
-  <p class="affiliate-banner-eyebrow">Recommended for Initiates</p>
-  <p class="affiliate-banner-copy">Discover <strong>${escapeHtml(link.label)}</strong> — our top pick for this territory.</p>
-  <a href="${href}" target="_blank" rel="nofollow sponsored noopener" class="affiliate-banner-link">Check Today&apos;s Price →</a>
-</aside>`;
-}
-
-function injectAfterSecondH2(html: string, chunk: string): string {
-  const h2Ends: number[] = [];
-  const h2Re = /<\/h2>/gi;
-  let match: RegExpExecArray | null;
-  while ((match = h2Re.exec(html)) !== null) {
-    h2Ends.push(match.index + match[0].length);
-  }
-
-  const insertAt =
-    h2Ends.length >= 2 ? h2Ends[1] : h2Ends.length === 1 ? h2Ends[0] : html.indexOf("</p>") + 4;
-
-  if (insertAt > 3) {
-    return `${html.slice(0, insertAt)}${chunk}${html.slice(insertAt)}`;
-  }
-
-  return `${chunk}${html}`;
+/** Natural fallback recommendation paragraph, used only if the model omitted the inline link. */
+function recommendationParagraph(link: ArmedLink, href: string): string {
+  const label = escapeHtml(link.label?.trim() || "this option");
+  return `<p class="affiliate-pick">If you'd rather skip the trial-and-error, <a href="${href}" ${REL}>${label}</a> is the pick we keep coming back to — it covers the essentials we walked through above and is the easiest place to start.</p>`;
 }
 
 const RELATED_SECTION_RE = /<section class="sms-related"[\s\S]*$/i;
@@ -68,6 +77,38 @@ function splitRelatedSection(html: string): { body: string; related: string } {
   };
 }
 
+function isValidLink(link: ArmedLink): boolean {
+  try {
+    const url = normalizeAffiliateUrl(link.url);
+    return Boolean(url && new URL(url).protocol.startsWith("http"));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Replace model-provided placeholder anchors with the tracked affiliate URL.
+ * Returns whether at least one inline link was woven into the prose.
+ */
+function applyInlinePlaceholders(html: string, tracked: string): { html: string; woven: boolean } {
+  let woven = false;
+  const out = html.replace(PLACEHOLDER_HREF_RE, () => {
+    woven = true;
+    return `href="${tracked}" ${REL}`;
+  });
+  return { html: out, woven };
+}
+
+/**
+ * Weave the primary affiliate offer into the article:
+ *  1. an FTC disclosure above the fold (trust / E-E-A-T),
+ *  2. ONE contextual inline link inside the prose (from the model's placeholder,
+ *     or a natural fallback paragraph after the first H2),
+ *  3. a single end-of-article CTA pointing at the same offer.
+ *
+ * Keeps affiliate-link density low and the placement natural, per current
+ * Google Helpful Content guidance for affiliate sites.
+ */
 export function weaveAffiliateLinks(
   html: string,
   links: ArmedLink[],
@@ -82,19 +123,21 @@ export function weaveAffiliateLinks(
   if (!offerUrl) return cleaned;
 
   const tracked = buildTrackUrl(postId, siteId, offerUrl);
-  const banner = renderBanner(primary, tracked);
-  const cta = renderCtaButton("Get Instant Access", tracked);
-
   const { body, related } = splitRelatedSection(cleaned);
-  const withBanner = injectAfterSecondH2(body, banner);
-  return `${withBanner}${cta}${related}`;
-}
 
-function isValidLink(link: ArmedLink): boolean {
-  try {
-    const url = normalizeAffiliateUrl(link.url);
-    return Boolean(url && new URL(url).protocol.startsWith("http"));
-  } catch {
-    return false;
+  let withInline: string;
+  if (body.includes("/api/blog/track-click")) {
+    // An inline link already exists (e.g. re-weave on render) — keep it in place,
+    // just refresh the href so it always points at the current tracked offer.
+    withInline = body.replace(TRACKED_HREF_RE, `href="${tracked}"`);
+  } else {
+    const { html: inlined, woven } = applyInlinePlaceholders(body, tracked);
+    withInline = woven
+      ? inlined
+      : insertAfterH2(inlined, recommendationParagraph(primary, tracked), 0);
   }
+
+  const cta = renderCtaButton("Check Today's Price", tracked);
+
+  return `${disclosureHtml()}${withInline}${cta}${related}`;
 }

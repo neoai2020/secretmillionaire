@@ -15,6 +15,7 @@ export async function generateBlogPostContent(params: {
   angle?: ArticleAngle;
   affiliateContext?: string;
   productContext?: string;
+  trendContext?: string;
 }): Promise<GeneratedPostContent> {
   const angle = params.angle ?? "pillar-guide";
   const userPrompt = buildArticleUserPrompt({
@@ -24,6 +25,7 @@ export async function generateBlogPostContent(params: {
     angle,
     affiliateContext: params.affiliateContext,
     productContext: params.productContext,
+    trendContext: params.trendContext,
   });
 
   return generateStructuredJSON<GeneratedPostContent>({

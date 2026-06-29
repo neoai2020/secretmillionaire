@@ -510,5 +510,7 @@ export async function resolvePostImage(params: {
     if (url) return { url, alt };
   }
 
-  return { url: "", alt };
+  // Never return an imageless post: picsum is a reliable, whitelisted host so a
+  // hero always renders even if stock/AI/upload all failed.
+  return { url: picsumFallbackUrl(params.title), alt };
 }

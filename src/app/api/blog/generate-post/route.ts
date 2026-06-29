@@ -3,7 +3,7 @@ import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
 import { generateBlogPostContent } from "@/features/blog-builder/lib/generate-content";
 import { weaveAffiliateLinks } from "@/features/blog-builder/lib/affiliate";
-import { scrapePage } from "@/features/blog-builder/lib/scrape";
+import { scrapePage, buildProductContext } from "@/features/blog-builder/lib/scrape";
 import type { ArmedLink } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   if (affiliateUrl) {
     const scraped = await scrapePage(affiliateUrl);
     if (scraped) {
-      productContext = `${scraped.title}. ${scraped.description}. ${scraped.bodySnippet}`;
+      productContext = buildProductContext(scraped);
     }
   }
 

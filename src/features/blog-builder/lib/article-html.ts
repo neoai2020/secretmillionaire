@@ -1,5 +1,6 @@
 import type { ArmedLink } from "../types";
 import { stripAffiliateBlocks, weaveAffiliateLinks } from "./affiliate";
+import { insertAfterH2 } from "./html-insert";
 
 const LEADING_FIGURE_RE = /^<figure[^>]*>[\s\S]*?<\/figure>\s*/i;
 
@@ -30,21 +31,7 @@ export function injectMidArticleFigure(html: string, imageUrl: string, alt: stri
 
   if (cleaned.includes(imageUrl)) return cleaned;
 
-  const h2Ends: number[] = [];
-  const h2Re = /<\/h2>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = h2Re.exec(cleaned)) !== null) {
-    h2Ends.push(m.index + m[0].length);
-  }
-
-  const insertAt =
-    h2Ends.length >= 2 ? h2Ends[1] : h2Ends.length === 1 ? h2Ends[0] : cleaned.indexOf("</p>") + 4;
-
-  if (insertAt > 3) {
-    return `${cleaned.slice(0, insertAt)}${figure}${cleaned.slice(insertAt)}`;
-  }
-
-  return `${figure}${cleaned}`;
+  return insertAfterH2(cleaned, figure, 1);
 }
 
 export function prepareArticleHtml(post: {

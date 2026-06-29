@@ -6,7 +6,12 @@ import { LogOut, ChevronRight, Lock, X } from "lucide-react";
 import { clsx } from "clsx";
 import { motion } from "framer-motion";
 import { brand } from "@/config/brand.config";
-import { getVisibleWorkflowSteps, getCoreResourceNav, isNavItemLocked } from "@/lib/features";
+import {
+  getVisibleWorkflowSteps,
+  getCoreResourceNav,
+  getVisiblePremiumNav,
+  isNavItemLocked,
+} from "@/lib/features";
 import { getNavIcon } from "@/lib/nav-icons";
 import { SidebarPromos } from "./PromoOrchestrator";
 import { useWorkflowNav } from "@/context/WorkflowNavContext";
@@ -25,6 +30,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const workflowSteps = getVisibleWorkflowSteps();
   const coreResourceNav = getCoreResourceNav();
+  const premiumNav = getVisiblePremiumNav();
   const workflow = useWorkflowNav();
   const workflowProgress = workflow.progress;
   const blogEnabled = isFeatureEnabled("blog-builder");
@@ -130,6 +136,15 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
           )}
 
           {blogEnabled && <BlogBuilderNav pathname={pathname} onNavClick={handleNavClick} />}
+
+          {premiumNav.length > 0 && (
+            <>
+              <span className="text-[10px] font-black tracking-[0.25em] text-[#D4AF37] uppercase px-3 sm:px-5 mt-4 mb-2">
+                Society Access
+              </span>
+              {premiumNav.map((step) => renderNavLink(step, workflowProgress))}
+            </>
+          )}
 
           {coreResourceNav.length > 0 && (
             <>

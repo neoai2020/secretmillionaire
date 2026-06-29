@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
-import { scrapePage } from "@/features/blog-builder/lib/scrape";
+import { scrapePage, buildProductContext } from "@/features/blog-builder/lib/scrape";
 
 export const dynamic = "force-dynamic";
 
@@ -17,5 +17,6 @@ export async function POST(request: Request) {
   if (!url) return NextResponse.json({ error: "url is required" }, { status: 400 });
 
   const data = await scrapePage(url);
-  return NextResponse.json({ data });
+  const context = data ? buildProductContext(data) : "";
+  return NextResponse.json({ data, context });
 }

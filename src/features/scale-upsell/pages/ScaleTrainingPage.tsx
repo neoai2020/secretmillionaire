@@ -23,7 +23,7 @@ export default function ScaleTrainingPage() {
 
                 <h1 className="brand-font text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight max-w-3xl">
                     Scale Your{" "}
-                    <span className="text-accent">CashTap AI</span>
+                    <span className="text-accent">Society Income</span>
                     {" "}To $1,000+ Per Day
                 </h1>
 

@@ -1,0 +1,148 @@
+export interface RecurringProduct {
+  id: number;
+  rank: number;
+  name: string;
+  niche: string;
+  price: string;
+  commission: string;
+  earningsPerVisitor: string;
+  onlineSince: string;
+  paymentType: string;
+  cartConversion: string;
+  cancellationRate: string;
+  productUrl: string;
+}
+
+/** Curated subscription offers that pay recurring commissions. */
+export const RECURRING_PRODUCTS: RecurringProduct[] = [
+  {
+    id: 1, rank: 1,
+    name: "Online Training for Happy Dogs",
+    niche: "Pet Training",
+    price: "$16.08",
+    commission: "25.00%",
+    earningsPerVisitor: "$0.66",
+    onlineSince: "04/2025",
+    paymentType: "Subscription",
+    cartConversion: "2.00%",
+    cancellationRate: "3.06%",
+    productUrl: "https://dog-training.me/",
+  },
+  {
+    id: 2, rank: 2,
+    name: "Tube Magic — AI Tools For Growing on YouTube",
+    niche: "YouTube / AI Tools",
+    price: "$47/mo",
+    commission: "50.00%",
+    earningsPerVisitor: "$1.86",
+    onlineSince: "02/2024",
+    paymentType: "Subscription",
+    cartConversion: "1.00%",
+    cancellationRate: "9.19%",
+    productUrl: "https://tubemagic.com/ds",
+  },
+  {
+    id: 3, rank: 3,
+    name: "EchoXen",
+    niche: "Health Supplements",
+    price: "$219.49",
+    commission: "70.00%",
+    earningsPerVisitor: "$3.28",
+    onlineSince: "06/2025",
+    paymentType: "Single + Subscription",
+    cartConversion: "2.00%",
+    cancellationRate: "8.73%",
+    productUrl: "https://getechoxen.com/",
+  },
+  {
+    id: 4, rank: 4,
+    name: "AlgePrime",
+    niche: "Online Education",
+    price: "$3,068.49",
+    commission: "80.00%",
+    earningsPerVisitor: "$75.30",
+    onlineSince: "08/2025",
+    paymentType: "Subscription",
+    cartConversion: "3.00%",
+    cancellationRate: "14.23%",
+    productUrl: "https://algeprime.com/",
+  },
+  {
+    id: 5, rank: 5,
+    name: "M.S.S — Spend Efficiently",
+    niche: "Financial Education",
+    price: "$1,879.82",
+    commission: "80.00%",
+    earningsPerVisitor: "$39.63",
+    onlineSince: "03/2025",
+    paymentType: "Subscription",
+    cartConversion: "5.00%",
+    cancellationRate: "23.99%",
+    productUrl: "https://digitalmss.com/",
+  },
+  {
+    id: 6, rank: 6,
+    name: "ExpertSlides",
+    niche: "Presentations / Software",
+    price: "avg $277.08",
+    commission: "50.00%",
+    earningsPerVisitor: "—",
+    onlineSince: "08/2022",
+    paymentType: "Subscription",
+    cartConversion: "—",
+    cancellationRate: "—",
+    productUrl: "https://expertslides.com/",
+  },
+  {
+    id: 7, rank: 7,
+    name: "AffiliateMastermind",
+    niche: "Affiliate Marketing",
+    price: "$112.14",
+    commission: "20.00%",
+    earningsPerVisitor: "—",
+    onlineSince: "06/2024",
+    paymentType: "Subscription",
+    cartConversion: "—",
+    cancellationRate: "—",
+    productUrl: "https://affiliatemastermind.com/membership/",
+  },
+  {
+    id: 8, rank: 8,
+    name: "Stealth Attraction",
+    niche: "Dating / Relationships",
+    price: "$80.87",
+    commission: "50.00%",
+    earningsPerVisitor: "—",
+    onlineSince: "04/2023",
+    paymentType: "Subscription",
+    cartConversion: "—",
+    cancellationRate: "—",
+    productUrl: "https://stealthattraction.com/",
+  },
+  {
+    id: 9, rank: 9,
+    name: "Writelytic",
+    niche: "AI Writing Tools",
+    price: "$332.96",
+    commission: "30.00%",
+    earningsPerVisitor: "—",
+    onlineSince: "05/2023",
+    paymentType: "Single + Subscription",
+    cartConversion: "—",
+    cancellationRate: "—",
+    productUrl: "https://writelytic.com/",
+  },
+  {
+    id: 10, rank: 10,
+    name: "Adaptichat — AI Platform",
+    niche: "AI Platform",
+    price: "$1,026.62",
+    commission: "30.00%",
+    earningsPerVisitor: "—",
+    onlineSince: "03/2024",
+    paymentType: "Subscription",
+    cartConversion: "—",
+    cancellationRate: "—",
+    productUrl: "https://adaptichat.com/",
+  },
+];
