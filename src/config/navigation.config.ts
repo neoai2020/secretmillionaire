@@ -94,7 +94,7 @@ export const blogBuilderWorkflowSteps: NavItem[] = [
 ];
 
 export const blogBuilderResourceNav: NavItem[] = [
-  { path: "/asset", label: "Asset Command", icon: "Globe", feature: "blog-builder" },
+  { path: "/asset", label: "Asset Vault", icon: "Globe", feature: "blog-builder" },
   { path: "/link-vault", label: "Link Vault", icon: "FileText", feature: "blog-builder" },
 ];
 

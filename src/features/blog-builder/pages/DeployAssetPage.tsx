@@ -659,7 +659,7 @@ export default function DeployAssetPage() {
           }}
         >
           <span className="flex items-center justify-center gap-3">
-            View Asset Command
+            View Asset Vault
             <ArrowRight size={22} />
           </span>
         </motion.button>
