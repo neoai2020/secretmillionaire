@@ -12,6 +12,11 @@ const RAPIDAPI_IMAGE_OUTPUT_PATH =
 const RAPIDAPI_IMAGE_OUTPUT_QUERY =
   process.env.RAPIDAPI_IMAGE_OUTPUT_QUERY ?? "id";
 
+// PR Labs (chatgpt-42) text-to-image — same RapidAPI key/subscription as text.
+const RAPIDAPI_TEXT_HOST = process.env.RAPIDAPI_HOST ?? "chatgpt-42.p.rapidapi.com";
+const RAPIDAPI_TEXTTOIMAGE_PATH = process.env.RAPIDAPI_TEXTTOIMAGE_PATH ?? "texttoimage";
+const TEXTTOIMAGE_TIMEOUT_MS = 45_000;
+
 const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY ?? "";
 const PIXABAY_TIMEOUT_MS = 5_000;
 
@@ -368,6 +373,41 @@ async function callRapidApiImage(params: {
   return callLegacyNanoBanana(params.prompt, params.negativePrompt);
 }
 
+/**
+ * Generate an image via the PR Labs (chatgpt-42) text-to-image endpoint using
+ * the same RapidAPI key as text generation. Returns the hosted image URL.
+ * NOTE: shares the account's per-second rate limit with article text calls.
+ */
+async function prLabsImageUrl(prompt: string): Promise<string | null> {
+  if (!RAPIDAPI_KEY) return null;
+  try {
+    const res = await fetch(`https://${RAPIDAPI_TEXT_HOST}/${RAPIDAPI_TEXTTOIMAGE_PATH}`, {
+      method: "POST",
+      headers: {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": RAPIDAPI_TEXT_HOST,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: prompt.slice(0, 500) }),
+      signal: AbortSignal.timeout(TEXTTOIMAGE_TIMEOUT_MS),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const url =
+      typeof (data as { generated_image?: unknown })?.generated_image === "string"
+        ? (data as { generated_image: string }).generated_image
+        : findRemoteImageUrl(data);
+    return url && /^https?:\/\//i.test(url) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+async function prLabsImageBuffer(prompt: string): Promise<Buffer | null> {
+  const url = await prLabsImageUrl(prompt);
+  return url ? fetchImageBuffer(url, 20_000) : null;
+}
+
 async function uploadToBlogImages(
   supabase: SupabaseClient,
   userId: string,
@@ -441,8 +481,14 @@ export async function resolveFastImageUrl(params: {
 }): Promise<ResolvedImage> {
   const alt = `${params.title} — ${params.subject}`;
 
+  // Stock first (free + fast + topical), then your RapidAPI AI generator, then
+  // Pollinations as a no-key fallback. The returned URL is cached to Supabase
+  // shortly after by the caller's background persist step.
   const pixabay = await fetchPixabayImageUrl(params.title, params.subject);
   if (pixabay) return { url: pixabay, alt };
+
+  const ai = await prLabsImageUrl(buildHeroImagePrompt(params.title, params.subject));
+  if (ai) return { url: ai, alt };
 
   return { url: pollinationsImageUrl(params.title, params.subject), alt };
 }
@@ -488,11 +534,13 @@ export async function resolvePostImage(params: {
   const sources: Array<() => Promise<Buffer | null>> = params.fast
     ? [
         stockSource,
+        () => prLabsImageBuffer(prompt),
         () => fetchImageBuffer(pollinations, FAST_POLLINATIONS_TIMEOUT_MS),
         () => fetchImageBuffer(picsumFallbackUrl(params.title), FAST_PICSUM_TIMEOUT_MS),
       ]
     : [
         stockSource,
+        () => prLabsImageBuffer(prompt),
         () =>
           callRapidApiImage({
             prompt,
