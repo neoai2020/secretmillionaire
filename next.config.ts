@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "image.pollinations.ai" },
       { protocol: "https", hostname: supabaseHost },
+      { protocol: "https", hostname: "picsum.photos" },
     ],
   },
   async headers() {

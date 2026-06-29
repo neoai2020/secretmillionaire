@@ -5,13 +5,16 @@ const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? "";
 const RAPIDAPI_IMAGE_HOST =
   process.env.RAPIDAPI_IMAGE_HOST ?? "google-nano-banana4.p.rapidapi.com";
 
-export function pollinationsImageUrl(title: string, hobby: string): string {
+const NANO_TIMEOUT_MS = 18_000;
+const POLLINATIONS_TIMEOUT_MS = 14_000;
+
+export function pollinationsImageUrl(title: string, subject: string): string {
   const prompt = [
-    "professional blog hero image",
-    hobby,
+    "professional blog hero photo",
+    subject,
     title,
     "photorealistic",
-    "vibrant",
+    "vibrant lighting",
     "no text",
     "no watermark",
   ].join(", ");
@@ -19,6 +22,11 @@ export function pollinationsImageUrl(title: string, hobby: string): string {
   const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
 
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1200&height=800&seed=${seed}&nologo=true`;
+}
+
+function picsumFallbackUrl(title: string): string {
+  const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return `https://picsum.photos/seed/sms-${seed}/1200/800`;
 }
 
 function findBase64InResponse(val: unknown, depth = 0): string | null {
@@ -33,7 +41,6 @@ function findBase64InResponse(val: unknown, depth = 0): string | null {
     if (compact.length > 200 && /^[A-Za-z0-9+/]+=*$/.test(compact)) {
       return compact;
     }
-    if (/^https?:\/\//i.test(s)) return null;
     return null;
   }
   if (Array.isArray(val)) {
@@ -52,6 +59,18 @@ function findBase64InResponse(val: unknown, depth = 0): string | null {
   return null;
 }
 
+async function fetchImageBuffer(url: string, timeoutMs: number): Promise<Buffer | null> {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    if (!response.ok) return null;
+    const type = response.headers.get("content-type") ?? "";
+    if (!type.startsWith("image/")) return null;
+    return Buffer.from(await response.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
 async function callNanoBanana(prompt: string): Promise<Buffer | null> {
   if (!RAPIDAPI_KEY) return null;
 
@@ -64,7 +83,7 @@ async function callNanoBanana(prompt: string): Promise<Buffer | null> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ prompt: prompt.slice(0, 500) }),
-      signal: AbortSignal.timeout(90000),
+      signal: AbortSignal.timeout(NANO_TIMEOUT_MS),
     });
 
     if (!response.ok) return null;
@@ -73,43 +92,60 @@ async function callNanoBanana(prompt: string): Promise<Buffer | null> {
     const b64 = findBase64InResponse(data);
     if (b64) return Buffer.from(b64, "base64");
 
-    const url =
+    const remoteUrl =
       typeof data === "object" && data && "url" in data && typeof data.url === "string"
         ? data.url
         : null;
-    if (url) {
-      const imgRes = await fetch(url, { signal: AbortSignal.timeout(60000) });
-      if (imgRes.ok) return Buffer.from(await imgRes.arrayBuffer());
-    }
+    if (remoteUrl) return fetchImageBuffer(remoteUrl, 12_000);
   } catch {
     return null;
   }
   return null;
 }
 
+async function uploadToBlogImages(
+  supabase: SupabaseClient,
+  userId: string,
+  buffer: Buffer,
+  ext: "png" | "jpg" = "jpg"
+): Promise<string | null> {
+  const fileName = `${userId}/${randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from("blog-images")
+    .upload(fileName, buffer, {
+      contentType: ext === "png" ? "image/png" : "image/jpeg",
+      upsert: false,
+    });
+
+  if (error) return null;
+  const { data } = supabase.storage.from("blog-images").getPublicUrl(fileName);
+  return data.publicUrl;
+}
+
+/**
+ * Always returns a Supabase-hosted URL (never a hotlinked Pollinations URL).
+ */
 export async function resolvePostImage(params: {
   title: string;
-  hobby: string;
+  subject: string;
   userId: string;
   supabase: SupabaseClient;
-  /** Skip slow RapidAPI image gen — use Pollinations only (faster deploy). */
-  fast?: boolean;
 }): Promise<{ url: string; alt: string }> {
-  const alt = `${params.title} — ${params.hobby} guide`;
-  const prompt = `Professional blog hero photo about ${params.hobby}: ${params.title}. Photorealistic, vibrant, no text.`;
+  const alt = `${params.title} — ${params.subject}`;
+  const prompt = `Professional blog hero photo: ${params.title}. Topic: ${params.subject}. Photorealistic, vibrant, no text.`;
 
-  const buffer = params.fast ? null : await callNanoBanana(prompt);
-  if (buffer) {
-    const fileName = `${params.userId}/${randomUUID()}.png`;
-    const { error } = await params.supabase.storage
-      .from("blog-images")
-      .upload(fileName, buffer, { contentType: "image/png", upsert: false });
+  const sources: Array<() => Promise<Buffer | null>> = [
+    () => callNanoBanana(prompt),
+    () => fetchImageBuffer(pollinationsImageUrl(params.title, params.subject), POLLINATIONS_TIMEOUT_MS),
+    () => fetchImageBuffer(picsumFallbackUrl(params.title), 8_000),
+  ];
 
-    if (!error) {
-      const { data } = params.supabase.storage.from("blog-images").getPublicUrl(fileName);
-      return { url: data.publicUrl, alt };
-    }
+  for (const load of sources) {
+    const buffer = await load();
+    if (!buffer) continue;
+    const url = await uploadToBlogImages(params.supabase, params.userId, buffer);
+    if (url) return { url, alt };
   }
 
-  return { url: pollinationsImageUrl(params.title, params.hobby), alt };
+  return { url: "", alt };
 }

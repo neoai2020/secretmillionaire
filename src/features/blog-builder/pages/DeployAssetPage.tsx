@@ -11,9 +11,12 @@ import { DeploySitePreview } from "../components/DeploySitePreview";
 import { DeployPostGrid, type PostSlotState } from "../components/DeployPostGrid";
 import { buildClusterTopics } from "../lib/templates";
 import { buildDeploySlots, firstQueuedSlotIndex } from "../lib/deploy-slots";
+import { getSiteTerritory } from "../lib/site-territory";
 import type { BlogPost, BlogSite } from "../types";
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
+
+const GENERATION_CONCURRENCY = 2;
 
 function initSlots(topics: ReturnType<typeof buildClusterTopics>): PostSlotState[] {
   return topics.map((topic) => ({
@@ -113,12 +116,12 @@ export default function DeployAssetPage() {
     }
   };
 
-  const startSlotProgress = (index: number) => {
-    clearSlotProgressTimer();
+  const startSlotsProgress = () => {
+    if (slotProgressTimer.current) return;
     slotProgressTimer.current = setInterval(() => {
       setPostSlots((prev) =>
-        prev.map((s, idx) => {
-          if (idx !== index || s.status !== "generating") return s;
+        prev.map((s) => {
+          if (s.status !== "generating") return s;
           const next = s.progress + 1.5 + Math.random() * 2.5;
           return { ...s, progress: Math.min(94, next) };
         })
@@ -132,16 +135,19 @@ export default function DeployAssetPage() {
         idx === index ? { ...s, status: "generating", progress: 4, error: undefined } : s
       )
     );
-    startSlotProgress(index);
+    startSlotsProgress();
   };
 
   const setSlotComplete = (index: number, post: BlogPost) => {
-    clearSlotProgressTimer();
-    setPostSlots((prev) =>
-      prev.map((s, idx) =>
-        idx === index ? { ...s, status: "complete", progress: 100, post } : s
-      )
-    );
+    setPostSlots((prev) => {
+      const next = prev.map((s, idx) =>
+        idx === index ? { ...s, status: "complete" as const, progress: 100, post } : s
+      );
+      if (!next.some((s) => s.status === "generating")) {
+        clearSlotProgressTimer();
+      }
+      return next;
+    });
   };
 
   const setSlotError = (index: number, message: string) => {
@@ -154,30 +160,22 @@ export default function DeployAssetPage() {
   const runPostGeneration = useCallback(
     async (params: {
       siteId: string;
-      deployHobby: string;
       topics: ReturnType<typeof buildClusterTopics>;
-      slots: PostSlotState[];
       productContext: string;
       startIndex?: number;
     }) => {
       const { siteId, topics, productContext, startIndex = 0 } = params;
       let createdCount = 0;
 
-      for (let i = startIndex; i < topics.length; i++) {
+      const generateOne = async (i: number): Promise<boolean> => {
         const topic = topics[i];
         appendLog(`Writing ${i + 1}/${topics.length}: ${topic.title}...`);
         setSlotGenerating(i);
-        bumpProgress(20 + Math.round((i / topics.length) * 65));
 
         const postRes = await fetch("/api/blog/generate-one-post", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            siteId,
-            topic,
-            productContext,
-            fastImages: true,
-          }),
+          body: JSON.stringify({ siteId, topic, productContext }),
         });
         const postData = await postRes.json();
 
@@ -187,10 +185,18 @@ export default function DeployAssetPage() {
         }
 
         setSlotComplete(i, postData.post as BlogPost);
-        if (!postData.skipped) createdCount++;
-        bumpProgress(20 + Math.round(((i + 1) / topics.length) * 65));
+        return !postData.skipped;
+      };
+
+      for (let i = startIndex; i < topics.length; i += GENERATION_CONCURRENCY) {
+        const batch = topics.slice(i, Math.min(i + GENERATION_CONCURRENCY, topics.length));
+        bumpProgress(20 + Math.round((i / topics.length) * 65));
+        const results = await Promise.all(batch.map((_, batchIdx) => generateOne(i + batchIdx)));
+        createdCount += results.filter(Boolean).length;
+        bumpProgress(20 + Math.round(((i + batch.length) / topics.length) * 65));
       }
 
+      clearSlotProgressTimer();
       return createdCount;
     },
     [appendLog]
@@ -249,10 +255,11 @@ export default function DeployAssetPage() {
       let productContext = "";
 
       if (resume && activeSite) {
+        const deployTerritory = getSiteTerritory(activeSite);
         const deployHobby = activeSite.hobby || hobby.trim() || niche;
-        const topics = buildClusterTopics(deployHobby);
+        const topics = buildClusterTopics(deployTerritory, deployHobby);
         activeSlots =
-          activeSlots.length > 0 ? activeSlots : buildDeploySlots(deployHobby, []);
+          activeSlots.length > 0 ? activeSlots : buildDeploySlots(activeSite, []);
         startIndex = firstQueuedSlotIndex(activeSlots);
         if (startIndex === -1) {
           await publishSite(activeSite.id, activeSite.slug);
@@ -283,9 +290,7 @@ export default function DeployAssetPage() {
 
         const createdCount = await runPostGeneration({
           siteId: activeSite.id,
-          deployHobby,
           topics,
-          slots: activeSlots,
           productContext,
           startIndex,
         });
@@ -324,8 +329,9 @@ export default function DeployAssetPage() {
       setSite(activeSite);
       bumpProgress(15);
 
+      const deployTerritory = getSiteTerritory(activeSite);
       const deployHobby = activeSite.hobby || hobby.trim() || niche;
-      const topics = buildClusterTopics(deployHobby);
+      const topics = buildClusterTopics(deployTerritory, deployHobby);
       activeSlots = initSlots(topics);
       setPostSlots(activeSlots);
 
@@ -353,9 +359,7 @@ export default function DeployAssetPage() {
 
       const createdCount = await runPostGeneration({
         siteId: activeSite.id,
-        deployHobby,
         topics,
-        slots: activeSlots,
         productContext,
         startIndex: 0,
       });

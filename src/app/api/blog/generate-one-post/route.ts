@@ -5,6 +5,7 @@ import { generateBlogPostContent } from "@/features/blog-builder/lib/generate-co
 import { weaveAffiliateLinks } from "@/features/blog-builder/lib/affiliate";
 import { resolvePostImage } from "@/features/blog-builder/lib/images";
 import { buildClusterTopics, buildInternalLinks } from "@/features/blog-builder/lib/templates";
+import { getSiteTerritory } from "@/features/blog-builder/lib/site-territory";
 import type { ArmedLink, BlogSite, ClusterTopic } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,6 @@ export async function POST(request: Request) {
   const topic = parseTopic(body.topic);
   const productContext =
     typeof body.productContext === "string" ? body.productContext : "";
-  const fastImages = body.fastImages !== false;
 
   if (!siteId || !topic) {
     return NextResponse.json({ error: "siteId and topic are required" }, { status: 400 });
@@ -58,22 +58,23 @@ export async function POST(request: Request) {
   }
 
   const typedSite = site as BlogSite;
+  const territory = getSiteTerritory(typedSite);
   const armedLinks = (typedSite.armed_links ?? []) as ArmedLink[];
-  const topics = buildClusterTopics(typedSite.hobby);
+  const topics = buildClusterTopics(territory, typedSite.hobby);
 
   const content = await generateBlogPostContent({
     topic: topic.title,
+    territory,
     hobby: typedSite.hobby,
-    affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("; "),
+    affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
     productContext,
   });
 
   const image = await resolvePostImage({
     title: content.title,
-    hobby: typedSite.hobby,
+    subject: territory,
     userId: user.id,
     supabase,
-    fast: fastImages,
   });
 
   const postId = crypto.randomUUID();
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
       html,
       excerpt: content.excerpt,
       meta_description: content.metaDescription,
-      image_url: image.url,
+      image_url: image.url || null,
       image_alt: image.alt,
       is_pillar: topic.isPillar,
       status: "draft",

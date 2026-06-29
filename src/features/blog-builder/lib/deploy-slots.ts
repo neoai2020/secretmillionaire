@@ -1,8 +1,13 @@
 import { buildClusterTopics } from "./templates";
-import type { BlogPost, PostSlotState } from "../types";
+import { getSiteTerritory } from "./site-territory";
+import type { BlogPost, BlogSite, PostSlotState } from "../types";
 
-export function buildDeploySlots(hobby: string, posts: BlogPost[]): PostSlotState[] {
-  const topics = buildClusterTopics(hobby);
+export function buildDeploySlots(
+  site: Pick<BlogSite, "hobby" | "territory" | "title" | "tagline">,
+  posts: BlogPost[]
+): PostSlotState[] {
+  const territory = getSiteTerritory(site);
+  const topics = buildClusterTopics(territory, site.hobby);
   const bySlug = new Map(posts.map((p) => [p.slug, p]));
 
   return topics.map((topic) => {

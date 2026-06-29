@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, FileText, Loader2, Sparkles } from "lucide-react";
+import { CheckCircle2, FileText, ImageIcon, Loader2, Sparkles } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
 import type { BlogPost, ClusterTopic, PostSlotState } from "../types";
 
@@ -16,6 +17,38 @@ interface DeployPostSlotProps {
 
 function ShimmerBlock({ className = "" }: { className?: string }) {
   return <div className={`rounded-md bg-[#1e2128] animate-pulse ${className}`} />;
+}
+
+function PostHeroImage({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-[#1e2128] to-[#0d1016] flex items-center justify-center">
+        <ImageIcon className="text-[#45A29E]/40" size={40} />
+        <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-[#45A29E]/90 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0B0C10]">
+          <CheckCircle2 size={12} />
+          Ready
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#1e2128]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        className="h-full w-full object-cover"
+        onError={() => setFailed(true)}
+      />
+      <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-[#45A29E]/90 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0B0C10]">
+        <CheckCircle2 size={12} />
+        Ready
+      </div>
+    </div>
+  );
 }
 
 export function DeployPostSlot({ slot, index, isPillar }: DeployPostSlotProps) {
@@ -46,18 +79,7 @@ export function DeployPostSlot({ slot, index, isPillar }: DeployPostSlotProps) {
             className="flex flex-col h-full"
           >
             {post.image_url ? (
-              <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#1e2128]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={post.image_url}
-                  alt={post.image_alt ?? post.title}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-[#45A29E]/90 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0B0C10]">
-                  <CheckCircle2 size={12} />
-                  Ready
-                </div>
-              </div>
+              <PostHeroImage src={post.image_url} alt={post.image_alt ?? post.title} />
             ) : (
               <div className="relative h-2 bg-[#45A29E]/20">
                 <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-[#45A29E]/90 px-2 py-0.5 text-[10px] font-bold uppercase text-[#0B0C10]">

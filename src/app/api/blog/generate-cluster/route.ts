@@ -5,6 +5,7 @@ import { generateBlogPostContent } from "@/features/blog-builder/lib/generate-co
 import { weaveAffiliateLinks } from "@/features/blog-builder/lib/affiliate";
 import { resolvePostImage } from "@/features/blog-builder/lib/images";
 import { buildClusterTopics, buildInternalLinks } from "@/features/blog-builder/lib/templates";
+import { getSiteTerritory } from "@/features/blog-builder/lib/site-territory";
 import { scrapePage } from "@/features/blog-builder/lib/scrape";
 import type { ArmedLink, BlogSite } from "@/features/blog-builder/types";
 
@@ -44,7 +45,8 @@ export async function POST(request: Request) {
     }
   }
 
-  const topics = buildClusterTopics(typedSite.hobby);
+  const territory = getSiteTerritory(typedSite);
+  const topics = buildClusterTopics(territory, typedSite.hobby);
   const createdPosts = [];
 
   for (const topic of topics) {
@@ -61,14 +63,15 @@ export async function POST(request: Request) {
     }
     const content = await generateBlogPostContent({
       topic: topic.title,
+      territory,
       hobby: typedSite.hobby,
-      affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("; "),
+      affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
       productContext,
     });
 
     const image = await resolvePostImage({
       title: content.title,
-      hobby: typedSite.hobby,
+      subject: territory,
       userId: user.id,
       supabase,
     });
@@ -94,7 +97,7 @@ export async function POST(request: Request) {
         html,
         excerpt: content.excerpt,
         meta_description: content.metaDescription,
-        image_url: image.url,
+        image_url: image.url || null,
         image_alt: image.alt,
         is_pillar: topic.isPillar,
         status: "draft",

@@ -3,46 +3,48 @@ import { slugify } from "./seo";
 
 export const CLUSTER_COUNT = 6;
 
-export function buildClusterTopics(hobby: string): ClusterTopic[] {
-  const h = hobby.trim();
-  const topics: ClusterTopic[] = [
+/** Territory-specific topic angles (not generic hobby fluff). */
+export function buildClusterTopics(territory: string, hobby: string): ClusterTopic[] {
+  const niche = territory.trim() || hobby.trim();
+  const key = slugify(hobby.trim() || niche.slice(0, 48)) || "site";
+
+  return [
     {
-      title: `The Complete Guide to ${h}`,
-      slug: slugify(`complete-guide-${h}`),
+      title: `${niche}: The Complete Buyer's Guide`,
+      slug: `${key}-complete-guide`,
       isPillar: true,
     },
     {
-      title: `Best ${h} Gear for Beginners`,
-      slug: slugify(`best-${h}-gear-beginners`),
+      title: `Best Picks for ${niche}`,
+      slug: `${key}-best-picks`,
       isPillar: false,
     },
     {
-      title: `${h} Mistakes to Avoid`,
-      slug: slugify(`${h}-mistakes-to-avoid`),
+      title: `7 Mistakes to Avoid With ${niche}`,
+      slug: `${key}-mistakes`,
       isPillar: false,
     },
     {
-      title: `How to Start ${h} on a Budget`,
-      slug: slugify(`start-${h}-on-budget`),
+      title: `${niche} on a Budget — What Actually Works`,
+      slug: `${key}-budget`,
       isPillar: false,
     },
     {
-      title: `Top ${h} Tips for Faster Results`,
-      slug: slugify(`${h}-tips-faster-results`),
+      title: `Pro Tips: Getting Results With ${niche}`,
+      slug: `${key}-pro-tips`,
       isPillar: false,
     },
     {
-      title: `Is ${h} Worth It? Honest Review`,
-      slug: slugify(`is-${h}-worth-it`),
+      title: `Is ${niche} Worth It? Honest Breakdown`,
+      slug: `${key}-worth-it`,
       isPillar: false,
     },
     {
-      title: `${h} for Beginners: Step-by-Step`,
-      slug: slugify(`${h}-beginners-step-by-step`),
+      title: `${niche} for Beginners — Step by Step`,
+      slug: `${key}-beginners`,
       isPillar: false,
     },
   ];
-  return topics;
 }
 
 export function buildInternalLinks(
@@ -69,14 +71,17 @@ export function buildInternalLinks(
 
 export const TONE_PROMPTS: Record<string, string> = {
   authoritative:
-    "Write in an authoritative, expert tone. Use confident language and practical advice.",
+    "You are an expert affiliate content writer. Write with authority, specificity, and practical buying advice. No fluff or generic filler.",
   conversational:
-    "Write in a friendly, conversational tone. Connect with the reader emotionally.",
-  bold: "Write in a bold, direct tone. Be clear and action-oriented.",
+    "You are a trusted reviewer writing for real buyers. Be friendly, specific, and honest — never generic.",
+  bold: "Write in a bold, direct tone. Be clear, specific, and action-oriented.",
 };
 
-export const BLOG_FORMAT_PROMPT = `Format as a SEO blog article using clean semantic HTML only (no markdown).
-Use <h2> for section headings, <p> for paragraphs, <ul>/<li> for lists.
-Do NOT include <html>, <head>, or <body> tags.
-Return valid JSON with keys: title, excerpt, metaDescription, html.
-The html field must be article body HTML only.`;
+export const BLOG_FORMAT_PROMPT = `Return ONLY valid JSON (no markdown fences, no commentary).
+Required keys: title, excerpt, metaDescription, html.
+
+The html field must be clean semantic article HTML only:
+- Use <h2> for section headings (3-4 sections)
+- Use <p> for paragraphs, <ul>/<li> for lists
+- Do NOT include <html>, <head>, or <body>
+- Do NOT use markdown`;

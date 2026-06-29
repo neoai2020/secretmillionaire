@@ -3,7 +3,7 @@ import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
 import { NO_STORE_HEADERS } from "@/lib/api-cache-headers";
 import { buildDeploySlots } from "@/features/blog-builder/lib/deploy-slots";
-import type { BlogPost } from "@/features/blog-builder/types";
+import type { BlogPost, BlogSite } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +33,7 @@ export async function GET() {
     posts = data ?? [];
   }
 
-  const slots = site?.hobby ? buildDeploySlots(site.hobby, (posts ?? []) as BlogPost[]) : [];
+  const slots = site ? buildDeploySlots(site as BlogSite, (posts ?? []) as BlogPost[]) : [];
 
   const completedCount = slots.filter((s) => s.status === "complete").length;
   const totalCount = slots.length;

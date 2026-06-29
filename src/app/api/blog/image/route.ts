@@ -21,9 +21,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "title and hobby are required" }, { status: 400 });
   }
 
+  const subject = typeof body.subject === "string" ? body.subject.trim() : hobby;
+
   const image = await resolvePostImage({
     title,
-    hobby,
+    subject,
     userId: user.id,
     supabase,
   });

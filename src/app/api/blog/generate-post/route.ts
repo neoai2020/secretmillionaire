@@ -35,10 +35,12 @@ export async function POST(request: Request) {
     }
   }
 
+  const territory = typeof body.territory === "string" ? body.territory.trim() : hobby;
   const content = await generateBlogPostContent({
     topic,
+    territory,
     hobby,
-    affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("; "),
+    affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
     productContext,
   });
 

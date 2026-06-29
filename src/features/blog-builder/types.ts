@@ -8,6 +8,7 @@ export interface BlogSite {
   id: string;
   user_id: string;
   hobby: string;
+  territory?: string | null;
   title: string;
   tagline: string | null;
   slug: string;

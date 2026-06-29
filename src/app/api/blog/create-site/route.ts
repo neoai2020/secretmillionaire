@@ -46,6 +46,7 @@ export async function POST(request: Request) {
   const payload = {
     user_id: user.id,
     hobby,
+    territory,
     title,
     tagline: `Your private cash asset for ${territory}`,
     slug,
@@ -60,6 +61,12 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (existing?.id) {
+    await supabase
+      .from("posts")
+      .delete()
+      .eq("site_id", existing.id)
+      .eq("status", "draft");
+
     const { data, error } = await supabase
       .from("sites")
       .update(payload)

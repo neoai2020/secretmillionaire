@@ -6,23 +6,33 @@ import { truncateMeta } from "./seo";
 
 export async function generateBlogPostContent(params: {
   topic: string;
+  territory: string;
   hobby: string;
   tone?: string;
   affiliateContext?: string;
   productContext?: string;
 }): Promise<GeneratedPostContent> {
-  const tone = params.tone ?? "conversational";
-  const system = `${TONE_PROMPTS[tone] ?? TONE_PROMPTS.conversational}\n\n${BLOG_FORMAT_PROMPT}`;
-  const user = `Write a medium-length SEO blog post.
+  const tone = params.tone ?? "authoritative";
+  const system = `${TONE_PROMPTS[tone] ?? TONE_PROMPTS.authoritative}\n\n${BLOG_FORMAT_PROMPT}`;
+  const user = `Write a focused SEO affiliate article.
 
-Territory (hobby/niche): ${params.hobby}
-Topic/title: ${params.topic}
-${params.affiliateContext ? `\nAffiliate context: ${params.affiliateContext}` : ""}
-${params.productContext ? `\nProduct/page context: ${params.productContext}` : ""}
+TERRITORY (exact niche — stay on this topic): ${params.territory}
+Article angle / headline: ${params.topic}
+Category: ${params.hobby}
+${params.affiliateContext ? `\nAffiliate links to weave in naturally (mention as recommendations, do not invent URLs):\n${params.affiliateContext}` : ""}
+${params.productContext ? `\nProduct/offer page context from affiliate URL:\n${params.productContext}` : ""}
 
-Target 800-1200 words in the html field. Include 3-5 <h2> sections.`;
+Requirements:
+- 550-750 words in the html field
+- Highly specific to the territory — mention materials, brands, price ranges, use cases where relevant
+- 3-4 <h2> sections with actionable advice for buyers
+- excerpt: 1-2 compelling sentences for card previews
+- metaDescription: under 155 characters, includes territory keywords
+- title: may refine the article angle but must match the territory
 
-  const raw = await generateWithGPT(system, user);
+Return JSON only.`;
+
+  const raw = await generateWithGPT(system, user, { maxRetries: 2 });
   const parsed = extractJsonFromText(raw) as Partial<GeneratedPostContent> | null;
 
   if (parsed?.html && parsed.title) {
@@ -37,14 +47,7 @@ Target 800-1200 words in the html field. Include 3-5 <h2> sections.`;
     };
   }
 
-  const plain = raw.replace(/```[\s\S]*?```/g, "").trim();
-  const title = params.topic;
-  return {
-    title,
-    excerpt: truncateMeta(plain, 200),
-    metaDescription: truncateMeta(`${title} — expert guide for ${params.hobby}`, 160),
-    html: `<p>${plain.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`,
-  };
+  throw new Error("AI returned invalid article format — try again");
 }
 
 export async function suggestTerritories(hobby: string): Promise<string[]> {
