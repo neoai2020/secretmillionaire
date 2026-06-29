@@ -52,6 +52,15 @@ export function AssetFolderCard({ summary, isActive, onOpen }: AssetFolderCardPr
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h3 className="brand-font text-base text-text-heading truncate">{site.title}</h3>
+            {site.template_key ? (
+              <span className="text-[9px] uppercase tracking-wider font-bold text-[#D4AF37] px-1.5 py-0.5 rounded border border-[#D4AF37]/30 bg-[#D4AF37]/5">
+                Premium
+              </span>
+            ) : (
+              <span className="text-[9px] uppercase tracking-wider font-bold text-[#45A29E]/80 px-1.5 py-0.5 rounded border border-[#45A29E]/25">
+                Generated
+              </span>
+            )}
             {isActive && (
               <span className="text-[9px] uppercase tracking-wider font-bold text-[#45A29E] px-1.5 py-0.5 rounded border border-[#45A29E]/30">
                 Latest

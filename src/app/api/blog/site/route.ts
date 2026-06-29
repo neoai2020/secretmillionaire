@@ -45,6 +45,7 @@ export async function GET(request: Request) {
     .from("sites")
     .select("*")
     .eq("user_id", user.id)
+    .eq("is_template", false)
     .order("created_at", { ascending: false });
 
   const siteList = (sites ?? []) as BlogSite[];

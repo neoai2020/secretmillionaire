@@ -149,6 +149,9 @@ function createUserSiteRow(
       armed_links: armedLinks,
       status: "live",
       is_template: false,
+      // Stamps the originating product so the Asset Vault can tag this as a
+      // Premium (Society Access) site vs a normal generated one.
+      template_key: templateKeyFor(product.id),
     })
     .select()
     .single();
