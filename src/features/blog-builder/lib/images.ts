@@ -14,7 +14,7 @@ const RAPIDAPI_IMAGE_OUTPUT_QUERY =
 
 // PR Labs (chatgpt-42) text-to-image — same RapidAPI key/subscription as text.
 const RAPIDAPI_TEXT_HOST = process.env.RAPIDAPI_HOST ?? "chatgpt-42.p.rapidapi.com";
-const RAPIDAPI_TEXTTOIMAGE_PATH = process.env.RAPIDAPI_TEXTTOIMAGE_PATH ?? "texttoimage";
+const RAPIDAPI_TEXTTOIMAGE_PATH = process.env.RAPIDAPI_TEXTTOIMAGE_PATH ?? "texttoimage3";
 const TEXTTOIMAGE_TIMEOUT_MS = 45_000;
 
 const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY ?? "";
@@ -388,7 +388,7 @@ async function prLabsImageUrl(prompt: string): Promise<string | null> {
         "x-rapidapi-host": RAPIDAPI_TEXT_HOST,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text: prompt.slice(0, 500) }),
+      body: JSON.stringify({ text: prompt.slice(0, 500), width: 1024, height: 768 }),
       signal: AbortSignal.timeout(TEXTTOIMAGE_TIMEOUT_MS),
     });
     if (!res.ok) return null;
