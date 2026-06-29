@@ -7,10 +7,18 @@ import { getAppUrl } from "@/lib/brand-vars";
 import { PostCard } from "../components/PostCard";
 import type { BlogPost, BlogSite } from "../types";
 
+interface GenerationQuota {
+  limit: number;
+  usedToday: number;
+  remaining: number;
+}
+
 export default function AssetCommandPage() {
   const [site, setSite] = useState<BlogSite | null>(null);
+  const [sites, setSites] = useState<BlogSite[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [clicks, setClicks] = useState(0);
+  const [quota, setQuota] = useState<GenerationQuota | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -19,8 +27,10 @@ export default function AssetCommandPage() {
       .then((r) => r.json())
       .then((data) => {
         setSite(data.site);
+        setSites(Array.isArray(data.sites) ? data.sites : data.site ? [data.site] : []);
         setPosts(data.posts ?? []);
         setClicks(data.clicks ?? 0);
+        if (data.quota) setQuota(data.quota);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -113,6 +123,43 @@ export default function AssetCommandPage() {
           <PostCard key={post.id} post={post} siteSlug={site.slug} />
         ))}
       </div>
+
+      {sites.length > 1 && (
+        <div className="flex flex-col gap-3">
+          <h2 className="brand-font text-lg text-text-heading">Your money sites</h2>
+          <p className="text-xs text-text-muted">
+            {quota
+              ? `${quota.usedToday} of ${quota.limit} generated today — each site is saved separately.`
+              : "Each generation is saved as its own live site."}
+          </p>
+          <ul className="flex flex-col gap-2">
+            {sites.map((entry) => {
+              const entryUrl = `${typeof window !== "undefined" ? window.location.origin : getAppUrl()}/sites/${entry.slug}`;
+              const isLatest = entry.id === site.id;
+              return (
+                <li
+                  key={entry.id}
+                  className={`rounded-lg border px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                    isLatest ? "border-[#45A29E]/40 bg-[#45A29E]/5" : "border-white/10"
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm text-text-heading font-medium">{entry.title}</p>
+                    <p className="text-xs text-text-muted break-all">{entryUrl}</p>
+                  </div>
+                  <Link
+                    href={`/sites/${entry.slug}`}
+                    target="_blank"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#45A29E]/40 text-[#45A29E] text-xs font-medium shrink-0"
+                  >
+                    View {isLatest ? "(latest)" : ""} <ExternalLink size={14} />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

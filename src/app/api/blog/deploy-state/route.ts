@@ -3,6 +3,8 @@ import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
 import { NO_STORE_HEADERS } from "@/lib/api-cache-headers";
 import { buildDeploySlots } from "@/features/blog-builder/lib/deploy-slots";
+import { loadActiveUserSite } from "@/features/blog-builder/lib/load-user-site";
+import { getDailyGenerationQuota } from "@/features/blog-builder/lib/site-quota";
 import type { BlogPost, BlogSite } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -17,10 +19,12 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
-  const [{ data: session }, { data: site }] = await Promise.all([
+  const [{ data: session }, quota] = await Promise.all([
     supabase.from("blog_builder_sessions").select("*").eq("user_id", user.id).maybeSingle(),
-    supabase.from("sites").select("*").eq("user_id", user.id).maybeSingle(),
+    getDailyGenerationQuota(supabase, user.id),
   ]);
+
+  const site = await loadActiveUserSite(supabase, user.id, session?.site_id);
 
   let posts: unknown[] = [];
   if (site?.id) {
@@ -39,6 +43,8 @@ export async function GET() {
   const totalCount = slots.length;
   const canResume =
     Boolean(site) &&
+    Boolean(session?.site_id) &&
+    session.site_id === site?.id &&
     !session?.deployed &&
     completedCount > 0 &&
     completedCount < totalCount;
@@ -52,6 +58,7 @@ export async function GET() {
       completedCount,
       totalCount,
       canResume,
+      quota,
     },
     { headers: NO_STORE_HEADERS }
   );

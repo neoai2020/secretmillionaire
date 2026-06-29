@@ -14,9 +14,36 @@ import { buildClusterTopics } from "../lib/templates";
 import { buildDeploySlots, firstQueuedSlotIndex } from "../lib/deploy-slots";
 import { getSiteTerritory } from "../lib/site-territory";
 import { IMAGE_BATCH_CONCURRENCY } from "../lib/generation-pipeline";
-import type { BlogPost, BlogSite } from "../types";
+import type { ArmedLink, BlogPost, BlogSite } from "../types";
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
+
+interface GenerationQuota {
+  limit: number;
+  usedToday: number;
+  remaining: number;
+}
+
+function linkFingerprint(links: ArmedLink[]): string {
+  return links
+    .map((l) => l.url.trim())
+    .filter(Boolean)
+    .sort()
+    .join("|");
+}
+
+function siteMatchesWizard(
+  site: BlogSite,
+  hobby: string,
+  territory: string,
+  armedLinks: ArmedLink[]
+): boolean {
+  const niche = (territory.trim() || hobby.trim()).toLowerCase();
+  const siteNiche = getSiteTerritory(site).trim().toLowerCase();
+  const siteLinks = linkFingerprint((site.armed_links ?? []) as ArmedLink[]);
+  const currentLinks = linkFingerprint(armedLinks);
+  return Boolean(niche) && siteNiche === niche && siteLinks === currentLinks;
+}
 
 function initSlots(topics: ReturnType<typeof buildClusterTopics>): PostSlotState[] {
   return topics.map((topic) => ({
@@ -39,6 +66,7 @@ export default function DeployAssetPage() {
     setGenerating,
     markDeployed,
     appendLog,
+    beginNewSiteGeneration,
   } = useBlogBuilder();
 
   const [phase, setPhase] = useState<DeployPhase>("idle");
@@ -49,6 +77,7 @@ export default function DeployAssetPage() {
   const [deployLoaded, setDeployLoaded] = useState(false);
   const [canResume, setCanResume] = useState(false);
   const [resumeLabel, setResumeLabel] = useState("");
+  const [quota, setQuota] = useState<GenerationQuota | null>(null);
   const [previewPostId, setPreviewPostId] = useState<string | null>(null);
   const slotProgressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const deployRunning = useRef(false);
@@ -74,26 +103,38 @@ export default function DeployAssetPage() {
         const data = res.ok ? await res.json() : null;
         if (cancelled || !data) return;
 
-        if (data.site) setSite(data.site as BlogSite);
-        if (Array.isArray(data.slots) && data.slots.length > 0) {
-          setPostSlots(data.slots as PostSlotState[]);
-        }
+        if (data.quota) setQuota(data.quota as GenerationQuota);
 
-        const completed = data.completedCount ?? 0;
-        const total = data.totalCount ?? 0;
+        const loadedSite = data.site as BlogSite | null;
+        const matchesCurrent =
+          loadedSite && siteMatchesWizard(loadedSite, hobby, territory, armedLinks);
+        const isSessionSite =
+          !data.session?.site_id ||
+          !loadedSite ||
+          data.session.site_id === loadedSite.id;
 
-        if (data.session?.deployed && data.site) {
-          setPhase("complete");
-          setProgress(100);
-        } else if (deployed && data.site) {
-          setPhase("complete");
-          setProgress(100);
-        } else if (data.site && total > 0 && completed === total && !data.session?.deployed) {
-          setCanResume(true);
-          setResumeLabel(`Publish money site (${completed}/${total} posts ready)`);
-        } else if (data.canResume && data.site) {
-          setCanResume(true);
-          setResumeLabel(`Continue deployment (${completed}/${total} posts ready)`);
+        if (loadedSite && matchesCurrent && isSessionSite) {
+          setSite(loadedSite);
+          if (Array.isArray(data.slots) && data.slots.length > 0) {
+            setPostSlots(data.slots as PostSlotState[]);
+          }
+
+          const completed = data.completedCount ?? 0;
+          const total = data.totalCount ?? 0;
+
+          if (data.session?.deployed) {
+            setPhase("complete");
+            setProgress(100);
+          } else if (deployed) {
+            setPhase("complete");
+            setProgress(100);
+          } else if (total > 0 && completed === total && !data.session?.deployed) {
+            setCanResume(true);
+            setResumeLabel(`Publish money site (${completed}/${total} posts ready)`);
+          } else if (data.canResume) {
+            setCanResume(true);
+            setResumeLabel(`Continue deployment (${completed}/${total} posts ready)`);
+          }
         }
       } finally {
         if (!cancelled) setDeployLoaded(true);
@@ -104,7 +145,17 @@ export default function DeployAssetPage() {
     return () => {
       cancelled = true;
     };
-  }, [sessionLoaded, deployed]);
+  }, [sessionLoaded, deployed, hobby, territory, armedLinks]);
+
+  const prepareFreshDeploy = () => {
+    beginNewSiteGeneration();
+    setPhase("idle");
+    setSite(null);
+    setPostSlots([]);
+    setCanResume(false);
+    setError(null);
+    setProgress(0);
+  };
 
   const bumpProgress = (target: number) => {
     setProgress((current) => Math.max(current, target));
@@ -351,6 +402,7 @@ export default function DeployAssetPage() {
       setProgress(0);
       setSite(null);
       setPostSlots([]);
+      beginNewSiteGeneration();
 
       appendLog("Creating cash asset record...");
       bumpProgress(8);
@@ -366,6 +418,7 @@ export default function DeployAssetPage() {
       });
       const createData = await createRes.json();
       if (!createRes.ok) throw new Error(createData.error || "Failed to create site");
+      if (createData.quota) setQuota(createData.quota as GenerationQuota);
 
       activeSite = createData.site as BlogSite;
       setSite(activeSite);
@@ -463,6 +516,12 @@ export default function DeployAssetPage() {
           weave in your armed links — then publish your money site live. All progress is saved to
           your account on our servers — nothing is stored in your browser.
         </p>
+        {quota && (
+          <p className="text-xs text-[#45A29E]/90">
+            {quota.remaining} of {quota.limit} new money sites remaining today ({quota.usedToday}{" "}
+            generated).
+          </p>
+        )}
       </div>
 
       {phase === "setup" && (
@@ -549,8 +608,9 @@ export default function DeployAssetPage() {
         <motion.button
           type="button"
           onClick={() => deploy(false)}
-          whileHover={{ scale: 1.01 }}
-          className="w-full max-w-lg mx-auto py-4 sm:py-5 px-4 sm:px-8 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10]"
+          disabled={quota !== null && quota.remaining <= 0}
+          whileHover={{ scale: quota !== null && quota.remaining <= 0 ? 1 : 1.01 }}
+          className="w-full max-w-lg mx-auto py-4 sm:py-5 px-4 sm:px-8 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10] disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             background: "linear-gradient(135deg, #45A29E 0%, #2d7a76 100%)",
             boxShadow: "0 0 40px rgba(69, 162, 158, 0.35)",
@@ -560,6 +620,27 @@ export default function DeployAssetPage() {
             <Rocket size={22} />
             Deploy Money Site Live
             <ArrowRight size={22} />
+          </span>
+        </motion.button>
+      )}
+
+      {phase === "complete" && quota && quota.remaining > 0 && (
+        <motion.button
+          type="button"
+          onClick={() => {
+            prepareFreshDeploy();
+            router.push("/territory");
+          }}
+          whileHover={{ scale: 1.01 }}
+          className="w-full max-w-lg mx-auto py-4 sm:py-5 px-4 sm:px-8 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10] border border-[#D4AF37]/40"
+          style={{
+            background: "linear-gradient(135deg, #D4AF37 0%, #b8942a 100%)",
+            boxShadow: "0 0 40px rgba(212, 175, 55, 0.25)",
+          }}
+        >
+          <span className="flex items-center justify-center gap-3">
+            <Rocket size={20} />
+            Generate Another Site ({quota.remaining} left today)
           </span>
         </motion.button>
       )}

@@ -41,6 +41,7 @@ interface BlogBuilderContextType extends BlogBuilderState {
   appendLog: (line: string) => void;
   setGenerating: (v: boolean) => void;
   resetWizard: () => void;
+  beginNewSiteGeneration: () => void;
   blogProgress: number;
 }
 
@@ -310,6 +311,18 @@ export function BlogBuilderProvider({ children }: { children: React.ReactNode })
     setState(defaultState);
   }, []);
 
+  const beginNewSiteGeneration = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      deployed: false,
+      siteId: null,
+      siteSlug: null,
+      step: 2,
+      isGenerating: false,
+      generationLog: [],
+    }));
+  }, []);
+
   let blogProgress = 0;
   if (state.deployed || state.step >= 3) blogProgress = 3;
   else if (state.linksArmed || state.step >= 2) blogProgress = 2;
@@ -331,6 +344,7 @@ export function BlogBuilderProvider({ children }: { children: React.ReactNode })
         appendLog,
         setGenerating,
         resetWizard,
+        beginNewSiteGeneration,
         blogProgress,
       }}
     >

@@ -3,6 +3,7 @@ import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
 import { slugify } from "@/features/blog-builder/lib/seo";
 import { pickThemeForSite, buildSiteTitle, buildSiteTagline } from "@/features/blog-builder/themes";
+import { getDailyGenerationQuota } from "@/features/blog-builder/lib/site-quota";
 import type { ArmedLink } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,9 @@ async function linkSiteToSession(
       site_id: siteId,
       site_slug: siteSlug,
       step: 2,
+      deployed: false,
+      is_generating: false,
+      generation_log: [],
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }
@@ -32,6 +36,17 @@ export async function POST(request: Request) {
   const { supabase, user } = await getApiUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const quota = await getDailyGenerationQuota(supabase, user.id);
+  if (quota.remaining <= 0) {
+    return NextResponse.json(
+      {
+        error: `Daily limit reached (${quota.limit} new money sites per day). Try again tomorrow.`,
+        quota,
+      },
+      { status: 429 }
+    );
+  }
+
   const body = await request.json();
   const hobby = typeof body.hobby === "string" ? body.hobby.trim() : "";
   const territory =
@@ -42,51 +57,31 @@ export async function POST(request: Request) {
 
   const title = buildSiteTitle(hobby);
   const baseSlug = slugify(territory) || slugify(hobby) || "site";
-  const slug = `${baseSlug}-${user.id.slice(0, 8)}`;
+  const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
 
   const theme = pickThemeForSite(territory, user.id);
 
-  const basePayload = {
-    user_id: user.id,
-    hobby,
-    territory,
-    title,
-    tagline: buildSiteTagline(hobby),
-    slug,
-    armed_links: armedLinks,
-    status: "draft" as const,
-  };
-
-  const { data: existing } = await supabase
-    .from("sites")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (existing?.id) {
-    await supabase
-      .from("posts")
-      .delete()
-      .eq("site_id", existing.id)
-      .eq("status", "draft");
-
-    const { data, error } = await supabase
-      .from("sites")
-      .update(basePayload)
-      .eq("id", existing.id)
-      .select()
-      .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    await linkSiteToSession(supabase, user.id, data.id, data.slug);
-    return NextResponse.json({ site: data });
-  }
-
   const { data, error } = await supabase
     .from("sites")
-    .insert({ ...basePayload, theme })
+    .insert({
+      user_id: user.id,
+      hobby,
+      territory,
+      title,
+      tagline: buildSiteTagline(hobby),
+      slug,
+      theme,
+      armed_links: armedLinks,
+      status: "draft",
+    })
     .select()
     .single();
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
   await linkSiteToSession(supabase, user.id, data.id, data.slug);
-  return NextResponse.json({ site: data });
+
+  const quotaAfter = await getDailyGenerationQuota(supabase, user.id);
+
+  return NextResponse.json({ site: data, quota: quotaAfter });
 }
