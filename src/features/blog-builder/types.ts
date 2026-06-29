@@ -16,6 +16,8 @@ export interface BlogSite {
   armed_links: ArmedLink[];
   status: "draft" | "live";
   created_at: string;
+  is_template?: boolean;
+  template_key?: string | null;
 }
 
 export interface BlogPost {

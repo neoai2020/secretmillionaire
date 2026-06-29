@@ -164,26 +164,113 @@ export default function AcceleratorPage() {
       </motion.div>
 
       {/* Unlimited pass */}
-      <div className="glass-card p-5 sm:p-6 border border-[#45A29E]/25 flex items-center gap-4">
-        <div className="shrink-0 w-12 h-12 rounded-xl bg-[#45A29E]/15 border border-[#45A29E]/20 flex items-center justify-center">
-          <InfinityIcon className="w-6 h-6 text-accent" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="brand-font text-lg text-text-heading">Unlimited Empire Builder</h2>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-400/10 border border-green-400/20 text-[10px] font-bold text-green-400 uppercase">
-              <Check className="w-3 h-3" /> Active
-            </span>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-2xl border border-[#45A29E]/30 p-6 sm:p-8"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(69,162,158,0.16) 0%, rgba(11,12,16,0.55) 46%, rgba(212,175,55,0.13) 100%)",
+          boxShadow: "0 0 48px rgba(69,162,158,0.14)",
+        }}
+      >
+        {/* shimmer accent + glow orbs */}
+        <div
+          className="absolute inset-x-0 top-0 h-[2px]"
+          style={{ background: "linear-gradient(90deg, #D4AF37, #45A29E, #D4AF37)" }}
+          aria-hidden
+        />
+        <motion.div
+          aria-hidden
+          className="absolute -top-12 -left-10 w-52 h-52 rounded-full blur-[80px] bg-[#45A29E]/30 pointer-events-none"
+          animate={{ opacity: [0.45, 0.85, 0.45], scale: [1, 1.12, 1] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <div
+          aria-hidden
+          className="absolute -bottom-16 right-0 w-56 h-56 rounded-full blur-[90px] bg-[#D4AF37]/16 pointer-events-none"
+        />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
+          <motion.div
+            className="shrink-0 w-16 h-16 rounded-2xl bg-[#45A29E]/15 border border-[#45A29E]/30 flex items-center justify-center"
+            animate={{
+              boxShadow: [
+                "0 0 0px rgba(69,162,158,0)",
+                "0 0 30px rgba(69,162,158,0.55)",
+                "0 0 0px rgba(69,162,158,0)",
+              ],
+            }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <InfinityIcon className="w-8 h-8 text-accent" />
+          </motion.div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2.5 mb-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#D4AF37]">
+                No Limits Unlocked
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-400/10 border border-green-400/25 text-[10px] font-bold text-green-400 uppercase tracking-wider">
+                <motion.span
+                  className="w-1.5 h-1.5 rounded-full bg-green-400"
+                  style={{ boxShadow: "0 0 6px rgba(74,222,128,0.9)" }}
+                  animate={{ scale: [1, 1.5, 1] }}
+                  transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+                />
+                Active
+              </span>
+            </div>
+
+            <h2 className="brand-font text-2xl sm:text-3xl text-text-heading tracking-tight leading-tight">
+              Build Money Sites{" "}
+              <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: "linear-gradient(90deg, #D4AF37, #f1dc94, #D4AF37)" }}
+              >
+                Without Limits
+              </span>
+            </h2>
+
+            <p className="text-sm text-text-secondary mt-2 max-w-xl leading-relaxed">
+              The 5-a-day cap is gone for good. Chase every niche, test every angle, and deploy a new
+              cash asset the moment inspiration strikes — no quota, no waiting, no ceiling.
+            </p>
+
+            <div className="flex flex-wrap gap-2 mt-4">
+              {[
+                { icon: InfinityIcon, label: "Daily cap removed" },
+                { icon: Sparkles, label: quota ? `${quota.usedToday} built today` : "Deploy on demand" },
+                { icon: Rocket, label: "1-click deploy" },
+              ].map((chip) => {
+                const ChipIcon = chip.icon;
+                return (
+                  <span
+                    key={chip.label}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-[11px] font-semibold text-text-secondary"
+                  >
+                    <ChipIcon className="w-3.5 h-3.5 text-accent" />
+                    {chip.label}
+                  </span>
+                );
+              })}
+            </div>
           </div>
-          <p className="text-xs text-text-muted mt-0.5">
-            The daily money-site cap is lifted. Generate as many sites as you want
-            {quota ? ` · ${quota.usedToday} generated today.` : "."}
-          </p>
+
+          <Link
+            href="/territory"
+            className="group relative inline-flex items-center justify-center gap-2 w-full lg:w-auto shrink-0 px-7 py-4 rounded-xl font-bold text-sm uppercase tracking-wider text-[#0B0C10]"
+            style={{
+              background: "linear-gradient(135deg, #D4AF37 0%, #45A29E 100%)",
+              boxShadow: "0 0 32px rgba(212,175,55,0.3)",
+            }}
+          >
+            <Rocket className="w-4 h-4" />
+            Build a Site
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
-        <Link href="/territory" className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl btn-primary text-xs uppercase tracking-wider shrink-0">
-          <Rocket className="w-3.5 h-3.5" /> Build a Site
-        </Link>
-      </div>
+      </motion.div>
 
       {/* Facebook post generator */}
       <div className="glass-card p-5 sm:p-7 flex flex-col gap-5">

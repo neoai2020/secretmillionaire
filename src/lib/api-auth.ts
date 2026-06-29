@@ -18,6 +18,15 @@ function createServiceRoleClient() {
   });
 }
 
+/**
+ * Service-role client (bypasses RLS) for trusted server-side work like seeding
+ * shared template sites and cloning them across users. Returns null if the
+ * service role key is not configured.
+ */
+export function getServiceRoleClient() {
+  return createServiceRoleClient();
+}
+
 function buildDevUser(id: string): User {
   return {
     id,
