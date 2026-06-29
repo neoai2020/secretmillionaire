@@ -95,11 +95,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth app-main-canvas">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth relative app-main-canvas">
           <div className="app-glow-orb app-glow-orb-teal" aria-hidden />
           <div className="app-glow-orb app-glow-orb-gold" aria-hidden />
           <div className="app-glow-orb app-glow-orb-center" aria-hidden />
-          <div className="app-content-layer px-4 sm:px-6 md:px-10 lg:px-12 pt-4 sm:pt-6 lg:pt-6 pb-10 sm:pb-12 lg:pb-16 max-w-6xl mx-auto min-h-full flex flex-col gap-8 w-full">
+          <div className="app-content-layer px-4 sm:px-6 md:px-10 lg:px-12 pt-4 sm:pt-6 lg:pt-4 pb-10 sm:pb-12 lg:pb-16 max-w-5xl mx-auto min-h-full flex flex-col w-full">
             <GlobalTopPromo />
             {children}
             <div className="mt-auto pt-10 sm:pt-16">

@@ -42,7 +42,7 @@ export default function AssetCommandPage() {
 
   if (!site) {
     return (
-      <div className="flex flex-col gap-6 max-w-4xl">
+      <div className="flex flex-col gap-6 max-w-4xl w-full mx-auto">
         <h1 className="brand-font text-2xl text-[#C5C6C7]">Asset Command</h1>
         <p className="text-[#6b7280]">No cash asset deployed yet.</p>
         <Link
@@ -57,7 +57,7 @@ export default function AssetCommandPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full">
+    <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
       <div className="flex flex-col gap-2">
         <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Live Asset</p>
         <h1 className="brand-font text-2xl sm:text-3xl text-[#C5C6C7] tracking-tight">

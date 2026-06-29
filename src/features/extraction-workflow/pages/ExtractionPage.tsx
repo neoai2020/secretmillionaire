@@ -20,7 +20,7 @@ export default function ExtractionPage() {
   const amount = extracted ? balance : commissionsFound;
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full">
+    <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
       <div className="flex flex-col gap-2">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#D4AF37]">Click 3</p>
         <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-[#C5C6C7] tracking-tight">

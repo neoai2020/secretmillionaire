@@ -14,7 +14,7 @@ export default function SupportPage() {
   const contactHref = support.contactUrl || `mailto:${support.email}`;
 
   return (
-    <div className="flex flex-col gap-8 sm:gap-10 max-w-3xl w-full">
+    <div className="flex flex-col gap-8 sm:gap-10 max-w-3xl w-full mx-auto">
       <div className="flex flex-col gap-2 sm:gap-3">
         <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-text-primary tracking-tight">
           {support.pageTitle}
