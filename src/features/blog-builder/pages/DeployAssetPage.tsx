@@ -18,6 +18,33 @@ import type { ArmedLink, BlogPost, BlogSite } from "../types";
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
 
+/** POST and parse JSON defensively — a busy host can return an HTML timeout page. */
+async function postJson(
+  url: string,
+  body: unknown
+): Promise<{ ok: boolean; status: number; data: Record<string, unknown> | null }> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  let data: Record<string, unknown> | null = null;
+  try {
+    data = text ? (JSON.parse(text) as Record<string, unknown>) : null;
+  } catch {
+    data = null;
+  }
+  return { ok: res.ok, status: res.status, data };
+}
+
+function busyError(status: number): string {
+  if (status === 502 || status === 503 || status === 504 || status === 408 || status === 0) {
+    return "The server got busy and timed out while writing your articles. Finished posts are saved — click Try Deploy Again to pick up where it left off.";
+  }
+  return "The server returned an unexpected response. Click Try Deploy Again — finished posts are saved.";
+}
+
 interface GenerationQuota {
   limit: number | null;
   usedToday: number;
@@ -281,15 +308,13 @@ export default function DeployAssetPage() {
       appendLog(`Writing ${pending.length} articles on server (text first, images after publish)...`);
       bumpProgress(25);
 
-      const batchRes = await fetch("/api/blog/generate-deploy-batch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteId, productContext, startIndex }),
-      });
-      const batchData = await batchRes.json();
+      const { ok: batchOk, status: batchStatus, data: batchData } = await postJson(
+        "/api/blog/generate-deploy-batch",
+        { siteId, productContext, startIndex }
+      );
 
-      if (!batchRes.ok) {
-        throw new Error(batchData.error || "Batch generation failed");
+      if (!batchOk || !batchData) {
+        throw new Error((batchData?.error as string) || busyError(batchStatus));
       }
 
       const results = (Array.isArray(batchData.results) ? batchData.results : []) as Array<{
@@ -334,13 +359,11 @@ export default function DeployAssetPage() {
     bumpProgress(92);
     appendLog("Publishing money site live...");
 
-    const pubRes = await fetch("/api/blog/publish", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ siteId }),
-    });
-    const pubData = await pubRes.json();
-    if (!pubRes.ok) throw new Error(pubData.error || "Publish failed");
+    const { ok: pubOk, status: pubStatus, data: pubData } = await postJson(
+      "/api/blog/publish",
+      { siteId }
+    );
+    if (!pubOk) throw new Error((pubData?.error as string) || busyError(pubStatus));
 
     bumpProgress(100);
     appendLog("Money site is live — traffic routing enabled.");
@@ -444,17 +467,13 @@ export default function DeployAssetPage() {
       appendLog("Creating cash asset record...");
       bumpProgress(8);
 
-      const createRes = await fetch("/api/blog/create-site", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          hobby: hobby.trim() || niche,
-          territory: niche,
-          armedLinks,
-        }),
-      });
-      const createData = await createRes.json();
-      if (!createRes.ok) throw new Error(createData.error || "Failed to create site");
+      const { ok: createOk, status: createStatus, data: createData } = await postJson(
+        "/api/blog/create-site",
+        { hobby: hobby.trim() || niche, territory: niche, armedLinks }
+      );
+      if (!createOk || !createData) {
+        throw new Error((createData?.error as string) || busyError(createStatus));
+      }
       if (createData.quota) setQuota(createData.quota as GenerationQuota);
 
       activeSite = createData.site as BlogSite;
