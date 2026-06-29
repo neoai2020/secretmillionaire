@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import {
@@ -12,6 +13,7 @@ import {
   Sparkles,
   Palette,
   Lightbulb,
+  ExternalLink,
 } from "lucide-react";
 import { saveToLinkVault } from "@/lib/save-to-link-vault";
 import {
@@ -59,7 +61,7 @@ function ArmPopup({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-lg glass-card p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-lg glass-card p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
         <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-text-muted hover:text-text-heading hover:bg-white/10 transition-all">
           <X className="w-5 h-5" />
         </button>
@@ -189,16 +191,29 @@ export default function AcceleratorPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setArmPopup(template)}
-                disabled={isArmed}
-                className={clsx(
-                  "w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
-                  isArmed ? "bg-green-400/10 border border-green-400/30 text-green-400 cursor-default" : "btn-primary"
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/accelerator/${template.id}`}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-text-muted uppercase tracking-wider hover:bg-white/10 hover:text-text-heading transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Check Page
+                </Link>
+                {isArmed ? (
+                  <Link
+                    href="/territory"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-400/10 border border-green-400/30 text-green-400 text-xs font-bold uppercase tracking-wider hover:bg-green-400/20 transition-all"
+                  >
+                    <Rocket className="w-3.5 h-3.5" /> Deploy
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => setArmPopup(template)}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider btn-primary"
+                  >
+                    <Rocket className="w-3.5 h-3.5" /> Arm
+                  </button>
                 )}
-              >
-                {isArmed ? <><CheckCircle2 className="w-3.5 h-3.5" /> Armed</> : <><Rocket className="w-3.5 h-3.5" /> Arm Blueprint</>}
-              </button>
+              </div>
             </motion.div>
           );
         })}
