@@ -65,6 +65,7 @@ export async function POST(request: Request) {
       topic: topic.title,
       territory,
       hobby: typedSite.hobby,
+      angle: topic.angle,
       affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
       productContext,
     });

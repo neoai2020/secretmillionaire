@@ -43,10 +43,20 @@ export interface GeneratedPostContent {
   html: string;
 }
 
+export type ArticleAngle =
+  | "pillar-guide"
+  | "best-picks"
+  | "mistakes"
+  | "budget"
+  | "pro-tips"
+  | "worth-it"
+  | "beginners";
+
 export interface ClusterTopic {
   title: string;
   slug: string;
   isPillar: boolean;
+  angle?: ArticleAngle;
 }
 
 export type PostSlotStatus = "queued" | "generating" | "complete" | "error";

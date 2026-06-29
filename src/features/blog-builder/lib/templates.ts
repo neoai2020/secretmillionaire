@@ -1,50 +1,60 @@
 import type { ClusterTopic } from "../types";
+import type { ArticleAngle } from "../types";
 import { slugify } from "./seo";
 
 export const CLUSTER_COUNT = 6;
 
-/** Territory-specific topic angles (not generic hobby fluff). */
+/** Territory-specific topics mapped to SEO search-intent angles. */
 export function buildClusterTopics(territory: string, hobby: string): ClusterTopic[] {
   const niche = territory.trim() || hobby.trim();
   const key = slugify(hobby.trim() || niche.slice(0, 48)) || "site";
 
-  return [
+  const topics: Array<ClusterTopic & { angle: ArticleAngle }> = [
     {
       title: `${niche}: The Complete Buyer's Guide`,
       slug: `${key}-complete-guide`,
       isPillar: true,
+      angle: "pillar-guide",
     },
     {
       title: `Best Picks for ${niche}`,
       slug: `${key}-best-picks`,
       isPillar: false,
+      angle: "best-picks",
     },
     {
       title: `7 Mistakes to Avoid With ${niche}`,
       slug: `${key}-mistakes`,
       isPillar: false,
+      angle: "mistakes",
     },
     {
       title: `${niche} on a Budget — What Actually Works`,
       slug: `${key}-budget`,
       isPillar: false,
+      angle: "budget",
     },
     {
       title: `Pro Tips: Getting Results With ${niche}`,
       slug: `${key}-pro-tips`,
       isPillar: false,
+      angle: "pro-tips",
     },
     {
       title: `Is ${niche} Worth It? Honest Breakdown`,
       slug: `${key}-worth-it`,
       isPillar: false,
+      angle: "worth-it",
     },
     {
       title: `${niche} for Beginners — Step by Step`,
       slug: `${key}-beginners`,
       isPillar: false,
+      angle: "beginners",
     },
   ];
+
+  return topics;
 }
 
 export function buildInternalLinks(
@@ -69,19 +79,12 @@ export function buildInternalLinks(
   </section>`;
 }
 
+/** @deprecated Use prompts.ts — kept for imports that referenced tone keys. */
 export const TONE_PROMPTS: Record<string, string> = {
-  authoritative:
-    "You are an expert affiliate content writer. Write with authority, specificity, and practical buying advice. No fluff or generic filler.",
-  conversational:
-    "You are a trusted reviewer writing for real buyers. Be friendly, specific, and honest — never generic.",
-  bold: "Write in a bold, direct tone. Be clear, specific, and action-oriented.",
+  authoritative: "authoritative",
+  conversational: "conversational",
+  bold: "bold",
 };
 
-export const BLOG_FORMAT_PROMPT = `Return ONLY valid JSON (no markdown fences, no commentary).
-Required keys: title, excerpt, metaDescription, html.
-
-The html field must be clean semantic article HTML only:
-- Use <h2> for section headings (3-4 sections)
-- Use <p> for paragraphs, <ul>/<li> for lists
-- Do NOT include <html>, <head>, or <body>
-- Do NOT use markdown`;
+/** @deprecated Use prompts.ts ARTICLE_SYSTEM_PROMPT. */
+export const BLOG_FORMAT_PROMPT = "See prompts.ts";

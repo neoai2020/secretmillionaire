@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { buildHeroImagePrompt, buildHeroImageNegativePrompt } from "./prompts";
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? "";
 const RAPIDAPI_IMAGE_HOST =
@@ -9,15 +10,7 @@ const NANO_TIMEOUT_MS = 18_000;
 const POLLINATIONS_TIMEOUT_MS = 14_000;
 
 export function pollinationsImageUrl(title: string, subject: string): string {
-  const prompt = [
-    "professional blog hero photo",
-    subject,
-    title,
-    "photorealistic",
-    "vibrant lighting",
-    "no text",
-    "no watermark",
-  ].join(", ");
+  const prompt = buildHeroImagePrompt(title, subject);
 
   const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
 
@@ -71,7 +64,7 @@ async function fetchImageBuffer(url: string, timeoutMs: number): Promise<Buffer 
   }
 }
 
-async function callNanoBanana(prompt: string): Promise<Buffer | null> {
+async function callNanoBanana(prompt: string, negativePrompt: string): Promise<Buffer | null> {
   if (!RAPIDAPI_KEY) return null;
 
   try {
@@ -82,7 +75,10 @@ async function callNanoBanana(prompt: string): Promise<Buffer | null> {
         "x-rapidapi-host": RAPIDAPI_IMAGE_HOST,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ prompt: prompt.slice(0, 500) }),
+      body: JSON.stringify({
+        prompt: prompt.slice(0, 500),
+        negative_prompt: negativePrompt.slice(0, 300),
+      }),
       signal: AbortSignal.timeout(NANO_TIMEOUT_MS),
     });
 
@@ -132,10 +128,11 @@ export async function resolvePostImage(params: {
   supabase: SupabaseClient;
 }): Promise<{ url: string; alt: string }> {
   const alt = `${params.title} — ${params.subject}`;
-  const prompt = `Professional blog hero photo: ${params.title}. Topic: ${params.subject}. Photorealistic, vibrant, no text.`;
+  const prompt = buildHeroImagePrompt(params.title, params.subject);
+  const negative = buildHeroImageNegativePrompt();
 
   const sources: Array<() => Promise<Buffer | null>> = [
-    () => callNanoBanana(prompt),
+    () => callNanoBanana(prompt, negative),
     () => fetchImageBuffer(pollinationsImageUrl(params.title, params.subject), POLLINATIONS_TIMEOUT_MS),
     () => fetchImageBuffer(picsumFallbackUrl(params.title), 8_000),
   ];

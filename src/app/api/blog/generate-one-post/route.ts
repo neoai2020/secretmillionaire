@@ -6,7 +6,7 @@ import { weaveAffiliateLinks } from "@/features/blog-builder/lib/affiliate";
 import { resolvePostImage } from "@/features/blog-builder/lib/images";
 import { buildClusterTopics, buildInternalLinks } from "@/features/blog-builder/lib/templates";
 import { getSiteTerritory } from "@/features/blog-builder/lib/site-territory";
-import type { ArmedLink, BlogSite, ClusterTopic } from "@/features/blog-builder/types";
+import type { ArmedLink, BlogSite, ClusterTopic, ArticleAngle } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -15,7 +15,9 @@ function parseTopic(raw: unknown): ClusterTopic | null {
   if (!raw || typeof raw !== "object") return null;
   const t = raw as Record<string, unknown>;
   if (typeof t.title !== "string" || typeof t.slug !== "string") return null;
-  return { title: t.title, slug: t.slug, isPillar: Boolean(t.isPillar) };
+  const angle =
+    typeof t.angle === "string" ? (t.angle as ArticleAngle) : undefined;
+  return { title: t.title, slug: t.slug, isPillar: Boolean(t.isPillar), angle };
 }
 
 export async function POST(request: Request) {
@@ -66,6 +68,7 @@ export async function POST(request: Request) {
     topic: topic.title,
     territory,
     hobby: typedSite.hobby,
+    angle: topic.angle,
     affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
     productContext,
   });
