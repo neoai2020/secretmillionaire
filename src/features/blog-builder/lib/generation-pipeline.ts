@@ -4,21 +4,10 @@ import { weaveAffiliateLinks } from "./affiliate";
 import { resolvePostImage } from "./images";
 import { buildClusterTopics, buildInternalLinks } from "./templates";
 import { getSiteTerritory } from "./site-territory";
+import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
 import type { ArmedLink, BlogPost, BlogSite, ClusterTopic } from "../types";
 
 export const IMAGE_BATCH_CONCURRENCY = 3;
-
-function heroFigureHtml(imageUrl: string, alt: string): string {
-  const safeAlt = alt.replace(/"/g, "&quot;");
-  return `<figure style="margin:0 0 1.5rem;"><img src="${imageUrl}" alt="${safeAlt}" style="width:100%;border-radius:12px;max-height:420px;object-fit:cover;" loading="lazy" /></figure>`;
-}
-
-function stripLeadingHeroFigure(html: string): string {
-  return html.replace(
-    /^<figure[^>]*class="sms-hero"|^<figure style="margin:0 0 1\.5rem;">[\s\S]*?<\/figure>/i,
-    ""
-  ).trim();
-}
 
 export async function loadOwnedSite(
   supabase: SupabaseClient,
@@ -104,7 +93,7 @@ export async function generateAndSavePost(
 
   let html = content.html;
   if (imageUrl) {
-    html = `${heroFigureHtml(imageUrl, imageAlt)}${html}`;
+    html = injectMidArticleFigure(html, imageUrl, imageAlt);
   }
 
   html = weaveAffiliateLinks(html, armedLinks, postId);
@@ -156,8 +145,8 @@ export async function attachImageToPost(params: {
 
   if (!image.url) return post;
 
-  const bodyHtml = stripLeadingHeroFigure(post.html);
-  const html = `${heroFigureHtml(image.url, image.alt)}${bodyHtml}`;
+  const bodyHtml = stripLeadingHeroFigure(post.html, post.image_url);
+  const html = injectMidArticleFigure(bodyHtml, image.url, image.alt);
 
   const { data: updated, error } = await params.supabase
     .from("posts")

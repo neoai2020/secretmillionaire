@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { prepareArticleHtml } from "@/features/blog-builder/lib/article-html";
 import { getPublicBrand } from "../public-branding";
 import { PostThumb } from "./PostThumb";
 import type { PostLayoutModule, PublicPost, PublicPostSummary, PublicSite } from "../types";
@@ -11,7 +12,8 @@ interface ArticleLayoutProps {
   relatedPosts: PublicPostSummary[];
 }
 
-function ArticleBody({ html }: { html: string }) {
+function ArticleBody({ post }: { post: PublicPost }) {
+  const html = prepareArticleHtml(post);
   return <div className="blog-prose" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
@@ -79,7 +81,7 @@ export function ArticleLayout({ site, siteSlug, post, layout, relatedPosts }: Ar
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-10">
           <div className="lg:col-span-2 min-w-0">
             {hero}
-            <ArticleBody html={post.html} />
+            <ArticleBody post={post} />
           </div>
           <RelatedSidebar posts={relatedPosts} siteSlug={siteSlug} currentSlug={post.slug} />
         </div>
@@ -93,7 +95,7 @@ export function ArticleLayout({ site, siteSlug, post, layout, relatedPosts }: Ar
     <div className="blog-article-wrap">
       <article className={`${widthClass} min-w-0`}>
         {hero}
-        <ArticleBody html={post.html} />
+        <ArticleBody post={post} />
       </article>
     </div>
   );
