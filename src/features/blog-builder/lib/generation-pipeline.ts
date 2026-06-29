@@ -1,14 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateBlogPostContent } from "./generate-content";
 import { weaveAffiliateLinks } from "./affiliate";
-import { resolvePostImage } from "./images";
+import { resolvePostImage, resolveFastImageUrl, persistExternalImage } from "./images";
 import { buildClusterTopics, buildInternalLinks } from "./templates";
 import { getSiteTerritory } from "./site-territory";
 import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
 import type { ArmedLink, BlogPost, BlogSite, ClusterTopic } from "../types";
 
-/** GPT text calls share one RapidAPI quota — one at a time avoids 429 bursts. */
-export const TEXT_GENERATION_CONCURRENCY = 1;
+/**
+ * GPT text calls share one RapidAPI quota. A small pool (not strictly serial)
+ * cuts bulk generation time ~Nx while per-post retry/backoff absorbs the
+ * occasional 429. Tune via env if the quota tier changes.
+ */
+export const TEXT_GENERATION_CONCURRENCY = Number(
+  process.env.TEXT_GENERATION_CONCURRENCY ?? 4
+);
 export const POST_GENERATION_ATTEMPTS = 3;
 
 export async function loadOwnedSite(
@@ -37,6 +43,40 @@ export async function loadOwnedPost(
     .eq("user_id", userId)
     .maybeSingle();
   return (data as BlogPost) ?? null;
+}
+
+/**
+ * Fire-and-forget: download the shown external image and cache it to Supabase,
+ * then swap the post's image_url and the <img src> inside its html. Runs after
+ * the response is sent so the user sees the image immediately. Safe on a
+ * persistent Node server (DigitalOcean); failures are logged, never thrown.
+ */
+export function persistPostImageInBackground(params: {
+  supabase: SupabaseClient;
+  userId: string;
+  postId: string;
+  externalUrl: string;
+}): void {
+  const { supabase, userId, postId, externalUrl } = params;
+
+  void (async () => {
+    try {
+      const newUrl = await persistExternalImage({ url: externalUrl, userId, supabase });
+      if (!newUrl || newUrl === externalUrl) return;
+
+      const post = await loadOwnedPost(supabase, userId, postId);
+      if (!post) return;
+
+      const html = (post.html ?? "").split(externalUrl).join(newUrl);
+      await supabase
+        .from("posts")
+        .update({ image_url: newUrl, html })
+        .eq("id", postId)
+        .eq("user_id", userId);
+    } catch (err) {
+      console.error("[image-persist] background upload failed", err);
+    }
+  })();
 }
 
 export interface GeneratePostParams {
@@ -84,17 +124,28 @@ export async function generateAndSavePost(
   const postId = crypto.randomUUID();
   let imageUrl: string | null = null;
   let imageAlt = `${content.title} — ${territory}`;
+  // External (hotlinked) URL to cache to Supabase in the background after save.
+  let externalImageUrl: string | null = null;
 
   if (!skipImage) {
-    const image = await resolvePostImage({
-      title: content.title,
-      subject: territory,
-      userId,
-      supabase,
-      fast: fastImage,
-    });
-    imageUrl = image.url || null;
-    imageAlt = image.alt;
+    if (fastImage) {
+      // Fast: show a direct URL now, cache it to storage afterwards.
+      const image = await resolveFastImageUrl({ title: content.title, subject: territory });
+      imageUrl = image.url || null;
+      imageAlt = image.alt;
+      externalImageUrl = image.url || null;
+    } else {
+      // Guaranteed-persisted before returning (no background work).
+      const image = await resolvePostImage({
+        title: content.title,
+        subject: territory,
+        userId,
+        supabase,
+        fast: false,
+      });
+      imageUrl = image.url || null;
+      imageAlt = image.alt;
+    }
   }
 
   let html = content.html;
@@ -125,6 +176,11 @@ export async function generateAndSavePost(
     .single();
 
   if (error) throw new Error(error.message);
+
+  if (externalImageUrl) {
+    persistPostImageInBackground({ supabase, userId, postId, externalUrl: externalImageUrl });
+  }
+
   return { post: post as BlogPost, skipped: false };
 }
 
@@ -132,7 +188,6 @@ export async function attachImageToPost(params: {
   supabase: SupabaseClient;
   userId: string;
   postId: string;
-  fast?: boolean;
 }): Promise<BlogPost> {
   const post = await loadOwnedPost(params.supabase, params.userId, params.postId);
   if (!post) throw new Error("Post not found");
@@ -143,13 +198,9 @@ export async function attachImageToPost(params: {
   if (!site) throw new Error("Site not found");
 
   const territory = getSiteTerritory(site);
-  const image = await resolvePostImage({
-    title: post.title,
-    subject: territory,
-    userId: params.userId,
-    supabase: params.supabase,
-    fast: params.fast ?? true,
-  });
+  // Resolve a direct URL fast and return it immediately so the image appears
+  // for the user; caching to Supabase happens in the background afterwards.
+  const image = await resolveFastImageUrl({ title: post.title, subject: territory });
 
   if (!image.url) return post;
 
@@ -169,6 +220,14 @@ export async function attachImageToPost(params: {
     .single();
 
   if (error) throw new Error(error.message);
+
+  persistPostImageInBackground({
+    supabase: params.supabase,
+    userId: params.userId,
+    postId: post.id,
+    externalUrl: image.url,
+  });
+
   return updated as BlogPost;
 }
 

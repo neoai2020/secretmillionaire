@@ -5,9 +5,11 @@ import {
   generateAndSavePost,
   loadOwnedSite,
   POST_GENERATION_ATTEMPTS,
+  TEXT_GENERATION_CONCURRENCY,
 } from "@/features/blog-builder/lib/generation-pipeline";
 import { buildClusterTopics } from "@/features/blog-builder/lib/templates";
 import { getSiteTerritory } from "@/features/blog-builder/lib/site-territory";
+import { mapWithConcurrency } from "@/features/blog-builder/lib/concurrency";
 import type { ClusterTopic } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -37,46 +39,41 @@ export async function POST(request: Request) {
   const topics = buildClusterTopics(territory, site.hobby);
   const pending = topics.slice(startIndex);
 
-  const results: Array<{ index: number; topic: ClusterTopic; post?: unknown; error?: string }> = [];
+  // Generate posts in a bounded concurrency pool instead of one-at-a-time.
+  // Each post keeps its own retry/backoff so a 429 only delays that worker.
+  const results = await mapWithConcurrency(
+    pending,
+    TEXT_GENERATION_CONCURRENCY,
+    async (
+      topic,
+      offset
+    ): Promise<{ index: number; topic: ClusterTopic; post?: unknown; error?: string }> => {
+      const index = startIndex + offset;
+      let lastError = "Generation failed";
 
-  for (let offset = 0; offset < pending.length; offset++) {
-    const index = startIndex + offset;
-    const topic = pending[offset];
-    let saved = false;
+      for (let attempt = 0; attempt < POST_GENERATION_ATTEMPTS; attempt++) {
+        if (attempt > 0) {
+          await new Promise((r) => setTimeout(r, 2000 * attempt));
+        }
 
-    for (let attempt = 0; attempt < POST_GENERATION_ATTEMPTS; attempt++) {
-      if (attempt > 0) {
-        await new Promise((r) => setTimeout(r, 2000 * attempt));
-      }
-
-      try {
-        const result = await generateAndSavePost({
-          supabase,
-          userId: user.id,
-          site,
-          topic,
-          productContext,
-          skipImage: true,
-        });
-        results.push({ index, topic, post: result.post });
-        saved = true;
-        break;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Generation failed";
-        if (attempt === POST_GENERATION_ATTEMPTS - 1) {
-          results.push({ index, topic, error: message });
+        try {
+          const result = await generateAndSavePost({
+            supabase,
+            userId: user.id,
+            site,
+            topic,
+            productContext,
+            skipImage: true,
+          });
+          return { index, topic, post: result.post };
+        } catch (err) {
+          lastError = err instanceof Error ? err.message : "Generation failed";
         }
       }
-    }
 
-    if (!saved && !results.some((r) => r.index === index)) {
-      results.push({ index, topic, error: "Generation failed" });
+      return { index, topic, error: lastError };
     }
-
-    if (offset < pending.length - 1) {
-      await new Promise((r) => setTimeout(r, 400));
-    }
-  }
+  );
 
   const failures = results.filter((r) => r.error);
   const posts = results.filter((r) => r.post).map((r) => r.post);

@@ -12,6 +12,9 @@ const RAPIDAPI_IMAGE_OUTPUT_PATH =
 const RAPIDAPI_IMAGE_OUTPUT_QUERY =
   process.env.RAPIDAPI_IMAGE_OUTPUT_QUERY ?? "id";
 
+const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY ?? "";
+const PIXABAY_TIMEOUT_MS = 5_000;
+
 const NANO_TIMEOUT_MS = 12_000;
 const ULTRA_FAST_CREATE_TIMEOUT_MS = 25_000;
 const ULTRA_FAST_POLL_TIMEOUT_MS = 8_000;
@@ -20,6 +23,79 @@ const ULTRA_FAST_POLL_INTERVAL_MS = 1_500;
 const POLLINATIONS_TIMEOUT_MS = 10_000;
 const FAST_POLLINATIONS_TIMEOUT_MS = 7_000;
 const FAST_PICSUM_TIMEOUT_MS = 4_000;
+
+const STOP_WORDS = new Set([
+  "the", "a", "an", "and", "or", "for", "to", "of", "in", "on", "with", "your",
+  "best", "top", "guide", "review", "reviews", "vs", "under", "how", "what",
+  "why", "is", "are", "buyers", "buyer", "buying", "tips", "avoid", "mistakes",
+]);
+
+/** Build a concise Pixabay search query from the article title + niche. */
+function buildPixabayQuery(title: string, subject: string): string {
+  const words = `${subject} ${title}`
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP_WORDS.has(w) && !/^\d+$/.test(w));
+
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const w of words) {
+    if (seen.has(w)) continue;
+    seen.add(w);
+    unique.push(w);
+    if (unique.length >= 5) break;
+  }
+
+  return unique.join(" ").slice(0, 100);
+}
+
+interface PixabayHit {
+  largeImageURL?: string;
+  webformatURL?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+}
+
+/**
+ * Look up a relevant free stock photo from Pixabay. Returns a downloadable URL
+ * (image bytes are cached to Supabase by the caller, per Pixabay's terms).
+ * Much faster than AI generation, so this runs first.
+ */
+async function fetchPixabayImageUrl(title: string, subject: string): Promise<string | null> {
+  if (!PIXABAY_API_KEY) return null;
+
+  const query = buildPixabayQuery(title, subject);
+  if (!query) return null;
+
+  const url = new URL("https://pixabay.com/api/");
+  url.searchParams.set("key", PIXABAY_API_KEY);
+  url.searchParams.set("q", query);
+  url.searchParams.set("image_type", "photo");
+  url.searchParams.set("orientation", "horizontal");
+  url.searchParams.set("safesearch", "true");
+  url.searchParams.set("order", "popular");
+  url.searchParams.set("per_page", "12");
+  url.searchParams.set("min_width", "1200");
+
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(PIXABAY_TIMEOUT_MS) });
+    if (!response.ok) return null;
+
+    const data = (await response.json()) as { hits?: PixabayHit[] };
+    const hits = (data.hits ?? []).filter(
+      (h) => (h.largeImageURL || h.webformatURL) && (h.imageWidth ?? 0) >= (h.imageHeight ?? 1)
+    );
+    if (hits.length === 0) return null;
+
+    // Deterministic pick keyed off the title so regenerating a post is stable.
+    const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const hit = hits[seed % hits.length];
+    return hit.largeImageURL || hit.webformatURL || null;
+  } catch {
+    return null;
+  }
+}
 
 export function pollinationsImageUrl(title: string, subject: string): string {
   const prompt = buildHeroImagePrompt(title, subject);
@@ -348,6 +424,44 @@ export async function uploadUserImage(params: {
   return data.publicUrl;
 }
 
+export interface ResolvedImage {
+  url: string;
+  alt: string;
+}
+
+/**
+ * FAST path: return a directly-usable image URL with NO download/upload, so the
+ * image can be shown to the user immediately. Pixabay search (~300ms) →
+ * Pollinations (AI, generated on first load) → picsum. The caller should kick
+ * off `persistExternalImage` in the background to cache it to Supabase.
+ */
+export async function resolveFastImageUrl(params: {
+  title: string;
+  subject: string;
+}): Promise<ResolvedImage> {
+  const alt = `${params.title} — ${params.subject}`;
+
+  const pixabay = await fetchPixabayImageUrl(params.title, params.subject);
+  if (pixabay) return { url: pixabay, alt };
+
+  return { url: pollinationsImageUrl(params.title, params.subject), alt };
+}
+
+/**
+ * Download an external image URL and cache it to Supabase Storage.
+ * Returns the new public URL, or null on failure (caller keeps the original).
+ */
+export async function persistExternalImage(params: {
+  url: string;
+  userId: string;
+  supabase: SupabaseClient;
+}): Promise<string | null> {
+  if (!params.url || params.url.includes("/blog-images/")) return null;
+  const buffer = await fetchImageBuffer(params.url, 20_000);
+  if (!buffer) return null;
+  return uploadToBlogImages(params.supabase, params.userId, buffer);
+}
+
 /**
  * Always returns a Supabase-hosted URL (never a hotlinked Pollinations URL).
  */
@@ -364,12 +478,21 @@ export async function resolvePostImage(params: {
   const negative = buildHeroImageNegativePrompt();
   const pollinations = pollinationsImageUrl(params.title, params.subject);
 
+  // Stock-first: a relevant free Pixabay photo resolves in well under a second
+  // and looks more professional than generation. Only generate if none is found.
+  const stockSource = async (): Promise<Buffer | null> => {
+    const stockUrl = await fetchPixabayImageUrl(params.title, params.subject);
+    return stockUrl ? fetchImageBuffer(stockUrl, PIXABAY_TIMEOUT_MS) : null;
+  };
+
   const sources: Array<() => Promise<Buffer | null>> = params.fast
     ? [
+        stockSource,
         () => fetchImageBuffer(pollinations, FAST_POLLINATIONS_TIMEOUT_MS),
         () => fetchImageBuffer(picsumFallbackUrl(params.title), FAST_PICSUM_TIMEOUT_MS),
       ]
     : [
+        stockSource,
         () =>
           callRapidApiImage({
             prompt,

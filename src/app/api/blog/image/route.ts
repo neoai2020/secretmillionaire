@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
-import { resolvePostImage } from "@/features/blog-builder/lib/images";
+import { resolveFastImageUrl } from "@/features/blog-builder/lib/images";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   const guard = featureApiGuard("blog-builder");
   if (guard) return guard;
 
-  const { supabase, user } = await getApiUser();
+  const { user } = await getApiUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
@@ -23,12 +23,9 @@ export async function POST(request: Request) {
 
   const subject = typeof body.subject === "string" ? body.subject.trim() : hobby;
 
-  const image = await resolvePostImage({
-    title,
-    subject,
-    userId: user.id,
-    supabase,
-  });
+  // Preview path: return a directly-usable URL fast (no download/upload). It is
+  // cached to Supabase later when the post is generated/saved.
+  const image = await resolveFastImageUrl({ title, subject });
 
   return NextResponse.json(image);
 }

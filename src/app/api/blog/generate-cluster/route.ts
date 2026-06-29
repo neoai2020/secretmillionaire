@@ -4,10 +4,15 @@ import { getApiUser } from "@/lib/api-auth";
 import { generateBlogPostContent } from "@/features/blog-builder/lib/generate-content";
 import { weaveAffiliateLinks } from "@/features/blog-builder/lib/affiliate";
 import { injectMidArticleFigure } from "@/features/blog-builder/lib/article-html";
-import { resolvePostImage } from "@/features/blog-builder/lib/images";
+import { resolveFastImageUrl } from "@/features/blog-builder/lib/images";
 import { buildClusterTopics, buildInternalLinks } from "@/features/blog-builder/lib/templates";
 import { getSiteTerritory } from "@/features/blog-builder/lib/site-territory";
 import { scrapePage } from "@/features/blog-builder/lib/scrape";
+import { mapWithConcurrency } from "@/features/blog-builder/lib/concurrency";
+import {
+  TEXT_GENERATION_CONCURRENCY,
+  persistPostImageInBackground,
+} from "@/features/blog-builder/lib/generation-pipeline";
 import type { ArmedLink, BlogSite } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -48,72 +53,87 @@ export async function POST(request: Request) {
 
   const territory = getSiteTerritory(typedSite);
   const topics = buildClusterTopics(territory, typedSite.hobby);
-  const createdPosts = [];
 
-  for (const topic of topics) {
-    const { data: existing } = await supabase
-      .from("posts")
-      .select("id")
-      .eq("site_id", siteId)
-      .eq("slug", topic.slug)
-      .maybeSingle();
+  // Generate the cluster in a bounded concurrency pool instead of serially.
+  const settled = await mapWithConcurrency(
+    topics,
+    TEXT_GENERATION_CONCURRENCY,
+    async (topic) => {
+      const { data: existing } = await supabase
+        .from("posts")
+        .select("id")
+        .eq("site_id", siteId)
+        .eq("slug", topic.slug)
+        .maybeSingle();
 
-    if (existing) {
-      createdPosts.push(existing);
-      continue;
-    }
-    const content = await generateBlogPostContent({
-      topic: topic.title,
-      territory,
-      hobby: typedSite.hobby,
-      angle: topic.angle,
-      affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
-      productContext,
-    });
+      if (existing) return { post: existing };
 
-    const image = await resolvePostImage({
-      title: content.title,
-      subject: territory,
-      userId: user.id,
-      supabase,
-      fast: true,
-    });
+      const content = await generateBlogPostContent({
+        topic: topic.title,
+        territory,
+        hobby: typedSite.hobby,
+        angle: topic.angle,
+        affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
+        productContext,
+      });
 
-    const postId = crypto.randomUUID();
-    let html = content.html;
-
-    if (image.url) {
-      html = injectMidArticleFigure(html, image.url, image.alt);
-    }
-
-    html = weaveAffiliateLinks(html, armedLinks, postId, siteId);
-    html += buildInternalLinks(topics, typedSite.slug, topic.slug);
-
-    const { data: post, error } = await supabase
-      .from("posts")
-      .insert({
-        id: postId,
-        site_id: siteId,
-        user_id: user.id,
+      const image = await resolveFastImageUrl({
         title: content.title,
-        slug: topic.slug,
-        html,
-        excerpt: content.excerpt,
-        meta_description: content.metaDescription,
-        image_url: image.url || null,
-        image_alt: image.alt,
-        is_pillar: topic.isPillar,
-        status: "draft",
-      })
-      .select()
-      .single();
+        subject: territory,
+      });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      const postId = crypto.randomUUID();
+      let html = content.html;
+
+      if (image.url) {
+        html = injectMidArticleFigure(html, image.url, image.alt);
+      }
+
+      html = weaveAffiliateLinks(html, armedLinks, postId, siteId);
+      html += buildInternalLinks(topics, typedSite.slug, topic.slug);
+
+      const { data: post, error } = await supabase
+        .from("posts")
+        .insert({
+          id: postId,
+          site_id: siteId,
+          user_id: user.id,
+          title: content.title,
+          slug: topic.slug,
+          html,
+          excerpt: content.excerpt,
+          meta_description: content.metaDescription,
+          image_url: image.url || null,
+          image_alt: image.alt,
+          is_pillar: topic.isPillar,
+          status: "draft",
+        })
+        .select()
+        .single();
+
+      if (error) return { error: error.message };
+
+      if (image.url) {
+        persistPostImageInBackground({
+          supabase,
+          userId: user.id,
+          postId,
+          externalUrl: image.url,
+        });
+      }
+
+      return { post };
     }
+  );
 
-    createdPosts.push(post);
+  const firstError = settled.find((r) => "error" in r && r.error);
+  if (firstError && "error" in firstError) {
+    return NextResponse.json({ error: firstError.error }, { status: 500 });
   }
+
+  const createdPosts = settled
+    .filter((r): r is { post: unknown } => "post" in r && Boolean(r.post))
+    .map((r) => r.post);
 
   return NextResponse.json({ posts: createdPosts, count: createdPosts.length });
 }
