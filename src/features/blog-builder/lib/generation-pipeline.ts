@@ -7,8 +7,15 @@ import { getSiteTerritory } from "./site-territory";
 import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
 import type { ArmedLink, BlogPost, BlogSite, ClusterTopic } from "../types";
 
-export const IMAGE_BATCH_CONCURRENCY = 2;
-export const TEXT_GENERATION_STAGGER_MS = 1500;
+/** Hero images use a different API — safe to run a few in parallel. */
+export const IMAGE_BATCH_CONCURRENCY = 3;
+
+/** GPT text calls share one RapidAPI quota — small batches avoid 429 bursts. */
+export const TEXT_GENERATION_CONCURRENCY = 2;
+/** Offset between starts within a batch (ms) so two requests don't land same second. */
+export const TEXT_GENERATION_STAGGER_MS = 350;
+/** Brief pause between batches before the next pair starts. */
+export const TEXT_GENERATION_BATCH_DELAY_MS = 500;
 
 export async function loadOwnedSite(
   supabase: SupabaseClient,

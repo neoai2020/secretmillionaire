@@ -13,7 +13,12 @@ import { PostPreviewModal } from "../components/PostPreviewModal";
 import { buildClusterTopics } from "../lib/templates";
 import { buildDeploySlots, firstQueuedSlotIndex } from "../lib/deploy-slots";
 import { getSiteTerritory } from "../lib/site-territory";
-import { IMAGE_BATCH_CONCURRENCY, TEXT_GENERATION_STAGGER_MS } from "../lib/generation-pipeline";
+import {
+  IMAGE_BATCH_CONCURRENCY,
+  TEXT_GENERATION_BATCH_DELAY_MS,
+  TEXT_GENERATION_CONCURRENCY,
+  TEXT_GENERATION_STAGGER_MS,
+} from "../lib/generation-pipeline";
 import type { ArmedLink, BlogPost, BlogSite } from "../types";
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
@@ -229,14 +234,20 @@ export default function DeployAssetPage() {
 
       if (pending.length === 0) return 0;
 
-      appendLog(`Phase 1: writing ${pending.length} articles (one at a time)...`);
+      appendLog(
+        `Phase 1: writing ${pending.length} articles (${TEXT_GENERATION_CONCURRENCY} at a time)...`
+      );
       bumpProgress(25);
 
       let textFinished = 0;
       const generatedPosts: BlogPost[] = [];
       let failedCount = 0;
 
-      const generateText = async (i: number): Promise<boolean> => {
+      const generateText = async (i: number, slotInBatch: number): Promise<boolean> => {
+        if (slotInBatch > 0) {
+          await new Promise((r) => setTimeout(r, TEXT_GENERATION_STAGGER_MS * slotInBatch));
+        }
+
         const topic = topics[i];
         setSlotGenerating(i);
 
@@ -272,10 +283,11 @@ export default function DeployAssetPage() {
         }
       };
 
-      for (let idx = 0; idx < pending.length; idx++) {
-        await generateText(pending[idx]);
-        if (idx < pending.length - 1) {
-          await new Promise((r) => setTimeout(r, TEXT_GENERATION_STAGGER_MS));
+      for (let batchStart = 0; batchStart < pending.length; batchStart += TEXT_GENERATION_CONCURRENCY) {
+        const batch = pending.slice(batchStart, batchStart + TEXT_GENERATION_CONCURRENCY);
+        await Promise.all(batch.map((slotIndex, slotInBatch) => generateText(slotIndex, slotInBatch)));
+        if (batchStart + TEXT_GENERATION_CONCURRENCY < pending.length) {
+          await new Promise((r) => setTimeout(r, TEXT_GENERATION_BATCH_DELAY_MS));
         }
       }
 
