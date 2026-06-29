@@ -1,3 +1,6 @@
+import type { ArmedLink } from "../types";
+import { stripAffiliateBlocks, weaveAffiliateLinks } from "./affiliate";
+
 const LEADING_FIGURE_RE = /^<figure[^>]*>[\s\S]*?<\/figure>\s*/i;
 
 export function heroFigureHtml(imageUrl: string, alt: string): string {
@@ -49,12 +52,21 @@ export function prepareArticleHtml(post: {
   image_url: string | null;
   image_alt: string | null;
   title: string;
+  id: string;
+  armedLinks?: ArmedLink[];
+  siteId?: string;
 }): string {
   const alt = post.image_alt ?? post.title;
   let html = stripLeadingHeroFigure(post.html, post.image_url);
 
   if (post.image_url && !html.includes(post.image_url)) {
     html = injectMidArticleFigure(html, post.image_url, alt);
+  }
+
+  if (post.armedLinks?.length && post.siteId) {
+    html = weaveAffiliateLinks(html, post.armedLinks, post.id, post.siteId);
+  } else {
+    html = stripAffiliateBlocks(html);
   }
 
   return html;

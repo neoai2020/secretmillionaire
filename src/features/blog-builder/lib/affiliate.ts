@@ -1,72 +1,100 @@
 import type { ArmedLink } from "../types";
+import { normalizeAffiliateUrl } from "./affiliate-url";
 
-function trackUrl(postId: string, target: string): string {
-  return `/api/blog/track-click?post=${encodeURIComponent(postId)}&to=${encodeURIComponent(target)}`;
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+}
+
+export function buildTrackUrl(postId: string, siteId: string, target: string): string {
+  const url = normalizeAffiliateUrl(target);
+  const params = new URLSearchParams({
+    post: postId,
+    site: siteId,
+    to: url,
+  });
+  return `/api/blog/track-click?${params.toString()}`;
+}
+
+const AFFILIATE_BLOCK_RE =
+  /<(?:aside|div|table)[^>]*class="(?:sms-affiliate-(?:banner|cta)|affiliate-(?:banner|cta)|sms-comparison)"[\s\S]*?<\/(?:aside|div|table)>/gi;
+
+/** Remove injected affiliate blocks (legacy or current) before re-weaving. */
+export function stripAffiliateBlocks(html: string): string {
+  return html.replace(AFFILIATE_BLOCK_RE, "").trim();
 }
 
 export function renderCtaButton(label: string, href: string): string {
-  return `<div class="sms-affiliate-cta" style="margin:2rem 0;text-align:center;">
-  <a href="${href}" target="_blank" rel="nofollow sponsored noopener"
-    style="display:inline-block;padding:14px 28px;background:linear-gradient(135deg,#45A29E,#2d7a76);color:#0B0C10;font-weight:700;border-radius:12px;text-decoration:none;box-shadow:0 0 24px rgba(69,162,158,0.35);">
-    ${label}
-  </a>
+  return `<div class="affiliate-cta">
+  <a href="${href}" target="_blank" rel="nofollow sponsored noopener">${escapeHtml(label)}</a>
 </div>`;
 }
 
 export function renderBanner(link: ArmedLink, href: string): string {
-  return `<aside class="sms-affiliate-banner" style="margin:2rem 0;padding:1.5rem;border:1px solid rgba(212,175,55,0.3);background:rgba(212,175,55,0.08);border-radius:12px;">
-  <p style="margin:0 0 0.75rem;font-size:0.75rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#b8860b;">Recommended for Initiates</p>
-  <p style="margin:0 0 1rem;color:#333;line-height:1.6;">Discover <strong>${link.label}</strong> — our top pick for this territory.</p>
-  <a href="${href}" target="_blank" rel="nofollow sponsored noopener" style="color:#45A29E;font-weight:700;">Check Today's Price →</a>
+  return `<aside class="affiliate-banner">
+  <p class="affiliate-banner-eyebrow">Recommended for Initiates</p>
+  <p class="affiliate-banner-copy">Discover <strong>${escapeHtml(link.label)}</strong> — our top pick for this territory.</p>
+  <a href="${href}" target="_blank" rel="nofollow sponsored noopener" class="affiliate-banner-link">Check Today&apos;s Price →</a>
 </aside>`;
 }
 
-export function renderComparisonTable(links: ArmedLink[], postId: string): string {
-  if (links.length === 0) return "";
-  const rows = links
-    .map(
-      (l) => `<tr>
-      <td style="padding:12px;border-bottom:1px solid #eee;">${l.label}</td>
-      <td style="padding:12px;border-bottom:1px solid #eee;text-align:center;">
-        <a href="${trackUrl(postId, l.url)}" target="_blank" rel="nofollow sponsored noopener" style="color:#45A29E;font-weight:600;">View Offer</a>
-      </td>
-    </tr>`
-    )
-    .join("");
-  return `<table class="sms-comparison" style="width:100%;border-collapse:collapse;margin:2rem 0;font-size:0.95rem;">
-    <thead><tr style="background:#f8f9fa;">
-      <th style="padding:12px;text-align:left;">Pick</th>
-      <th style="padding:12px;text-align:center;">Link</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+function injectAfterSecondH2(html: string, chunk: string): string {
+  const h2Ends: number[] = [];
+  const h2Re = /<\/h2>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = h2Re.exec(html)) !== null) {
+    h2Ends.push(match.index + match[0].length);
+  }
+
+  const insertAt =
+    h2Ends.length >= 2 ? h2Ends[1] : h2Ends.length === 1 ? h2Ends[0] : html.indexOf("</p>") + 4;
+
+  if (insertAt > 3) {
+    return `${html.slice(0, insertAt)}${chunk}${html.slice(insertAt)}`;
+  }
+
+  return `${chunk}${html}`;
+}
+
+const RELATED_SECTION_RE = /<section class="sms-related"[\s\S]*$/i;
+
+function splitRelatedSection(html: string): { body: string; related: string } {
+  const match = html.match(RELATED_SECTION_RE);
+  if (!match || match.index === undefined) {
+    return { body: html, related: "" };
+  }
+  return {
+    body: html.slice(0, match.index).trim(),
+    related: match[0],
+  };
 }
 
 export function weaveAffiliateLinks(
   html: string,
   links: ArmedLink[],
-  postId: string
+  postId: string,
+  siteId: string
 ): string {
-  if (links.length === 0) return html;
+  const cleaned = stripAffiliateBlocks(html);
+  if (links.length === 0) return cleaned;
 
-  const primary = links[0];
-  const tracked = trackUrl(postId, primary.url);
+  const primary = links.find((link) => isValidLink(link)) ?? links[0];
+  const offerUrl = normalizeAffiliateUrl(primary.url);
+  if (!offerUrl) return cleaned;
 
-  let out = html;
-  const mid = Math.floor(out.length / 2);
+  const tracked = buildTrackUrl(postId, siteId, offerUrl);
   const banner = renderBanner(primary, tracked);
   const cta = renderCtaButton("Get Instant Access", tracked);
-  const table = renderComparisonTable(links, postId);
 
-  if (out.includes("</p>")) {
-    const parts = out.split("</p>");
-    const insertAt = Math.min(Math.floor(parts.length / 2), parts.length - 1);
-    parts[insertAt] = `${parts[insertAt]}</p>${banner}`;
-    out = parts.join("</p>");
-  } else {
-    out = `${banner}${out}`;
+  const { body, related } = splitRelatedSection(cleaned);
+  const withBanner = injectAfterSecondH2(body, banner);
+  return `${withBanner}${cta}${related}`;
+}
+
+function isValidLink(link: ArmedLink): boolean {
+  try {
+    const url = normalizeAffiliateUrl(link.url);
+    return Boolean(url && new URL(url).protocol.startsWith("http"));
+  } catch {
+    return false;
   }
-
-  out = `${out}${cta}${table}`;
-  return out;
 }

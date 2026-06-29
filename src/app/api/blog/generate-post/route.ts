@@ -20,6 +20,7 @@ export async function POST(request: Request) {
   const topic = typeof body.topic === "string" ? body.topic.trim() : "";
   const hobby = typeof body.hobby === "string" ? body.hobby.trim() : "";
   const postId = typeof body.postId === "string" ? body.postId : "preview";
+  const siteId = typeof body.siteId === "string" ? body.siteId : "preview";
   const armedLinks = Array.isArray(body.armedLinks) ? (body.armedLinks as ArmedLink[]) : [];
   const affiliateUrl = typeof body.affiliateUrl === "string" ? body.affiliateUrl : "";
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     productContext,
   });
 
-  const html = weaveAffiliateLinks(content.html, armedLinks, postId);
+  const html = weaveAffiliateLinks(content.html, armedLinks, postId, siteId);
 
   return NextResponse.json({ ...content, html });
 }

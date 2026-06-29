@@ -55,7 +55,7 @@ export default async function PostPage({ params }: Props) {
 
   const { data: site } = await supabase
     .from("sites")
-    .select("id, title, slug, hobby, territory, tagline, theme")
+    .select("id, title, slug, hobby, territory, tagline, theme, armed_links")
     .eq("slug", siteSlug)
     .eq("status", "live")
     .maybeSingle();

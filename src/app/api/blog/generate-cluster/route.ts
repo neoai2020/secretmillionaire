@@ -3,6 +3,7 @@ import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
 import { generateBlogPostContent } from "@/features/blog-builder/lib/generate-content";
 import { weaveAffiliateLinks } from "@/features/blog-builder/lib/affiliate";
+import { injectMidArticleFigure } from "@/features/blog-builder/lib/article-html";
 import { resolvePostImage } from "@/features/blog-builder/lib/images";
 import { buildClusterTopics, buildInternalLinks } from "@/features/blog-builder/lib/templates";
 import { getSiteTerritory } from "@/features/blog-builder/lib/site-territory";
@@ -81,10 +82,10 @@ export async function POST(request: Request) {
     let html = content.html;
 
     if (image.url) {
-      html = `<figure style="margin:0 0 1.5rem;"><img src="${image.url}" alt="${image.alt.replace(/"/g, "&quot;")}" style="width:100%;border-radius:12px;max-height:420px;object-fit:cover;" loading="lazy" /></figure>${html}`;
+      html = injectMidArticleFigure(html, image.url, image.alt);
     }
 
-    html = weaveAffiliateLinks(html, armedLinks, postId);
+    html = weaveAffiliateLinks(html, armedLinks, postId, siteId);
     html += buildInternalLinks(topics, typedSite.slug, topic.slug);
 
     const { data: post, error } = await supabase

@@ -587,12 +587,13 @@
 
 .blog-prose .affiliate-cta,
 .blog-prose .cta-box {
-  margin: 2rem 0;
+  margin: 2.5rem 0;
   padding: 1.35rem 1.5rem;
   background: var(--blog-surface);
   border: 1px solid var(--blog-border);
   border-radius: var(--blog-radius);
   box-shadow: var(--blog-shadow);
+  text-align: center;
 }
 
 .blog-prose .affiliate-cta a,
@@ -600,13 +601,47 @@
   display: inline-flex;
   min-height: 48px;
   align-items: center;
-  padding: 0.75rem 1.5rem;
-  margin-top: 0.75rem;
+  justify-content: center;
+  padding: 0.85rem 1.75rem;
   background: var(--blog-accent);
   color: #fff !important;
-  text-decoration: none;
+  text-decoration: none !important;
   border-radius: 9999px;
   font-weight: 700;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--blog-accent) 35%, transparent);
+}
+
+.blog-prose .affiliate-banner {
+  margin: 2rem 0;
+  padding: 1.35rem 1.5rem;
+  background: var(--blog-accent-soft);
+  border: 1px solid var(--blog-border);
+  border-radius: var(--blog-radius);
+}
+
+.blog-prose .affiliate-banner-eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--blog-pillar, var(--blog-accent));
+}
+
+.blog-prose .affiliate-banner-copy {
+  margin: 0 0 1rem;
+  color: var(--blog-text);
+  line-height: 1.6;
+}
+
+.blog-prose .affiliate-banner-link {
+  color: var(--blog-accent) !important;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+
+.blog-prose .affiliate-banner-link:hover {
+  text-decoration: underline !important;
 }
 
 /* Sidebar */

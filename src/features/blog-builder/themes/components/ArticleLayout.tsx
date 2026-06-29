@@ -12,8 +12,16 @@ interface ArticleLayoutProps {
   relatedPosts: PublicPostSummary[];
 }
 
-function ArticleBody({ post }: { post: PublicPost }) {
-  const html = prepareArticleHtml(post);
+function ArticleBody({ post, site }: { post: PublicPost; site: PublicSite }) {
+  const html = prepareArticleHtml({
+    html: post.html,
+    image_url: post.image_url,
+    image_alt: post.image_alt,
+    title: post.title,
+    id: post.id,
+    armedLinks: site.armed_links,
+    siteId: site.id,
+  });
   return <div className="blog-prose" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
@@ -81,7 +89,7 @@ export function ArticleLayout({ site, siteSlug, post, layout, relatedPosts }: Ar
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-10">
           <div className="lg:col-span-2 min-w-0">
             {hero}
-            <ArticleBody post={post} />
+            <ArticleBody post={post} site={site} />
           </div>
           <RelatedSidebar posts={relatedPosts} siteSlug={siteSlug} currentSlug={post.slug} />
         </div>
@@ -95,7 +103,7 @@ export function ArticleLayout({ site, siteSlug, post, layout, relatedPosts }: Ar
     <div className="blog-article-wrap">
       <article className={`${widthClass} min-w-0`}>
         {hero}
-        <ArticleBody post={post} />
+        <ArticleBody post={post} site={site} />
       </article>
     </div>
   );

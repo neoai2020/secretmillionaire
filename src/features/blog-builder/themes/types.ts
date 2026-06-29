@@ -1,3 +1,5 @@
+import type { ArmedLink } from "../types";
+
 export type HeaderModule = "centered" | "split" | "minimal";
 export type HeroModule = "featured-pillar" | "none" | "cta-banner";
 export type HomeListModule = "stack" | "grid-2" | "magazine-mix" | "bento" | "horizontal";
@@ -55,6 +57,7 @@ export interface PublicSite {
   hobby: string;
   territory?: string | null;
   theme: string;
+  armed_links?: ArmedLink[];
 }
 
 export interface PublicPostSummary {
@@ -67,6 +70,7 @@ export interface PublicPostSummary {
 }
 
 export interface PublicPost extends PublicPostSummary {
+  id: string;
   html: string;
   meta_description: string | null;
   image_url: string | null;

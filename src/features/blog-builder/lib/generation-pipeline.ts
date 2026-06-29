@@ -96,7 +96,7 @@ export async function generateAndSavePost(
     html = injectMidArticleFigure(html, imageUrl, imageAlt);
   }
 
-  html = weaveAffiliateLinks(html, armedLinks, postId);
+  html = weaveAffiliateLinks(html, armedLinks, postId, site.id);
   html += buildInternalLinks(topics, site.slug, topic.slug);
 
   const { data: post, error } = await supabase
