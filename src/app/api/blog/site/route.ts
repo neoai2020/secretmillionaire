@@ -3,6 +3,7 @@ import { featureApiGuard } from "@/lib/feature-api-guard";
 import { getApiUser } from "@/lib/api-auth";
 import { NO_STORE_HEADERS } from "@/lib/api-cache-headers";
 import { getDailyGenerationQuota } from "@/features/blog-builder/lib/site-quota";
+import { countFacebookPostsBySite, listFacebookPostsForSite } from "@/features/blog-builder/lib/facebook-posts-vault";
 import type { BlogSite } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,7 @@ export interface SiteVaultSummary {
   postCount: number;
   livePostCount: number;
   clickCount: number;
+  facebookPostCount: number;
 }
 
 function countBySite(rows: { site_id: string | null }[] | null): Record<string, number> {
@@ -58,9 +60,10 @@ export async function GET(request: Request) {
     );
   }
 
-  const [{ data: postRows }, { data: clickRows }] = await Promise.all([
+  const [{ data: postRows }, { data: clickRows }, facebookPostCounts] = await Promise.all([
     supabase.from("posts").select("site_id, status").in("site_id", siteIds),
     supabase.from("affiliate_clicks").select("site_id").in("site_id", siteIds),
+    countFacebookPostsBySite(supabase, user.id, siteIds).catch(() => ({} as Record<string, number>)),
   ]);
 
   const postCounts = countBySite(postRows);
@@ -76,6 +79,7 @@ export async function GET(request: Request) {
     postCount: postCounts[site.id] ?? 0,
     livePostCount: livePostCounts[site.id] ?? 0,
     clickCount: clickCounts[site.id] ?? 0,
+    facebookPostCount: facebookPostCounts[site.id] ?? 0,
   }));
 
   if (siteId) {
@@ -91,11 +95,14 @@ export async function GET(request: Request) {
       .order("is_pillar", { ascending: false })
       .order("created_at", { ascending: true });
 
+    const facebookPosts = await listFacebookPostsForSite(supabase, user.id, siteId).catch(() => []);
+
     return NextResponse.json(
       {
         summaries,
         site: summary.site,
         posts: posts ?? [],
+        facebookPosts,
         clicks: summary.clickCount,
         quota,
         activeSiteId: session?.site_id ?? null,

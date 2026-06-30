@@ -9,7 +9,6 @@ import {
   Infinity as InfinityIcon,
   Rocket,
   Facebook,
-  Copy,
   Check,
   Loader2,
   RefreshCw,
@@ -22,6 +21,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
+import { FacebookPostCard } from "@/features/blog-builder/components/FacebookPostCard";
+import type { SavedFacebookPost } from "@/features/blog-builder/lib/facebook-posts-vault";
 
 const FB_LOADING_STEPS = [
   "AI is scanning trending angles in your niche…",
@@ -94,12 +95,12 @@ export default function AcceleratorPage() {
   const [loadingSites, setLoadingSites] = useState(true);
   const [selectedSiteId, setSelectedSiteId] = useState<string>("");
 
-  const [posts, setPosts] = useState<string[]>([]);
+  const [posts, setPosts] = useState<SavedFacebookPost[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [origin, setOrigin] = useState("");
 
   const messageTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -132,6 +133,35 @@ export default function AcceleratorPage() {
       if (progressTimer.current) clearInterval(progressTimer.current);
     };
   }, [generating]);
+
+  useEffect(() => {
+    if (!selectedSiteId) {
+      setPosts([]);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingSaved(true);
+
+    fetch(`/api/blog/facebook-posts?siteId=${encodeURIComponent(selectedSiteId)}`, {
+      cache: "no-store",
+    })
+      .then(async (res) => {
+        const data = res.ok ? await res.json() : { posts: [] };
+        if (cancelled) return;
+        setPosts(Array.isArray(data.posts) ? data.posts : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPosts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSaved(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSiteId]);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -173,7 +203,6 @@ export default function AcceleratorPage() {
     if (!selectedSiteId) return;
     setGenerating(true);
     setError(null);
-    setPosts([]);
     try {
       const res = await fetch("/api/blog/facebook-posts", {
         method: "POST",
@@ -183,18 +212,17 @@ export default function AcceleratorPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
       setLoadingProgress(100);
-      setPosts(Array.isArray(data.posts) ? data.posts : []);
+      const saved = Array.isArray(data.posts) ? (data.posts as SavedFacebookPost[]) : [];
+      setPosts((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        const fresh = saved.filter((p) => !seen.has(p.id));
+        return [...fresh, ...prev];
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally {
       setGenerating(false);
     }
-  };
-
-  const handleCopy = (idx: number, text: string) => {
-    navigator.clipboard.writeText(resolve(text));
-    setCopiedIdx(idx);
-    setTimeout(() => setCopiedIdx(null), 2000);
   };
 
   return (
@@ -406,37 +434,36 @@ export default function AcceleratorPage() {
 
             {error && <p className="text-sm text-red-400/90">{error}</p>}
 
+            {loadingSaved && posts.length === 0 && (
+              <p className="text-sm text-text-muted animate-pulse">Loading saved posts...</p>
+            )}
+
             {posts.length > 0 && (
               <div className="flex flex-col gap-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-accent">
-                  {posts.length} posts ready · link points to {selectedSite?.title}
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-accent">
+                    {posts.length} saved post{posts.length === 1 ? "" : "s"} · link points to{" "}
+                    {selectedSite?.title}
+                  </p>
+                  <Link
+                    href="/asset"
+                    className="text-[11px] font-semibold text-text-muted hover:text-accent transition"
+                  >
+                    View in Asset Vault →
+                  </Link>
+                </div>
+                <p className="text-xs text-text-muted -mt-1">
+                  Each generation adds 10 more posts — nothing is overwritten. All batches are saved
+                  to this site&apos;s folder.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {posts.map((post, idx) => {
-                    const isCopied = copiedIdx === idx;
-                    return (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.03 }}
-                        className="rounded-xl bg-black/30 border border-white/5 p-4 flex flex-col gap-3"
-                      >
-                        <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap flex-1">
-                          {resolve(post)}
-                        </p>
-                        <button
-                          onClick={() => handleCopy(idx, post)}
-                          className={clsx(
-                            "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all self-start",
-                            isCopied ? "bg-green-500 text-black" : "btn-primary"
-                          )}
-                        >
-                          {isCopied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Copy className="w-3.5 h-3.5" /> Copy Post</>}
-                        </button>
-                      </motion.div>
-                    );
-                  })}
+                  {posts.map((post) => (
+                    <FacebookPostCard
+                      key={post.id}
+                      post={post}
+                      resolvedText={resolve(post.body)}
+                    />
+                  ))}
                 </div>
               </div>
             )}

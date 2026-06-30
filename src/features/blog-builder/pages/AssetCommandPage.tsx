@@ -13,7 +13,9 @@ import {
 import { getAppUrl } from "@/lib/brand-vars";
 import { AssetFolderCard, type SiteVaultSummary } from "../components/AssetFolderCard";
 import { PostCard } from "../components/PostCard";
+import { FacebookPostCard } from "../components/FacebookPostCard";
 import { getSiteTerritory } from "../lib/site-territory";
+import type { SavedFacebookPost } from "../lib/facebook-posts-vault";
 import type { BlogPost, BlogSite } from "../types";
 
 interface GenerationQuota {
@@ -27,6 +29,7 @@ export default function AssetCommandPage() {
   const [activeSiteId, setActiveSiteId] = useState<string | null>(null);
   const [selectedSite, setSelectedSite] = useState<BlogSite | null>(null);
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [facebookPosts, setFacebookPosts] = useState<SavedFacebookPost[]>([]);
   const [clicks, setClicks] = useState(0);
   const [quota, setQuota] = useState<GenerationQuota | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +53,7 @@ export default function AssetCommandPage() {
     setDetailLoading(true);
     setSelectedSite(null);
     setPosts([]);
+    setFacebookPosts([]);
 
     try {
       const res = await fetch(`/api/blog/site?siteId=${encodeURIComponent(siteId)}`, {
@@ -60,6 +64,7 @@ export default function AssetCommandPage() {
 
       setSelectedSite(data.site as BlogSite);
       setPosts(data.posts ?? []);
+      setFacebookPosts(Array.isArray(data.facebookPosts) ? data.facebookPosts : []);
       setClicks(data.clicks ?? 0);
       if (Array.isArray(data.summaries)) setSummaries(data.summaries);
     } finally {
@@ -71,12 +76,16 @@ export default function AssetCommandPage() {
     setOpenSiteId(null);
     setSelectedSite(null);
     setPosts([]);
+    setFacebookPosts([]);
     setClicks(0);
   };
 
   const publicUrl = selectedSite
     ? `${typeof window !== "undefined" ? window.location.origin : getAppUrl()}/sites/${selectedSite.slug}`
     : "";
+
+  const resolveFacebookPost = (body: string) =>
+    publicUrl ? body.split("[LINK]").join(publicUrl) : body;
 
   const copyUrl = () => {
     if (!publicUrl) return;
@@ -180,13 +189,46 @@ export default function AssetCommandPage() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <h2 className="brand-font text-lg text-text-heading">Published posts</h2>
+              <h2 className="brand-font text-lg text-text-heading">Published articles</h2>
               {posts.length === 0 ? (
-                <p className="text-sm text-text-muted">No posts in this folder yet.</p>
+                <p className="text-sm text-text-muted">No articles in this folder yet.</p>
               ) : (
                 posts.map((post) => (
                   <PostCard key={post.id} post={post} siteSlug={selectedSite.slug} />
                 ))
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <h2 className="brand-font text-lg text-text-heading">Facebook posts (Accelerator)</h2>
+                {facebookPosts.length > 0 && (
+                  <Link
+                    href="/accelerator"
+                    className="text-xs font-semibold text-[#45A29E] hover:underline"
+                  >
+                    Generate more →
+                  </Link>
+                )}
+              </div>
+              {facebookPosts.length === 0 ? (
+                <p className="text-sm text-text-muted">
+                  No Facebook posts saved yet. Generate posts in{" "}
+                  <Link href="/accelerator" className="text-[#45A29E] hover:underline">
+                    Accelerator
+                  </Link>{" "}
+                  — each batch is saved here automatically.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {facebookPosts.map((post) => (
+                    <FacebookPostCard
+                      key={post.id}
+                      post={post}
+                      resolvedText={resolveFacebookPost(post.body)}
+                    />
+                  ))}
+                </div>
               )}
             </div>
 

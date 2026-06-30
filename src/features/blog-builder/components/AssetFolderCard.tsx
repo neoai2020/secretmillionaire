@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderOpen, Globe, MousePointerClick, FileText } from "lucide-react";
+import { FolderOpen, Globe, MousePointerClick, FileText, Facebook } from "lucide-react";
 import { getSiteTerritory } from "../lib/site-territory";
 import type { BlogSite } from "../types";
 
@@ -9,6 +9,7 @@ export interface SiteVaultSummary {
   postCount: number;
   livePostCount: number;
   clickCount: number;
+  facebookPostCount?: number;
 }
 
 interface AssetFolderCardProps {
@@ -26,7 +27,7 @@ function formatCreatedAt(iso: string): string {
 }
 
 export function AssetFolderCard({ summary, isActive, onOpen }: AssetFolderCardProps) {
-  const { site, postCount, livePostCount, clickCount } = summary;
+  const { site, postCount, livePostCount, clickCount, facebookPostCount = 0 } = summary;
   const territory = getSiteTerritory(site);
 
   return (
@@ -81,9 +82,15 @@ export function AssetFolderCard({ summary, isActive, onOpen }: AssetFolderCardPr
         </span>
         <span className="inline-flex items-center gap-1">
           <FileText size={12} />
-          {postCount} posts
+          {postCount} articles
           {livePostCount > 0 && livePostCount !== postCount ? ` · ${livePostCount} live` : ""}
         </span>
+        {facebookPostCount > 0 && (
+          <span className="inline-flex items-center gap-1">
+            <Facebook size={12} />
+            {facebookPostCount} FB posts
+          </span>
+        )}
         <span className="inline-flex items-center gap-1">
           <MousePointerClick size={12} />
           {clickCount} clicks
