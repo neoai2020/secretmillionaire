@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildHeroImagePrompt, buildHeroImageNegativePrompt } from "./prompts";
 import { mapWithConcurrency } from "./concurrency";
+import { SiteImagePool } from "./site-image-pool";
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? "";
 const RAPIDAPI_IMAGE_HOST =
@@ -107,7 +108,7 @@ export interface StockImageResult {
   stockId: string;
 }
 
-function normalizeImageUrl(url: string): string {
+export function normalizeImageUrl(url: string): string {
   try {
     const parsed = new URL(url);
     return `${parsed.hostname}${parsed.pathname}`;
@@ -604,25 +605,26 @@ export async function resolveFastImageUrl(params: {
   return { url: fallback, alt, stockId: normalizeImageUrl(fallback) };
 }
 
-/** Prefetch hero images for all cluster topics (runs while GPT writes). */
+/** Prefetch hero images for all cluster topics (unique per site generation). */
 export async function prefetchTopicImages(
   topics: ReadonlyArray<{ title: string; slug: string }>,
   subject: string,
+  hobby?: string,
   _concurrency = 4
 ): Promise<Record<string, ResolvedImage>> {
-  const usedUrls: string[] = [];
+  const pool = new SiteImagePool();
   const out: Record<string, ResolvedImage> = {};
 
-  for (const topic of topics) {
-    const image = await resolveFastImageUrl({
+  for (let i = 0; i < topics.length; i++) {
+    const topic = topics[i];
+    const image = await pool.resolveUnique({
       title: topic.title,
       subject,
-      excludeUrls: usedUrls,
+      hobby,
+      seedBoost: i,
+      pickOffset: 0,
     });
-    if (image.url) {
-      usedUrls.push(image.url);
-      out[topic.slug] = image;
-    }
+    if (image.url) out[topic.slug] = image;
   }
 
   return out;

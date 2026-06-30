@@ -22,7 +22,7 @@ const emptyLink = (): ArmedLink => ({
 
 export default function ArmLinksPage() {
   const router = useRouter();
-  const { territoryChosen, territory, hobby, armedLinks, armLinks, saveLinksToVault, sessionLoaded } =
+  const { territoryChosen, territory, hobby, armedLinks, deployArmedLinks, armLinks, saveLinksToVault, sessionLoaded } =
     useBlogBuilder();
   const [links, setLinks] = useState<ArmedLink[]>(
     armedLinks.length > 0 ? armedLinks : [emptyLink()]
@@ -50,8 +50,8 @@ export default function ArmLinksPage() {
         const nextLinks = vault.length > 0 ? vault : armedLinks.length > 0 ? armedLinks : [emptyLink()];
         setLinks(nextLinks);
         setSelected(
-          armedLinks.length > 0
-            ? selectionFromArmedLinks(nextLinks, armedLinks)
+          deployArmedLinks.length > 0
+            ? selectionFromArmedLinks(nextLinks, deployArmedLinks)
             : defaultLinkSelection(nextLinks)
         );
       })
@@ -59,7 +59,7 @@ export default function ArmLinksPage() {
         setVaultLoaded(true);
         skipAutoSave.current = false;
       });
-  }, [sessionLoaded, armedLinks, vaultLoaded]);
+  }, [sessionLoaded, armedLinks, deployArmedLinks, vaultLoaded]);
 
   useEffect(() => {
     if (!vaultLoaded || skipAutoSave.current) return;

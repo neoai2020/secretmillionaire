@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "topics and territory are required" }, { status: 400 });
   }
 
-  const images = await prefetchTopicImages(topics, subject, 4);
+  const images = await prefetchTopicImages(topics, subject, hobby || undefined);
   return NextResponse.json({
     images,
     count: Object.keys(images).length,

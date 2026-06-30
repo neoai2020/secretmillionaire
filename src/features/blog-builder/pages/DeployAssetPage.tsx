@@ -19,6 +19,7 @@ import type { ArmedLink, BlogPost, BlogSite } from "../types";
 interface PrefetchedImage {
   url: string;
   alt: string;
+  stockId?: string;
 }
 
 const DEPLOY_TEXT_WAVE_SIZE = 3;
@@ -101,7 +102,7 @@ export default function DeployAssetPage() {
     linksArmed,
     hobby,
     territory,
-    armedLinks,
+    deployArmedLinks,
     deployed,
     generationLog,
     setGenerating,
@@ -176,7 +177,7 @@ export default function DeployAssetPage() {
 
         const loadedSite = data.site as BlogSite | null;
         const matchesCurrent =
-          loadedSite && siteMatchesWizard(loadedSite, hobby, territory, armedLinks);
+          loadedSite && siteMatchesWizard(loadedSite, hobby, territory, deployArmedLinks);
         const isSessionSite =
           !data.session?.site_id ||
           !loadedSite ||
@@ -214,7 +215,7 @@ export default function DeployAssetPage() {
     return () => {
       cancelled = true;
     };
-  }, [sessionLoaded, deployed, hobby, territory, armedLinks]);
+  }, [sessionLoaded, deployed, hobby, territory, deployArmedLinks]);
 
   const prepareFreshDeploy = () => {
     beginNewSiteGeneration();
@@ -283,37 +284,44 @@ export default function DeployAssetPage() {
     );
   };
 
-  const attachSingleImage = useCallback(
-    (post: BlogPost, prefetched?: PrefetchedImage | null) => {
-      if (post.image_url) return;
-
-      void fetch(`/api/blog/posts/${post.id}/image`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(prefetched?.url ? prefetched : {}),
-      })
-        .then(async (res) => {
-          const data = await res.json();
-          if (res.ok && data.post) {
-            updatePostInSlots(data.post as BlogPost);
-          }
-        })
-        .catch(() => {
-          /* best-effort — publish backfill will retry */
-        });
-    },
-    []
-  );
-
-  const attachImagesInBackground = useCallback(
-    (posts: BlogPost[]) => {
+  const attachSiteImagesBatch = useCallback(
+    async (
+      posts: BlogPost[],
+      topics: ReturnType<typeof buildClusterTopics>,
+      cache: Record<string, PrefetchedImage>
+    ) => {
       const needsImage = posts.filter((p) => !p.image_url);
       if (needsImage.length === 0) return;
 
-      appendLog(`Adding ${needsImage.length} hero images...`);
-      needsImage.forEach((post) => attachSingleImage(post));
+      appendLog(`Adding ${needsImage.length} hero + inline images (no duplicates)...`);
+
+      const { ok, data } = await postJson("/api/blog/attach-site-images", {
+        items: needsImage.map((post) => {
+          const topicIndex = topics.findIndex((t) => t.slug === post.slug);
+          return {
+            postId: post.id,
+            prefetched: cache[post.slug] ?? null,
+            postIndex: topicIndex >= 0 ? topicIndex : 0,
+          };
+        }),
+      });
+
+      if (ok && data?.posts && Array.isArray(data.posts)) {
+        for (const updated of data.posts as BlogPost[]) {
+          updatePostInSlots(updated);
+        }
+        const attached = typeof data.attached === "number" ? data.attached : needsImage.length;
+        appendLog(`Images attached: ${attached}/${needsImage.length}.`);
+      }
     },
-    [appendLog, attachSingleImage]
+    [appendLog]
+  );
+
+  const attachImagesInBackground = useCallback(
+    (posts: BlogPost[], topics: ReturnType<typeof buildClusterTopics>) => {
+      void attachSiteImagesBatch(posts, topics, {});
+    },
+    [attachSiteImagesBatch]
   );
 
   const setWaveGenerating = (indices: number[], completedBefore: number, total: number) => {
@@ -428,10 +436,6 @@ export default function DeployAssetPage() {
             setSlotComplete(i, post);
             generatedPosts.push(post);
             appendLog(`Post ${i + 1}/${topics.length} saved.`);
-
-            void imagePrefetchPromise.then((cache) => {
-              attachSingleImage(post, cache[topics[i].slug] ?? null);
-            });
           } else if (row.error) {
             setSlotError(i, String(row.error));
           }
@@ -450,9 +454,15 @@ export default function DeployAssetPage() {
 
       clearSlotProgressTimer();
       bumpProgress(90);
+
+      if (generatedPosts.length > 0) {
+        const imageCache = await imagePrefetchPromise;
+        await attachSiteImagesBatch(generatedPosts, topics, imageCache);
+      }
+
       return generatedPosts;
     },
-    [appendLog, attachSingleImage]
+    [appendLog, attachSiteImagesBatch]
   );
 
   const publishSite = async (siteId: string, siteSlug: string) => {
@@ -491,7 +501,7 @@ export default function DeployAssetPage() {
       return;
     }
 
-    if (armedLinks.length === 0) {
+    if (deployArmedLinks.length === 0 && !resume) {
       setError("No armed links found — go back to Arm Your Links and add at least one affiliate URL.");
       setPhase("error");
       setGenerating(false);
@@ -522,7 +532,7 @@ export default function DeployAssetPage() {
         bumpProgress(20 + Math.round((startIndex / topics.length) * 65));
         appendLog(`Resuming from post ${startIndex + 1}/${topics.length}...`);
 
-        const affiliateUrl = armedLinks[0]?.url;
+        const affiliateUrl = deployArmedLinks[0]?.url;
         if (affiliateUrl) {
           try {
             const scrapeRes = await fetch("/api/blog/scrape", {
@@ -559,7 +569,7 @@ export default function DeployAssetPage() {
             : "All posts ready. Publishing..."
         );
         await publishSite(activeSite.id, activeSite.slug);
-        attachImagesInBackground(generatedPosts);
+        attachImagesInBackground(generatedPosts, topics);
         deployRunning.current = false;
         return;
       }
@@ -575,7 +585,7 @@ export default function DeployAssetPage() {
 
       const { ok: createOk, status: createStatus, data: createData } = await postJson(
         "/api/blog/create-site",
-        { hobby: hobby.trim() || niche, territory: niche, armedLinks }
+        { hobby: hobby.trim() || niche, territory: niche, armedLinks: deployArmedLinks }
       );
       if (!createOk || !createData) {
         throw new Error((createData?.error as string) || busyError(createStatus));
@@ -592,7 +602,7 @@ export default function DeployAssetPage() {
       activeSlots = initSlots(topics);
       setPostSlots(activeSlots);
 
-      const affiliateUrl = armedLinks[0]?.url;
+      const affiliateUrl = deployArmedLinks[0]?.url;
       if (affiliateUrl) {
         appendLog("Scanning affiliate offer page...");
         try {
@@ -634,7 +644,7 @@ export default function DeployAssetPage() {
           : "All posts ready. Publishing..."
       );
       await publishSite(activeSite.id, activeSite.slug);
-      attachImagesInBackground(generatedPosts);
+      attachImagesInBackground(generatedPosts, topics);
     } catch (e) {
       clearSlotProgressTimer();
       let msg = e instanceof Error ? e.message : "Deploy failed";

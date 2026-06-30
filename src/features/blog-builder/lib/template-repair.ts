@@ -4,6 +4,7 @@ import { scrapePage, buildProductContext } from "./scrape";
 import { fetchTrendingAngles } from "./trends";
 import { getSiteTerritory } from "./site-territory";
 import { regenerateAndSavePost } from "./generation-pipeline";
+import { SiteImagePool } from "./site-image-pool";
 import { isDefectiveGeneratedPost } from "./template-quality";
 import { templateKeyFor, type RecurringTemplateProduct, TEMPLATE_ARTICLE_COUNT } from "./recurring-templates";
 import type { BlogPost, BlogSite, ClusterTopic } from "../types";
@@ -80,9 +81,11 @@ export async function repairTemplateProduct(
 
   let repaired = 0;
   let failed = 0;
+  const imagePool = new SiteImagePool();
 
   for (const post of defective) {
     const topic = topicForPost(post, topics);
+    const postIndex = topics.findIndex((t) => t.slug === topic.slug);
     try {
       await regenerateAndSavePost({
         supabase: admin,
@@ -92,6 +95,8 @@ export async function repairTemplateProduct(
         productContext,
         trendContext,
         fastImage: true,
+        imagePool,
+        postIndex: postIndex >= 0 ? postIndex : 0,
       });
       repaired += 1;
     } catch (err) {

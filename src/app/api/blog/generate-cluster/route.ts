@@ -10,6 +10,7 @@ import {
   generateAndSavePost,
   TEXT_GENERATION_CONCURRENCY,
 } from "@/features/blog-builder/lib/generation-pipeline";
+import { SiteImagePool } from "@/features/blog-builder/lib/site-image-pool";
 import type { ArmedLink, BlogSite } from "@/features/blog-builder/types";
 
 export const dynamic = "force-dynamic";
@@ -52,10 +53,11 @@ export async function POST(request: Request) {
   ]);
 
   // Generate the cluster in a bounded concurrency pool via the shared pipeline.
+  const imagePool = new SiteImagePool();
   const settled = await mapWithConcurrency(
     topics,
     TEXT_GENERATION_CONCURRENCY,
-    async (topic) => {
+    async (topic, index) => {
       try {
         const { post } = await generateAndSavePost({
           supabase,
@@ -65,6 +67,8 @@ export async function POST(request: Request) {
           productContext,
           trendContext,
           fastImage: true,
+          imagePool,
+          postIndex: index,
         });
         return { post };
       } catch (err) {

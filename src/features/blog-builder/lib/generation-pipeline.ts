@@ -10,7 +10,7 @@ import {
 import { buildClusterTopics, buildInternalLinks } from "./templates";
 import { getSiteTerritory } from "./site-territory";
 import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
-import { mapWithConcurrency } from "./concurrency";
+import { SiteImagePool } from "./site-image-pool";
 import type { ArmedLink, BlogPost, BlogSite, ClusterTopic, ContentTier } from "../types";
 
 /** Hero goes to image_url (layout); body gets a distinct inline photo when possible. */
@@ -20,18 +20,29 @@ async function weaveDistinctPostImages(params: {
   title: string;
   territory: string;
   hobby?: string;
+  imagePool?: SiteImagePool;
+  postIndex?: number;
 }): Promise<string> {
   let html = stripLeadingHeroFigure(params.html, params.hero.url);
   if (!params.hero.url) return html;
 
-  const inline = await resolveFastImageUrl({
-    title: params.title,
-    subject: params.territory,
-    hobby: params.hobby,
-    pickOffset: 5,
-    excludeUrls: [params.hero.url],
-    excludeStockIds: params.hero.stockId ? [params.hero.stockId] : [],
-  });
+  const inline = params.imagePool
+    ? await params.imagePool.resolveUnique({
+        title: params.title,
+        subject: params.territory,
+        hobby: params.hobby,
+        pickOffset: 5,
+        seedBoost: (params.postIndex ?? 0) + 1,
+      })
+    : await resolveFastImageUrl({
+        title: params.title,
+        subject: params.territory,
+        hobby: params.hobby,
+        pickOffset: 5,
+        seedBoost: (params.postIndex ?? 0) + 1,
+        excludeUrls: [params.hero.url],
+        excludeStockIds: params.hero.stockId ? [params.hero.stockId] : [],
+      });
 
   if (inline.url && inline.url !== params.hero.url) {
     html = injectMidArticleFigure(html, inline.url, inline.alt);
@@ -126,6 +137,9 @@ export interface GeneratePostParams {
   skipImage?: boolean;
   /** Fast Pollinations/picsum only (skip NanoBanana). Used during deploy. */
   fastImage?: boolean;
+  /** Shared pool — ensures no duplicate stock photos across one site generation. */
+  imagePool?: SiteImagePool;
+  postIndex?: number;
 }
 
 export async function generateAndSavePost(
@@ -141,6 +155,8 @@ export async function generateAndSavePost(
     contentTier = "full",
     skipImage = false,
     fastImage = false,
+    imagePool,
+    postIndex = 0,
   } = params;
 
   const { data: existing } = await supabase
@@ -177,8 +193,20 @@ export async function generateAndSavePost(
 
   if (!skipImage) {
     if (fastImage) {
-      // Fast: show a direct URL now, cache it to storage afterwards.
-      const image = await resolveFastImageUrl({ title: content.title, subject: territory, hobby: site.hobby });
+      const image = imagePool
+        ? await imagePool.resolveUnique({
+            title: content.title,
+            subject: territory,
+            hobby: site.hobby,
+            seedBoost: postIndex,
+            pickOffset: 0,
+          })
+        : await resolveFastImageUrl({
+            title: content.title,
+            subject: territory,
+            hobby: site.hobby,
+            seedBoost: postIndex,
+          });
       imageUrl = image.url || null;
       imageAlt = image.alt;
       externalImageUrl = image.url || null;
@@ -204,6 +232,8 @@ export async function generateAndSavePost(
       title: content.title,
       territory,
       hobby: site.hobby,
+      imagePool,
+      postIndex,
     });
   }
 
@@ -250,6 +280,8 @@ export async function regenerateAndSavePost(params: GeneratePostParams): Promise
     contentTier = "full",
     skipImage = false,
     fastImage = false,
+    imagePool,
+    postIndex = 0,
   } = params;
 
   const territory = getSiteTerritory(site);
@@ -274,7 +306,20 @@ export async function regenerateAndSavePost(params: GeneratePostParams): Promise
 
   if (!skipImage) {
     if (fastImage) {
-      const image = await resolveFastImageUrl({ title: content.title, subject: territory, hobby: site.hobby });
+      const image = imagePool
+        ? await imagePool.resolveUnique({
+            title: content.title,
+            subject: territory,
+            hobby: site.hobby,
+            seedBoost: postIndex,
+            pickOffset: 0,
+          })
+        : await resolveFastImageUrl({
+            title: content.title,
+            subject: territory,
+            hobby: site.hobby,
+            seedBoost: postIndex,
+          });
       imageUrl = image.url || null;
       imageAlt = image.alt;
       externalImageUrl = image.url || null;
@@ -299,6 +344,8 @@ export async function regenerateAndSavePost(params: GeneratePostParams): Promise
       title: content.title,
       territory,
       hobby: site.hobby,
+      imagePool,
+      postIndex,
     });
   }
 
@@ -347,6 +394,8 @@ export async function attachImageToPost(params: {
   postId: string;
   /** Hero image resolved during deploy prefetch — skips another lookup. */
   prefetched?: ResolvedImage | null;
+  imagePool?: SiteImagePool;
+  postIndex?: number;
 }): Promise<BlogPost> {
   const post = await loadOwnedPost(params.supabase, params.userId, params.postId);
   if (!post) throw new Error("Post not found");
@@ -357,10 +406,25 @@ export async function attachImageToPost(params: {
   if (!site) throw new Error("Site not found");
 
   const territory = getSiteTerritory(site);
+  const postIndex = params.postIndex ?? 0;
 
   const fast =
     params.prefetched ??
-    (await resolveFastImageUrl({ title: post.title, subject: territory, hobby: site.hobby }));
+    (params.imagePool
+      ? await params.imagePool.resolveUnique({
+          title: post.title,
+          subject: territory,
+          hobby: site.hobby,
+          seedBoost: postIndex,
+          pickOffset: 0,
+        })
+      : await resolveFastImageUrl({
+          title: post.title,
+          subject: territory,
+          hobby: site.hobby,
+          seedBoost: postIndex,
+        }));
+
   if (fast.url) {
     const html = await weaveDistinctPostImages({
       html: post.html,
@@ -368,6 +432,8 @@ export async function attachImageToPost(params: {
       title: post.title,
       territory,
       hobby: site.hobby,
+      imagePool: params.imagePool,
+      postIndex,
     });
 
     const { data: updated, error } = await params.supabase
@@ -413,6 +479,8 @@ export async function attachImageToPost(params: {
     title: post.title,
     territory,
     hobby: site.hobby,
+    imagePool: params.imagePool,
+    postIndex,
   });
 
   const { data: updated, error } = await params.supabase
@@ -430,6 +498,46 @@ export async function attachImageToPost(params: {
   if (error) throw new Error(error.message);
 
   return updated as BlogPost;
+}
+
+/** Attach hero + inline images for many posts in one generation — no duplicate stock photos. */
+export async function attachSiteImages(params: {
+  supabase: SupabaseClient;
+  userId: string;
+  items: Array<{
+    postId: string;
+    prefetched?: ResolvedImage | null;
+    postIndex?: number;
+  }>;
+}): Promise<{ posts: BlogPost[]; attached: number }> {
+  const pool = new SiteImagePool();
+  pool.seed(
+    params.items
+      .map((item) => item.prefetched)
+      .filter((img): img is ResolvedImage => Boolean(img?.url))
+  );
+
+  const posts: BlogPost[] = [];
+  let attached = 0;
+
+  for (const item of params.items) {
+    try {
+      const post = await attachImageToPost({
+        supabase: params.supabase,
+        userId: params.userId,
+        postId: item.postId,
+        prefetched: item.prefetched,
+        imagePool: pool,
+        postIndex: item.postIndex ?? 0,
+      });
+      posts.push(post);
+      if (post.image_url) attached += 1;
+    } catch (err) {
+      console.error("[attach-site-images] failed for post", item.postId, err);
+    }
+  }
+
+  return { posts, attached };
 }
 
 /**
@@ -453,15 +561,23 @@ export async function backfillMissingPostImages(
   const ids = (posts ?? []).map((p) => (p as { id: string }).id);
   if (ids.length === 0) return 0;
 
+  const pool = new SiteImagePool();
   let attached = 0;
-  await mapWithConcurrency(ids, 3, async (postId) => {
+
+  for (let i = 0; i < ids.length; i++) {
     try {
-      const updated = await attachImageToPost({ supabase, userId, postId });
+      const updated = await attachImageToPost({
+        supabase,
+        userId,
+        postId: ids[i],
+        imagePool: pool,
+        postIndex: i,
+      });
       if (updated.image_url) attached += 1;
     } catch (err) {
-      console.error("[image-backfill] failed for post", postId, err);
+      console.error("[image-backfill] failed for post", ids[i], err);
     }
-  });
+  }
 
   return attached;
 }

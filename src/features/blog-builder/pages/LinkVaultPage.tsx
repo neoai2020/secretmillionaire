@@ -12,31 +12,22 @@ const emptyLink = (): ArmedLink => ({
 });
 
 export default function LinkVaultPage() {
-  const { armedLinks, sessionLoaded, saveLinksToVault } = useBlogBuilder();
+  const { sessionLoaded, saveLinksToVault } = useBlogBuilder();
   const [links, setLinks] = useState<ArmedLink[]>([emptyLink()]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const skipAutoSave = useRef(true);
-  // Hydrate the editor exactly once. Without this guard, the debounced
-  // auto-save writes the cleaned list back into context `armedLinks`, which
-  // would re-run this effect and wipe a freshly-added empty row (the flicker /
-  // "can't add another link" bug).
   const hydrated = useRef(false);
 
   useEffect(() => {
     if (!sessionLoaded || hydrated.current) return;
 
-    if (armedLinks.length > 0) {
-      hydrated.current = true;
-      setLinks(armedLinks);
-      setLoading(false);
-      skipAutoSave.current = false;
-      return;
-    }
-
     fetch("/api/blog/link-vault", { cache: "no-store" })
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) throw new Error("Could not load link vault");
+        return r.json();
+      })
       .then((data) => {
         const stored = Array.isArray(data.links) ? (data.links as ArmedLink[]) : [];
         setLinks(stored.length > 0 ? stored : [emptyLink()]);
@@ -47,7 +38,7 @@ export default function LinkVaultPage() {
         setLoading(false);
         skipAutoSave.current = false;
       });
-  }, [sessionLoaded, armedLinks]);
+  }, [sessionLoaded]);
 
   useEffect(() => {
     if (!sessionLoaded || loading || skipAutoSave.current) return;

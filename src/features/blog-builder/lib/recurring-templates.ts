@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateAndSavePost, backfillMissingPostImages, TEXT_GENERATION_CONCURRENCY } from "./generation-pipeline";
+import { SiteImagePool } from "./site-image-pool";
 import { buildLargeClusterTopics } from "./templates";
 import { weaveAffiliateLinks } from "./affiliate";
 import { scrapePage, buildProductContext } from "./scrape";
@@ -107,8 +108,9 @@ export async function seedProductTemplate(
 
   const topics = buildLargeClusterTopics(product.name, product.niche, TEMPLATE_ARTICLE_COUNT);
   const templateSite = site;
+  const imagePool = new SiteImagePool();
 
-  const results = await mapWithConcurrency(topics, TEXT_GENERATION_CONCURRENCY, async (topic) => {
+  const results = await mapWithConcurrency(topics, TEXT_GENERATION_CONCURRENCY, async (topic, index) => {
     try {
       await generateAndSavePost({
         supabase: admin,
@@ -118,6 +120,8 @@ export async function seedProductTemplate(
         productContext,
         trendContext,
         fastImage: true,
+        imagePool,
+        postIndex: index,
       });
       return true;
     } catch {

@@ -18,7 +18,10 @@ interface BlogBuilderState {
   hobby: string;
   territory: string;
   suggestions: string[];
+  /** Full Link Vault (all saved affiliate URLs). */
   armedLinks: ArmedLink[];
+  /** Links selected for the current deploy — subset of the vault. */
+  deployArmedLinks: ArmedLink[];
   territoryChosen: boolean;
   linksArmed: boolean;
   deployed: boolean;
@@ -51,6 +54,7 @@ const defaultState: BlogBuilderState = {
   territory: "",
   suggestions: [],
   armedLinks: [],
+  deployArmedLinks: [],
   territoryChosen: false,
   linksArmed: false,
   deployed: false,
@@ -260,11 +264,11 @@ export function BlogBuilderProvider({ children }: { children: React.ReactNode })
   );
 
   const armLinks = useCallback(
-    (armedLinks: ArmedLink[]) => {
-      const cleaned = vaultReadyLinks(armedLinks);
+    (deployArmedLinks: ArmedLink[]) => {
+      const cleaned = vaultReadyLinks(deployArmedLinks);
       setState((s) => ({
         ...s,
-        armedLinks: cleaned,
+        deployArmedLinks: cleaned,
         linksArmed: cleaned.length > 0,
         step: 2,
       }));

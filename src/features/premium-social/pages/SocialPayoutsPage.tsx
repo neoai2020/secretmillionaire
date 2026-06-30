@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import {
   Zap,
   Filter,
-  Link2,
   Eye,
   Copy,
   Check,
@@ -17,11 +16,13 @@ import {
   ExternalLink,
   Users,
 } from "lucide-react";
+import { AffiliateLinkPicker } from "@/components/AffiliateLinkPicker";
+import { isValidAffiliateUrl } from "@/features/blog-builder/lib/affiliate-url";
 import { SOCIAL_NICHES, SOCIAL_POSTS } from "../data/posts";
 
 const STEPS = [
   { n: 1, title: "Pick Your Niche", text: "Choose from 8 proven niches that people spend money in every day." },
-  { n: 2, title: "Enter Your Affiliate Link", text: "Paste your link below and every post automatically includes it." },
+  { n: 2, title: "Pick Your Link", text: "Choose a saved armed link from your vault or add a new one — every post uses it automatically." },
   { n: 3, title: "Copy & Paste Posts", text: "One-click copy into any Facebook group and start earning commissions." },
 ];
 
@@ -36,6 +37,10 @@ export default function SocialPayoutsPage() {
     [activeNiche]
   );
 
+  useEffect(() => {
+    if (showPosts && !isValidAffiliateUrl(affiliateLink)) setShowPosts(false);
+  }, [affiliateLink, showPosts]);
+
   const resolve = (text: string) =>
     affiliateLink.trim() ? text.split("[LINK]").join(affiliateLink.trim()) : text;
 
@@ -46,7 +51,7 @@ export default function SocialPayoutsPage() {
   };
 
   const handleShow = () => {
-    if (!affiliateLink.trim()) return;
+    if (!isValidAffiliateUrl(affiliateLink)) return;
     setShowPosts(true);
   };
 
@@ -125,28 +130,24 @@ export default function SocialPayoutsPage() {
         </div>
       </div>
 
-      {/* Affiliate link input */}
+      {/* Affiliate link picker */}
       <div className="glass-card p-5 sm:p-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Link2 className="text-accent" size={18} />
-          <h3 className="brand-font text-lg text-text-heading">Your Affiliate Link</h3>
-        </div>
+        <h3 className="brand-font text-lg text-text-heading mb-2">Your Affiliate Link</h3>
         <p className="mb-4 text-sm text-text-muted">
-          Paste your link below. The <code className="rounded bg-white/10 px-1.5 py-0.5 text-accent">[LINK]</code> tag in
-          each post is swapped for your link automatically.
+          Select from your Link Vault or add a new DigiStore URL. The{" "}
+          <code className="rounded bg-white/10 px-1.5 py-0.5 text-accent">[LINK]</code> tag in each post
+          is swapped for your link automatically.
         </p>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <input
-            type="url"
-            value={affiliateLink}
-            onChange={(e) => { setAffiliateLink(e.target.value); if (showPosts && !e.target.value.trim()) setShowPosts(false); }}
-            placeholder="https://www.digistore24.com/redir/..."
-            className="input-base flex-1"
-          />
-          <button onClick={handleShow} disabled={!affiliateLink.trim()} className="btn-primary px-6 py-3.5 disabled:opacity-50 disabled:cursor-not-allowed">
-            <Eye size={18} /> Show My Posts
-          </button>
-        </div>
+
+        <AffiliateLinkPicker value={affiliateLink} onChange={setAffiliateLink} />
+
+        <button
+          onClick={handleShow}
+          disabled={!isValidAffiliateUrl(affiliateLink)}
+          className="btn-primary px-6 py-3.5 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Eye size={18} /> Show My Posts
+        </button>
       </div>
 
       {/* Posts */}
