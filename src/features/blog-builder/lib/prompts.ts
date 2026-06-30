@@ -1,4 +1,4 @@
-import type { GeneratedPostContent, ArticleAngle } from "../types";
+import type { GeneratedPostContent, ArticleAngle, ContentTier } from "../types";
 import { isDefectiveGeneratedPost } from "./template-quality";
 
 export const ARTICLE_JSON_EXAMPLE = `{
@@ -80,7 +80,14 @@ export function buildArticleUserPrompt(params: {
   affiliateContext?: string;
   productContext?: string;
   trendContext?: string;
+  contentTier?: ContentTier;
 }): string {
+  const tier = params.contentTier ?? "full";
+  const wordSpec =
+    tier === "deploy"
+      ? "- html: 400-550 words of useful content; 3-4 <h2> sections; mix of <p> and <ul>/<li>; optional short FAQ (1-2 questions)."
+      : "- html: 650-950 words of genuinely useful content; 4-5 <h2> sections; mix of <p>, <ul>/<li>, and a short FAQ (2-3 buyer questions answered in prose or a final <h2>FAQ).";
+
   const parts = [
     `TERRITORY (exact niche — every paragraph must relate to this): ${params.territory}`,
     `Article headline angle: ${params.topic}`,
@@ -89,7 +96,7 @@ export function buildArticleUserPrompt(params: {
     getAngleInstructions(params.angle),
     "",
     "Output requirements:",
-    "- html: 650-950 words of genuinely useful content; 4-5 <h2> sections; mix of <p>, <ul>/<li>, and a short FAQ (2-3 buyer questions answered in prose or a final <h2>FAQ).",
+    wordSpec,
     "- Lead with experience: include at least two concrete, first-hand-sounding details and one honest trade-off or downside.",
     "- Exactly ONE inline link with href=\"#offer\" and natural descriptive anchor text, placed in a body paragraph (no other links/CTAs).",
     "- title: compelling, names the TERRITORY product/niche (never chess, pool chemicals, or unrelated categories), max ~70 chars",

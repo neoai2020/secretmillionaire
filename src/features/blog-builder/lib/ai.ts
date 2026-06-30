@@ -12,6 +12,7 @@ interface ChatResponse {
 
 export interface GptCallOptions {
   maxRetries?: number;
+  maxRepairAttempts?: number;
   timeoutMs?: number;
   /** Lower = more deterministic JSON (0.2–0.4 recommended for structured output). */
   temperature?: number;
@@ -165,6 +166,7 @@ export async function generateStructuredJSON<T>(params: {
   const opts: GptCallOptions = {
     temperature: 0.3,
     maxRetries: 4,
+    maxRepairAttempts: 2,
     ...params.options,
   };
 
@@ -172,7 +174,8 @@ export async function generateStructuredJSON<T>(params: {
   const parsed = params.validate(extractJsonFromText(raw));
   if (parsed) return parsed;
 
-  for (let repair = 0; repair < 2; repair++) {
+  const repairAttempts = opts.maxRepairAttempts ?? 2;
+  for (let repair = 0; repair < repairAttempts; repair++) {
     const repairRaw = await generateWithGPT(
       params.systemPrompt,
       `${params.userPrompt}

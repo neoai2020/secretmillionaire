@@ -6,7 +6,7 @@ import {
   normalizeArticleContent,
 } from "./prompts";
 import { localTerritorySuggestions } from "./local-territory-suggestions";
-import type { ArticleAngle, GeneratedPostContent } from "../types";
+import type { ArticleAngle, ContentTier, GeneratedPostContent } from "../types";
 
 export async function generateBlogPostContent(params: {
   topic: string;
@@ -16,8 +16,10 @@ export async function generateBlogPostContent(params: {
   affiliateContext?: string;
   productContext?: string;
   trendContext?: string;
+  contentTier?: ContentTier;
 }): Promise<GeneratedPostContent> {
   const angle = params.angle ?? "pillar-guide";
+  const tier = params.contentTier ?? "full";
   const userPrompt = buildArticleUserPrompt({
     topic: params.topic,
     territory: params.territory,
@@ -26,6 +28,7 @@ export async function generateBlogPostContent(params: {
     affiliateContext: params.affiliateContext,
     productContext: params.productContext,
     trendContext: params.trendContext,
+    contentTier: tier,
   });
 
   return generateStructuredJSON<GeneratedPostContent>({
@@ -39,7 +42,11 @@ export async function generateBlogPostContent(params: {
         params.territory
       );
     },
-    options: { temperature: 0.3, maxRetries: 3 },
+    options: {
+      temperature: 0.3,
+      maxRetries: tier === "deploy" ? 2 : 3,
+      maxRepairAttempts: tier === "deploy" ? 1 : 2,
+    },
   });
 }
 

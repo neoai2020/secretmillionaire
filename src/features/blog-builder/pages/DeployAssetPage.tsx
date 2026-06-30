@@ -73,6 +73,16 @@ function siteMatchesWizard(
   return Boolean(niche) && siteNiche === niche && siteLinks === currentLinks;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function deployProgress(completed: number, total: number, slotProgress = 0): number {
+  if (total <= 0) return 0;
+  const base = 20 + (completed / total) * 70;
+  const slotShare = slotProgress / total;
+  return Math.min(92, Math.round(base + slotShare * 0.7));
+}
 function initSlots(topics: ReturnType<typeof buildClusterTopics>): PostSlotState[] {
   return topics.map((topic) => ({
     topic,
@@ -118,11 +128,10 @@ export default function DeployAssetPage() {
     }
   };
 
-  const isActiveDeployPhase =
-    phase === "setup" || phase === "generating" || phase === "publishing";
+  const isSetupPhase = phase === "setup";
 
   useEffect(() => {
-    if (!isActiveDeployPhase) {
+    if (!isSetupPhase) {
       clearProgressCreepTimer();
       return;
     }
@@ -130,14 +139,13 @@ export default function DeployAssetPage() {
     clearProgressCreepTimer();
     progressCreepTimer.current = setInterval(() => {
       setProgress((current) => {
-        if (current >= 97) return current;
-        const increment = current < 70 ? 0.22 : current < 90 ? 0.12 : 0.05;
-        return Math.min(97, current + increment);
+        if (current >= 18) return current;
+        return Math.min(18, current + 0.35);
       });
     }, 700);
 
     return clearProgressCreepTimer;
-  }, [isActiveDeployPhase]);
+  }, [isSetupPhase]);
 
   useEffect(() => {
     if (sessionLoaded && !linksArmed) router.replace("/arm-links");
@@ -219,33 +227,46 @@ export default function DeployAssetPage() {
     setProgress((current) => Math.max(current, target));
   };
 
+  const activeSlotIndex = useRef<number | null>(null);
+
   const clearSlotProgressTimer = () => {
     if (slotProgressTimer.current) {
       clearInterval(slotProgressTimer.current);
       slotProgressTimer.current = null;
     }
+    activeSlotIndex.current = null;
   };
 
-  const startSlotsProgress = () => {
-    if (slotProgressTimer.current) return;
+  const startActiveSlotProgress = (index: number, completed: number, total: number) => {
+    clearSlotProgressTimer();
+    activeSlotIndex.current = index;
     slotProgressTimer.current = setInterval(() => {
       setPostSlots((prev) =>
-        prev.map((s) => {
-          if (s.status !== "generating") return s;
-          const next = s.progress + 1.5 + Math.random() * 2.5;
-          return { ...s, progress: Math.min(94, next) };
+        prev.map((s, idx) => {
+          if (idx !== index || s.status !== "generating") return s;
+          const next = s.progress + 0.8 + Math.random() * 1.2;
+          const capped = Math.min(88, next);
+          setProgress(deployProgress(completed, total, capped));
+          return { ...s, progress: capped };
         })
       );
-    }, 700);
+    }, 900);
   };
 
-  const setSlotGenerating = (index: number) => {
+  const setSlotGenerating = (index: number, completed: number, total: number) => {
     setPostSlots((prev) =>
-      prev.map((s, idx) =>
-        idx === index ? { ...s, status: "generating", progress: 4, error: undefined } : s
-      )
+      prev.map((s, idx) => {
+        if (idx === index) {
+          return { ...s, status: "generating", progress: 6, error: undefined };
+        }
+        if (idx > index && s.status === "generating") {
+          return { ...s, status: "queued", progress: 0 };
+        }
+        return s;
+      })
     );
-    startSlotsProgress();
+    setProgress(deployProgress(completed, total, 6));
+    startActiveSlotProgress(index, completed, total);
   };
 
   const setSlotComplete = (index: number, post: BlogPost) => {
@@ -297,59 +318,90 @@ export default function DeployAssetPage() {
       siteId: string;
       topics: ReturnType<typeof buildClusterTopics>;
       productContext: string;
+      deployTerritory: string;
+      deployHobby: string;
       startIndex?: number;
     }) => {
-      const { siteId, topics, productContext, startIndex = 0 } = params;
-      const pending = topics.slice(startIndex).map((_, offset) => startIndex + offset);
+      const {
+        siteId,
+        topics,
+        productContext,
+        deployTerritory,
+        deployHobby,
+        startIndex = 0,
+      } = params;
 
-      if (pending.length === 0) return [];
+      if (startIndex >= topics.length) return [];
 
-      pending.forEach((i) => setSlotGenerating(i));
-      appendLog(`Writing ${pending.length} articles on server (text first, images after publish)...`);
-      bumpProgress(25);
-
-      const { ok: batchOk, status: batchStatus, data: batchData } = await postJson(
-        "/api/blog/generate-deploy-batch",
-        { siteId, productContext, startIndex }
-      );
-
-      if (!batchOk || !batchData) {
-        throw new Error((batchData?.error as string) || busyError(batchStatus));
-      }
-
-      const results = (Array.isArray(batchData.results) ? batchData.results : []) as Array<{
-        index: number;
-        post?: BlogPost;
-        error?: string;
-      }>;
-      let finished = 0;
-
-      for (const row of results) {
-        const i = typeof row.index === "number" ? row.index : -1;
-        if (i < 0) continue;
-
-        if (row.post) {
-          setSlotComplete(i, row.post as BlogPost);
-          finished += 1;
-          bumpProgress(20 + Math.round((finished / topics.length) * 65));
-        } else if (row.error) {
-          setSlotError(i, String(row.error));
+      let trendContext = "";
+      try {
+        appendLog("Gathering niche trend angles...");
+        const { ok, data } = await postJson("/api/blog/trend-angles", {
+          territory: deployTerritory,
+          hobby: deployHobby,
+        });
+        if (ok && data && typeof data.trendContext === "string") {
+          trendContext = data.trendContext;
         }
+      } catch {
+        // Non-fatal
       }
 
-      const failures = Array.isArray(batchData.failures) ? batchData.failures : [];
-      if (failures.length > 0) {
-        clearSlotProgressTimer();
-        throw new Error(
-          `${failures.length} article${failures.length === 1 ? "" : "s"} failed after ${POST_GENERATION_ATTEMPTS} tries. Click Try Deploy Again to resume.`
-        );
+      appendLog(
+        `Writing ${topics.length - startIndex} articles one at a time (text first, images after publish)...`
+      );
+      bumpProgress(22);
+
+      const generatedPosts: BlogPost[] = [];
+
+      for (let i = startIndex; i < topics.length; i++) {
+        const topic = topics[i];
+        const completedBefore = i;
+        setSlotGenerating(i, completedBefore, topics.length);
+        appendLog(`Post ${i + 1}/${topics.length}: ${topic.title.slice(0, 60)}...`);
+
+        let post: BlogPost | null = null;
+        let lastError = "Generation failed";
+
+        for (let attempt = 0; attempt < POST_GENERATION_ATTEMPTS; attempt++) {
+          if (attempt > 0) {
+            appendLog(`Retrying post ${i + 1} (attempt ${attempt + 1}/${POST_GENERATION_ATTEMPTS})...`);
+            await sleep(2000 * attempt);
+          }
+
+          const { ok, status, data } = await postJson("/api/blog/generate-one-post", {
+            siteId,
+            topic,
+            productContext,
+            trendContext,
+            contentTier: "deploy",
+            skipImage: true,
+          });
+
+          if (ok && data?.post) {
+            post = data.post as BlogPost;
+            break;
+          }
+
+          lastError = (data?.error as string) || busyError(status);
+        }
+
+        if (!post) {
+          setSlotError(i, lastError);
+          throw new Error(
+            `Post ${i + 1} failed after ${POST_GENERATION_ATTEMPTS} tries: ${lastError}`
+          );
+        }
+
+        setSlotComplete(i, post);
+        generatedPosts.push(post);
+        setProgress(deployProgress(i + 1, topics.length));
+        appendLog(`Post ${i + 1}/${topics.length} saved.`);
       }
 
       clearSlotProgressTimer();
-      bumpProgress(85);
-
-      const posts = results.filter((r) => r.post).map((r) => r.post as BlogPost);
-      return posts;
+      bumpProgress(90);
+      return generatedPosts;
     },
     [appendLog]
   );
@@ -444,6 +496,8 @@ export default function DeployAssetPage() {
           siteId: activeSite.id,
           topics,
           productContext,
+          deployTerritory,
+          deployHobby,
           startIndex,
         });
 
@@ -514,6 +568,8 @@ export default function DeployAssetPage() {
         siteId: activeSite.id,
         topics,
         productContext,
+        deployTerritory,
+        deployHobby,
         startIndex: 0,
       });
 
@@ -606,7 +662,7 @@ export default function DeployAssetPage() {
               label={
                 phase === "publishing"
                   ? "Publishing money site live"
-                  : `Generating content — ${completedPosts}/${postSlots.length} posts`
+                  : `Generating content — ${completedPosts}/${postSlots.length} posts ready`
               }
               progress={progress}
               active

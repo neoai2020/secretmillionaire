@@ -38,6 +38,8 @@ export interface BlogPost {
   created_at: string;
 }
 
+export type ContentTier = "deploy" | "full";
+
 export interface GeneratedPostContent {
   title: string;
   excerpt: string;

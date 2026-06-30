@@ -6,7 +6,7 @@ import { buildClusterTopics, buildInternalLinks } from "./templates";
 import { getSiteTerritory } from "./site-territory";
 import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
 import { mapWithConcurrency } from "./concurrency";
-import type { ArmedLink, BlogPost, BlogSite, ClusterTopic } from "../types";
+import type { ArmedLink, BlogPost, BlogSite, ClusterTopic, ContentTier } from "../types";
 
 /**
  * GPT text calls share one RapidAPI quota. A small pool (not strictly serial)
@@ -14,7 +14,7 @@ import type { ArmedLink, BlogPost, BlogSite, ClusterTopic } from "../types";
  * occasional 429. Tune via env if the quota tier changes.
  */
 export const TEXT_GENERATION_CONCURRENCY = Number(
-  process.env.TEXT_GENERATION_CONCURRENCY ?? 4
+  process.env.TEXT_GENERATION_CONCURRENCY ?? 2
 );
 export const POST_GENERATION_ATTEMPTS = 3;
 
@@ -88,6 +88,8 @@ export interface GeneratePostParams {
   productContext?: string;
   /** Niche trend angles, computed once per site and shared across the cluster. */
   trendContext?: string;
+  /** deploy = shorter copy for Empire Builder deploy; full = templates / bulk seed. */
+  contentTier?: ContentTier;
   /** Text-only — image attached in a second pass. */
   skipImage?: boolean;
   /** Fast Pollinations/picsum only (skip NanoBanana). Used during deploy. */
@@ -104,6 +106,7 @@ export async function generateAndSavePost(
     topic,
     productContext = "",
     trendContext = "",
+    contentTier = "full",
     skipImage = false,
     fastImage = false,
   } = params;
@@ -131,6 +134,7 @@ export async function generateAndSavePost(
     affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
     productContext,
     trendContext,
+    contentTier,
   });
 
   const postId = crypto.randomUUID();
@@ -205,6 +209,7 @@ export async function regenerateAndSavePost(params: GeneratePostParams): Promise
     topic,
     productContext = "",
     trendContext = "",
+    contentTier = "full",
     skipImage = false,
     fastImage = false,
   } = params;
@@ -221,6 +226,7 @@ export async function regenerateAndSavePost(params: GeneratePostParams): Promise
     affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
     productContext,
     trendContext,
+    contentTier,
   });
 
   const postId = crypto.randomUUID();

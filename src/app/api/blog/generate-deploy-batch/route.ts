@@ -68,6 +68,7 @@ export async function POST(request: Request) {
             topic,
             productContext,
             trendContext,
+            contentTier: "deploy",
             skipImage: true,
           });
           return { index, topic, post: result.post };
