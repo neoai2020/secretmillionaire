@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateBlogPostContent } from "./generate-content";
 import { weaveAffiliateLinks } from "./affiliate";
-import { resolvePostImage, resolveFastImageUrl, persistExternalImage } from "./images";
+import {
+  resolvePostImage,
+  resolveFastImageUrl,
+  persistExternalImage,
+  type ResolvedImage,
+} from "./images";
 import { buildClusterTopics, buildInternalLinks } from "./templates";
 import { getSiteTerritory } from "./site-territory";
 import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
@@ -301,6 +306,8 @@ export async function attachImageToPost(params: {
   supabase: SupabaseClient;
   userId: string;
   postId: string;
+  /** Hero image resolved during deploy prefetch — skips another lookup. */
+  prefetched?: ResolvedImage | null;
 }): Promise<BlogPost> {
   const post = await loadOwnedPost(params.supabase, params.userId, params.postId);
   if (!post) throw new Error("Post not found");
@@ -311,9 +318,41 @@ export async function attachImageToPost(params: {
   if (!site) throw new Error("Site not found");
 
   const territory = getSiteTerritory(site);
-  // Resolve AND persist to Supabase before returning. This guarantees the public
-  // site stores a stable Supabase URL (or reliable picsum fallback) instead of a
-  // flaky hotlink that may 404 — the main reason some hero images never showed.
+
+  const fast =
+    params.prefetched ??
+    (await resolveFastImageUrl({ title: post.title, subject: territory }));
+  if (fast.url) {
+    const bodyHtml = stripLeadingHeroFigure(post.html, post.image_url);
+    const html = injectMidArticleFigure(bodyHtml, fast.url, fast.alt);
+
+    const { data: updated, error } = await params.supabase
+      .from("posts")
+      .update({
+        html,
+        image_url: fast.url,
+        image_alt: fast.alt,
+      })
+      .eq("id", post.id)
+      .eq("user_id", params.userId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    if (!fast.url.includes("/blog-images/")) {
+      persistPostImageInBackground({
+        supabase: params.supabase,
+        userId: params.userId,
+        postId: post.id,
+        externalUrl: fast.url,
+      });
+    }
+
+    return updated as BlogPost;
+  }
+
+  // Slow fallback: download + upload before return (NanoBanana / guaranteed persist).
   const image = await resolvePostImage({
     title: post.title,
     subject: territory,

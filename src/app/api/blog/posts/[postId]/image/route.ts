@@ -8,8 +8,8 @@ export const maxDuration = 90;
 
 type RouteContext = { params: Promise<{ postId: string }> };
 
-/** Generate and attach hero image to an existing draft post. */
-export async function POST(_request: Request, context: RouteContext) {
+/** Attach hero image — uses prefetched URL when provided, else resolves fresh. */
+export async function POST(request: Request, context: RouteContext) {
   const guard = featureApiGuard("blog-builder");
   if (guard) return guard;
 
@@ -17,9 +17,23 @@ export async function POST(_request: Request, context: RouteContext) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { postId } = await context.params;
+  const body = await request.json().catch(() => ({}));
+
+  const prefetched =
+    typeof body.url === "string" && body.url.startsWith("http")
+      ? {
+          url: body.url,
+          alt: typeof body.alt === "string" ? body.alt : "Hero image",
+        }
+      : null;
 
   try {
-    const post = await attachImageToPost({ supabase, userId: user.id, postId });
+    const post = await attachImageToPost({
+      supabase,
+      userId: user.id,
+      postId,
+      prefetched,
+    });
     return NextResponse.json({ post });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Image generation failed";

@@ -16,6 +16,11 @@ import { getSiteTerritory } from "../lib/site-territory";
 import { POST_GENERATION_ATTEMPTS } from "../lib/generation-pipeline";
 import type { ArmedLink, BlogPost, BlogSite } from "../types";
 
+interface PrefetchedImage {
+  url: string;
+  alt: string;
+}
+
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
 
 /** POST and parse JSON defensively — a busy host can return an HTML timeout page. */
@@ -296,22 +301,38 @@ export default function DeployAssetPage() {
     );
   };
 
-  const attachImagesInBackground = useCallback((posts: BlogPost[]) => {
-    const needsImage = posts.filter((p) => !p.image_url);
-    if (needsImage.length === 0) return;
+  const attachSingleImage = useCallback(
+    (post: BlogPost, prefetched?: PrefetchedImage | null) => {
+      if (post.image_url) return;
 
-    appendLog(`Adding ${needsImage.length} hero images in the background...`);
-
-    void Promise.allSettled(
-      needsImage.map(async (post) => {
-        const res = await fetch(`/api/blog/posts/${post.id}/image`, { method: "POST" });
-        const data = await res.json();
-        if (res.ok && data.post) {
-          updatePostInSlots(data.post as BlogPost);
-        }
+      void fetch(`/api/blog/posts/${post.id}/image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(prefetched?.url ? prefetched : {}),
       })
-    );
-  }, [appendLog]);
+        .then(async (res) => {
+          const data = await res.json();
+          if (res.ok && data.post) {
+            updatePostInSlots(data.post as BlogPost);
+          }
+        })
+        .catch(() => {
+          /* best-effort — publish backfill will retry */
+        });
+    },
+    []
+  );
+
+  const attachImagesInBackground = useCallback(
+    (posts: BlogPost[]) => {
+      const needsImage = posts.filter((p) => !p.image_url);
+      if (needsImage.length === 0) return;
+
+      appendLog(`Adding ${needsImage.length} hero images...`);
+      needsImage.forEach((post) => attachSingleImage(post));
+    },
+    [appendLog, attachSingleImage]
+  );
 
   const runPostGeneration = useCallback(
     async (params: {
@@ -348,9 +369,23 @@ export default function DeployAssetPage() {
       }
 
       appendLog(
-        `Writing ${topics.length - startIndex} articles one at a time (text first, images after publish)...`
+        `Writing ${topics.length - startIndex} articles — prefetching all hero images in parallel...`
       );
       bumpProgress(22);
+
+      const imagePrefetchPromise = postJson("/api/blog/prefetch-images", {
+        topics,
+        territory: deployTerritory,
+        hobby: deployHobby,
+      }).then((res) => {
+        if (res.ok && res.data?.images && typeof res.data.images === "object") {
+          const count = Object.keys(res.data.images as object).length;
+          appendLog(`Hero images ready: ${count}/${topics.length} (Pixabay / fallback).`);
+          return res.data.images as Record<string, PrefetchedImage>;
+        }
+        appendLog("Image prefetch skipped — will attach per post.");
+        return {} as Record<string, PrefetchedImage>;
+      });
 
       const generatedPosts: BlogPost[] = [];
 
@@ -397,13 +432,17 @@ export default function DeployAssetPage() {
         generatedPosts.push(post);
         setProgress(deployProgress(i + 1, topics.length));
         appendLog(`Post ${i + 1}/${topics.length} saved.`);
+
+        void imagePrefetchPromise.then((cache) => {
+          attachSingleImage(post, cache[topic.slug] ?? null);
+        });
       }
 
       clearSlotProgressTimer();
       bumpProgress(90);
       return generatedPosts;
     },
-    [appendLog]
+    [appendLog, attachSingleImage]
   );
 
   const publishSite = async (siteId: string, siteSlug: string) => {

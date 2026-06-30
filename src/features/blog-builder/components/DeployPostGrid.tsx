@@ -84,7 +84,7 @@ export function DeployPostSlot({ slot, index, isPillar, onViewPost }: DeployPost
             ) : (
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-white/5 flex flex-col items-center justify-center gap-2">
                 <Loader2 size={22} className="text-accent animate-spin" />
-                <p className="text-[10px] uppercase tracking-wider text-text-muted">Generating image...</p>
+                <p className="text-[10px] uppercase tracking-wider text-text-muted">Adding hero image...</p>
               </div>
             )}
             <div className="p-4 flex flex-col gap-2 flex-1">

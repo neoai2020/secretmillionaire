@@ -5,9 +5,14 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Link2, Loader2, ArrowRight } from "lucide-react";
 import { useBlogBuilder } from "../context/BlogBuilderContext";
-import { ArmedLinkInput } from "../components/ArmedLinkInput";
+import {
+  ArmedLinkSelector,
+  defaultLinkSelection,
+  getSelectedArmedLinks,
+  selectionFromArmedLinks,
+} from "../components/ArmedLinkSelector";
 import type { ArmedLink } from "../types";
-import { isValidAffiliateUrl, normalizeAffiliateUrl } from "../lib/affiliate-url";
+import { isValidAffiliateUrl } from "../lib/affiliate-url";
 
 const emptyLink = (): ArmedLink => ({
   label: "DigiStore Offer",
@@ -22,6 +27,9 @@ export default function ArmLinksPage() {
   const [links, setLinks] = useState<ArmedLink[]>(
     armedLinks.length > 0 ? armedLinks : [emptyLink()]
   );
+  const [selected, setSelected] = useState<Set<number>>(() =>
+    defaultLinkSelection(armedLinks.length > 0 ? armedLinks : [emptyLink()])
+  );
   const [loading, setLoading] = useState(false);
   const [vaultLoaded, setVaultLoaded] = useState(false);
   const [vaultSaved, setVaultSaved] = useState(false);
@@ -35,17 +43,17 @@ export default function ArmLinksPage() {
   useEffect(() => {
     if (!sessionLoaded || vaultLoaded) return;
 
-    if (armedLinks.length > 0) {
-      setLinks(armedLinks);
-      setVaultLoaded(true);
-      return;
-    }
-
     fetch("/api/blog/link-vault", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         const vault = Array.isArray(data.links) ? (data.links as ArmedLink[]) : [];
-        if (vault.length > 0) setLinks(vault);
+        const nextLinks = vault.length > 0 ? vault : armedLinks.length > 0 ? armedLinks : [emptyLink()];
+        setLinks(nextLinks);
+        setSelected(
+          armedLinks.length > 0
+            ? selectionFromArmedLinks(nextLinks, armedLinks)
+            : defaultLinkSelection(nextLinks)
+        );
       })
       .finally(() => {
         setVaultLoaded(true);
@@ -69,30 +77,38 @@ export default function ArmLinksPage() {
     return () => clearTimeout(timer);
   }, [links, vaultLoaded, saveLinksToVault]);
 
-  const valid = links.some((l) => isValidAffiliateUrl(l.url));
+  const selectedReady = getSelectedArmedLinks(links, selected);
+  const canContinue = selected.size > 0 && selectedReady.length > 0;
 
   const handleContinue = () => {
-    const normalized: ArmedLink[] = links.map((l) => ({
-      ...l,
-      url: normalizeAffiliateUrl(l.url),
-    }));
-    const cleaned = normalized.filter((l) => isValidAffiliateUrl(l.url));
+    if (selected.size === 0) {
+      setLinkError("Select at least one armed link for this deploy — or add a new one and check it.");
+      return;
+    }
+
+    const cleaned = getSelectedArmedLinks(links, selected);
 
     if (cleaned.length === 0) {
-      const hasAnyText = normalized.some((l) => l.url.trim());
+      const selectedHasText = [...selected].some((i) => links[i]?.url.trim());
       setLinkError(
-        hasAnyText
-          ? "Fix your affiliate URL — it must be a valid link starting with https:// (e.g. https://www.digistore24.com/...)."
-          : "Add at least one DigiStore affiliate link before continuing."
+        selectedHasText
+          ? "Fix the selected affiliate URL — it must be a valid link starting with https:// (e.g. https://www.digistore24.com/...)."
+          : "Add a valid https affiliate URL to your selected link before continuing."
       );
       return;
     }
 
     setLinkError(null);
-    setLinks(normalized);
     setLoading(true);
-    armLinks(cleaned);
-    router.push("/deploy");
+    void saveLinksToVault(links)
+      .then(() => {
+        armLinks(cleaned);
+        router.push("/deploy");
+      })
+      .catch(() => {
+        setLinkError("Could not save links to vault. Try again.");
+        setLoading(false);
+      });
   };
 
   if (!sessionLoaded) {
@@ -107,13 +123,18 @@ export default function ArmLinksPage() {
           Arm Your Links
         </h1>
         <p className="text-[#6b7280] text-sm sm:text-base max-w-2xl leading-relaxed">
-          Paste your DigiStore affiliate links for{" "}
-          <strong className="text-[#C5C6C7]">{territory || hobby}</strong>. They will be woven into
-          your money site content, banners, and CTAs.
+          Choose which affiliate links to weave into your{" "}
+          <strong className="text-[#C5C6C7]">{territory || hobby}</strong> money site. Select at
+          least one from your vault — or add a new link and check it.
         </p>
       </div>
 
-      <ArmedLinkInput links={links} onChange={setLinks} />
+      <ArmedLinkSelector
+        links={links}
+        selected={selected}
+        onLinksChange={setLinks}
+        onSelectedChange={setSelected}
+      />
 
       {vaultSaved && (
         <p className="text-xs text-[#45A29E] text-center">Saved to Link Vault</p>
@@ -131,7 +152,7 @@ export default function ArmLinksPage() {
         disabled={loading}
         whileHover={{ scale: loading ? 1 : 1.01 }}
         className={`w-full max-w-lg mx-auto py-4 sm:py-5 px-4 sm:px-8 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10] disabled:opacity-60 ${
-          !valid && !loading ? "opacity-80" : ""
+          !canContinue && !loading ? "opacity-80" : ""
         }`}
         style={{
           background: "linear-gradient(135deg, #45A29E 0%, #2d7a76 100%)",
@@ -148,6 +169,11 @@ export default function ArmLinksPage() {
             <>
               <Link2 size={22} />
               Deploy Asset
+              {selectedReady.length > 0 && (
+                <span className="text-sm font-semibold opacity-90">
+                  ({selectedReady.length} link{selectedReady.length === 1 ? "" : "s"})
+                </span>
+              )}
               <ArrowRight size={22} />
             </>
           )}

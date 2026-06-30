@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildHeroImagePrompt, buildHeroImageNegativePrompt } from "./prompts";
+import { mapWithConcurrency } from "./concurrency";
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY ?? "";
 const RAPIDAPI_IMAGE_HOST =
@@ -68,7 +69,10 @@ interface PixabayHit {
  * Much faster than AI generation, so this runs first.
  */
 async function fetchPixabayImageUrl(title: string, subject: string): Promise<string | null> {
-  if (!PIXABAY_API_KEY) return null;
+  if (!PIXABAY_API_KEY) {
+    console.warn("[images] PIXABAY_API_KEY not set — skipping stock photos");
+    return null;
+  }
 
   const query = buildPixabayQuery(title, subject);
   if (!query) return null;
@@ -96,7 +100,9 @@ async function fetchPixabayImageUrl(title: string, subject: string): Promise<str
     // Deterministic pick keyed off the title so regenerating a post is stable.
     const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
     const hit = hits[seed % hits.length];
-    return hit.largeImageURL || hit.webformatURL || null;
+    const imageUrl = hit.largeImageURL || hit.webformatURL || null;
+    if (imageUrl) console.info("[images] pixabay hit", query.slice(0, 40));
+    return imageUrl;
   } catch {
     return null;
   }
@@ -491,6 +497,24 @@ export async function resolveFastImageUrl(params: {
   if (ai) return { url: ai, alt };
 
   return { url: pollinationsImageUrl(params.title, params.subject), alt };
+}
+
+/** Prefetch hero images for all cluster topics in parallel (runs while GPT writes). */
+export async function prefetchTopicImages(
+  topics: ReadonlyArray<{ title: string; slug: string }>,
+  subject: string,
+  concurrency = 4
+): Promise<Record<string, ResolvedImage>> {
+  const rows = await mapWithConcurrency(topics, concurrency, async (topic) => {
+    const image = await resolveFastImageUrl({ title: topic.title, subject });
+    return { slug: topic.slug, image };
+  });
+
+  const out: Record<string, ResolvedImage> = {};
+  for (const row of rows) {
+    if (row.image.url) out[row.slug] = row.image;
+  }
+  return out;
 }
 
 /**

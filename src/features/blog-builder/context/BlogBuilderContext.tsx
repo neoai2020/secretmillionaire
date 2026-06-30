@@ -268,9 +268,8 @@ export function BlogBuilderProvider({ children }: { children: React.ReactNode })
         linksArmed: cleaned.length > 0,
         step: 2,
       }));
-      if (cleaned.length > 0) void persistVault(cleaned);
     },
-    [persistVault]
+    []
   );
 
   const markDeployed = useCallback((siteId: string, siteSlug: string) => {
