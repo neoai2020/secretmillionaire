@@ -1,10 +1,11 @@
 import type { GeneratedPostContent, ArticleAngle } from "../types";
+import { isDefectiveGeneratedPost } from "./template-quality";
 
 export const ARTICLE_JSON_EXAMPLE = `{
-  "title": "Best Wooden Chess Sets Under $50 (2026 Buyer's Guide)",
-  "excerpt": "Two sentences that preview the buyer benefit and mention the niche keyword.",
+  "title": "Best Online Dog Training Courses for Reactive Dogs (2026 Guide)",
+  "excerpt": "Two sentences that preview the buyer benefit and mention the TERRITORY product or niche keyword.",
   "metaDescription": "Under 155 chars. Primary keyword near the start. Clear benefit.",
-  "html": "<p>Opening hook...</p><h2>How we'd evaluate these</h2><p>...<a href=\\"#offer\\">the kit we recommend starting with</a>...</p><h2>...</h2><ul><li>...</li></ul>"
+  "html": "<p>Opening hook...</p><h2>How we'd evaluate these</h2><p>...<a href=\\"#offer\\">the program we recommend starting with</a>...</p><h2>...</h2><ul><li>...</li></ul>"
 }`;
 
 export const ARTICLE_SYSTEM_PROMPT = `You are a senior SEO affiliate editor publishing buyer-intent content for a niche money site in 2026.
@@ -23,6 +24,8 @@ Affiliate linking (IMPORTANT):
 
 Hard rules:
 - Stay strictly inside the TERRITORY niche. Do not drift into generic hobby content.
+- The title MUST name the TERRITORY product or niche. NEVER reuse unrelated example titles (chess sets, pool chemicals, crypto nodes, etc.) unless that is literally the territory.
+- Read the product context carefully: "AlgePrime" is an algebra video course, NOT a pool algaecide. "EchoXen" is a hearing supplement, NOT a tech node or crypto project.
 - Do NOT invent specific brand names, exact prices, or URLs unless they appear in the product context. Use realistic ranges and use-cases instead.
 - Do NOT use <h1> (the page template supplies the title).
 - Do NOT use markdown, code fences, or commentary outside JSON.
@@ -89,7 +92,7 @@ export function buildArticleUserPrompt(params: {
     "- html: 650-950 words of genuinely useful content; 4-5 <h2> sections; mix of <p>, <ul>/<li>, and a short FAQ (2-3 buyer questions answered in prose or a final <h2>FAQ).",
     "- Lead with experience: include at least two concrete, first-hand-sounding details and one honest trade-off or downside.",
     "- Exactly ONE inline link with href=\"#offer\" and natural descriptive anchor text, placed in a body paragraph (no other links/CTAs).",
-    "- title: compelling, includes primary niche keywords, max ~70 chars",
+    "- title: compelling, names the TERRITORY product/niche (never chess, pool chemicals, or unrelated categories), max ~70 chars",
     "- excerpt: 2 sentences, buyer-focused, max 200 chars",
     "- metaDescription: max 155 chars, primary keyword in first half",
   ];
@@ -164,7 +167,8 @@ export function buildHeroImageNegativePrompt(): string {
 /** Validate and normalize model output before save. */
 export function normalizeArticleContent(
   parsed: Partial<GeneratedPostContent>,
-  fallbackTitle: string
+  fallbackTitle: string,
+  territory?: string
 ): GeneratedPostContent | null {
   if (!parsed.html?.trim() || !parsed.title?.trim()) return null;
 
@@ -181,7 +185,7 @@ export function normalizeArticleContent(
 
   const plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
-  return {
+  const content: GeneratedPostContent = {
     title: parsed.title.trim().slice(0, 120),
     excerpt: (parsed.excerpt ?? plain.slice(0, 200)).trim().slice(0, 220),
     metaDescription: (parsed.metaDescription ?? parsed.excerpt ?? parsed.title)
@@ -189,4 +193,10 @@ export function normalizeArticleContent(
       .slice(0, 160),
     html,
   };
+
+  if (territory?.trim() && isDefectiveGeneratedPost(content, territory.trim())) {
+    return null;
+  }
+
+  return content;
 }

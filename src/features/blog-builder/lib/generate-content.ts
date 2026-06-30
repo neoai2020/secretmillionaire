@@ -33,7 +33,11 @@ export async function generateBlogPostContent(params: {
     userPrompt,
     validate: (raw) => {
       if (!raw || typeof raw !== "object") return null;
-      return normalizeArticleContent(raw as Partial<GeneratedPostContent>, params.topic);
+      return normalizeArticleContent(
+        raw as Partial<GeneratedPostContent>,
+        params.topic,
+        params.territory
+      );
     },
     options: { temperature: 0.3, maxRetries: 3 },
   });

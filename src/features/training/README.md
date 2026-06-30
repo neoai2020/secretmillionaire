@@ -1,7 +1,9 @@
 # training
 
-Training page with Vimeo embeds, step guide, and collapsible FAQ.
+Member training page: videos, two-path overview, Extraction Protocol, Empire Builder steps, premium tools, FAQ.
 
 Enable with `"training"` in `features.config.ts`.
 
-Content lives in `pages/TrainingPage.tsx` — extract to `config/training-content.ts` as you customize.
+- **Copy:** `src/config/training-content.ts`
+- **Page shell:** `src/config/training.config.ts` (title, videos, external URL)
+- **UI:** `src/features/training/pages/TrainingPage.tsx` + `components/`

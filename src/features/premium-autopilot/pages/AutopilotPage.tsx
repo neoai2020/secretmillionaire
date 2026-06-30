@@ -117,12 +117,13 @@ const SOURCES: TrafficSource[] = [
     { id: "hg-6", name: "Medium Home Articles", niche: "Home & Garden", type: "Blog", difficulty: "Medium", traffic: "300-1200 visitors/month", time: "15 minutes", url: "https://medium.com", description: "I put together my best home improvement tips and garden hacks into one easy-to-follow guide: {LINK}", instructions: ["Write a home improvement tips or gardening article", "Include your page URL naturally in the content", "Add tags: 'Home', 'DIY', 'Garden', 'Home Improvement'", "Submit to relevant publications for more reach", "Publish 1-2 articles per week"] },
 ];
 
-const STORAGE_KEY = "cashtap_autopilot_completed";
+const STORAGE_KEY = "sms_autopilot_completed";
+const LEGACY_STORAGE_KEY = "cashtap_autopilot_completed";
 
 function loadCompleted(): Set<string> {
     if (typeof window === "undefined") return new Set();
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
         return saved ? new Set(JSON.parse(saved)) : new Set();
     } catch { return new Set(); }
 }

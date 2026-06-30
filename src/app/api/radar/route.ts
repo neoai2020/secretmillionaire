@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { expandKeywords } from "@/features/core-workflow/lib/llm";
+import { featureApiGuard } from "@/lib/feature-api-guard";
 import { supabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
+    const blocked = featureApiGuard("core-workflow");
+    if (blocked) return blocked;
     let keyword = "Business";
     try {
         const body = await req.json();

@@ -196,6 +196,101 @@ export async function generateAndSavePost(
   return { post: post as BlogPost, skipped: false };
 }
 
+/** Delete the existing slug (if any) and generate a fresh post — used for template repair. */
+export async function regenerateAndSavePost(params: GeneratePostParams): Promise<BlogPost> {
+  const {
+    supabase,
+    userId,
+    site,
+    topic,
+    productContext = "",
+    trendContext = "",
+    skipImage = false,
+    fastImage = false,
+  } = params;
+
+  const territory = getSiteTerritory(site);
+  const armedLinks = (site.armed_links ?? []) as ArmedLink[];
+  const topics = buildClusterTopics(territory, site.hobby);
+
+  const content = await generateBlogPostContent({
+    topic: topic.title,
+    territory,
+    hobby: site.hobby,
+    angle: topic.angle,
+    affiliateContext: armedLinks.map((l) => `${l.label}: ${l.url}`).join("\n"),
+    productContext,
+    trendContext,
+  });
+
+  const postId = crypto.randomUUID();
+  let imageUrl: string | null = null;
+  let imageAlt = `${content.title} — ${territory}`;
+  let externalImageUrl: string | null = null;
+
+  if (!skipImage) {
+    if (fastImage) {
+      const image = await resolveFastImageUrl({ title: content.title, subject: territory });
+      imageUrl = image.url || null;
+      imageAlt = image.alt;
+      externalImageUrl = image.url || null;
+    } else {
+      const image = await resolvePostImage({
+        title: content.title,
+        subject: territory,
+        userId,
+        supabase,
+        fast: false,
+      });
+      imageUrl = image.url || null;
+      imageAlt = image.alt;
+    }
+  }
+
+  let html = content.html;
+  if (imageUrl) {
+    html = injectMidArticleFigure(html, imageUrl, imageAlt);
+  }
+
+  html = weaveAffiliateLinks(html, armedLinks, postId, site.id);
+  html += buildInternalLinks(topics, site.slug, topic.slug);
+
+  // Generate first — only delete/replace after content is ready (avoids data loss on timeout).
+  await supabase
+    .from("posts")
+    .delete()
+    .eq("site_id", site.id)
+    .eq("user_id", userId)
+    .eq("slug", topic.slug);
+
+  const { data: post, error } = await supabase
+    .from("posts")
+    .insert({
+      id: postId,
+      site_id: site.id,
+      user_id: userId,
+      title: content.title,
+      slug: topic.slug,
+      html,
+      excerpt: content.excerpt,
+      meta_description: content.metaDescription,
+      image_url: imageUrl,
+      image_alt: imageAlt,
+      is_pillar: topic.isPillar,
+      status: "draft",
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  if (externalImageUrl) {
+    persistPostImageInBackground({ supabase, userId, postId, externalUrl: externalImageUrl });
+  }
+
+  return post as BlogPost;
+}
+
 export async function attachImageToPost(params: {
   supabase: SupabaseClient;
   userId: string;

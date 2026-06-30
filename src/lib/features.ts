@@ -61,6 +61,7 @@ export function isNavItemLocked(
   return workflowProgress < item.requiresWorkflowStep;
 }
 
+/** @deprecated Legacy core-workflow progress; extraction uses ExtractionWorkflowProvider. */
 export function getWorkflowProgress(
   pathname: string,
   hasVariations: boolean,
