@@ -20,7 +20,7 @@ Affiliate linking (IMPORTANT):
 - Include EXACTLY ONE inline recommendation link inside a body paragraph (ideally just after the first H2), written as natural prose where you'd genuinely point a reader to the product.
 - That link MUST use href="#offer" as a placeholder (the app swaps in the real tracked URL).
 - The anchor text must be descriptive and natural (3-7 words, e.g. "the starter kit we recommend"). NEVER use "click here", "buy now", or a raw URL as anchor text.
-- Do NOT add any other links, banners, buttons, or a closing CTA — the app appends the disclosure and the final CTA automatically.
+- Do NOT add any other links, banners, buttons, affiliate disclosures, or a closing CTA — the app appends the final CTA automatically.
 
 Hard rules:
 - Stay strictly inside the TERRITORY niche. Do not drift into generic hobby content.
@@ -182,6 +182,11 @@ export function normalizeArticleContent(
   let html = parsed.html.trim();
   html = html.replace(/^```(?:html)?\s*/i, "").replace(/\s*```$/i, "");
   html = html.replace(/<h1[^>]*>[\s\S]*?<\/h1>/gi, "");
+  html = html.replace(/<p[^>]*class="affiliate-disclosure"[\s\S]*?<\/p>/gi, "");
+  html = html.replace(
+    /<p[^>]*>\s*<em>\s*Disclosure:[\s\S]*?<\/p>/gi,
+    ""
+  );
 
   if (!/<h2/i.test(html)) {
     html = `<h2>Overview</h2>${html}`;

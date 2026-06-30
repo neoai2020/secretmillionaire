@@ -63,12 +63,35 @@ interface PixabayHit {
   imageHeight?: number;
 }
 
+interface ImagePickOptions {
+  pickOffset?: number;
+  excludeUrls?: string[];
+}
+
+function normalizeImageUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.hostname}${parsed.pathname}`;
+  } catch {
+    return url.split("?")[0] ?? url;
+  }
+}
+
+function isExcludedUrl(url: string, excludeUrls: string[]): boolean {
+  const key = normalizeImageUrl(url);
+  return excludeUrls.some((ex) => normalizeImageUrl(ex) === key || ex === url);
+}
+
 /**
  * Look up a relevant free stock photo from Pixabay. Returns a downloadable URL
  * (image bytes are cached to Supabase by the caller, per Pixabay's terms).
  * Much faster than AI generation, so this runs first.
  */
-async function fetchPixabayImageUrl(title: string, subject: string): Promise<string | null> {
+async function fetchPixabayImageUrl(
+  title: string,
+  subject: string,
+  options?: ImagePickOptions
+): Promise<string | null> {
   if (!PIXABAY_API_KEY) {
     console.warn("[images] PIXABAY_API_KEY not set — skipping stock photos");
     return null;
@@ -99,25 +122,34 @@ async function fetchPixabayImageUrl(title: string, subject: string): Promise<str
 
     // Deterministic pick keyed off the title so regenerating a post is stable.
     const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const hit = hits[seed % hits.length];
-    const imageUrl = hit.largeImageURL || hit.webformatURL || null;
-    if (imageUrl) console.info("[images] pixabay hit", query.slice(0, 40));
-    return imageUrl;
+    const offset = options?.pickOffset ?? 0;
+    const exclude = options?.excludeUrls ?? [];
+
+    for (let i = 0; i < hits.length; i++) {
+      const hit = hits[(seed + offset + i) % hits.length];
+      const imageUrl = hit.largeImageURL || hit.webformatURL || null;
+      if (imageUrl && !isExcludedUrl(imageUrl, exclude)) {
+        console.info("[images] pixabay hit", query.slice(0, 40));
+        return imageUrl;
+      }
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
-export function pollinationsImageUrl(title: string, subject: string): string {
+export function pollinationsImageUrl(title: string, subject: string, seedOffset = 0): string {
   const prompt = buildHeroImagePrompt(title, subject);
 
-  const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const seed =
+    title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) + seedOffset;
 
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1200&height=800&seed=${seed}&nologo=true`;
 }
 
-function picsumFallbackUrl(title: string): string {
-  const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+function picsumFallbackUrl(title: string, seedOffset = 0): string {
+  const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) + seedOffset;
   return `https://picsum.photos/seed/sms-${seed}/1200/800`;
 }
 
@@ -484,36 +516,55 @@ export interface ResolvedImage {
 export async function resolveFastImageUrl(params: {
   title: string;
   subject: string;
+  pickOffset?: number;
+  excludeUrls?: string[];
 }): Promise<ResolvedImage> {
   const alt = `${params.title} — ${params.subject}`;
+  const offset = params.pickOffset ?? 0;
+  const exclude = params.excludeUrls ?? [];
 
   // Stock first (free + fast + topical), then your RapidAPI AI generator, then
   // Pollinations as a no-key fallback. The returned URL is cached to Supabase
   // shortly after by the caller's background persist step.
-  const pixabay = await fetchPixabayImageUrl(params.title, params.subject);
+  const pixabay = await fetchPixabayImageUrl(params.title, params.subject, {
+    pickOffset: offset,
+    excludeUrls: exclude,
+  });
   if (pixabay) return { url: pixabay, alt };
 
   const ai = await prLabsImageUrl(buildHeroImagePrompt(params.title, params.subject));
-  if (ai) return { url: ai, alt };
+  if (ai && !isExcludedUrl(ai, exclude)) return { url: ai, alt };
 
-  return { url: pollinationsImageUrl(params.title, params.subject), alt };
+  const pollUrl = pollinationsImageUrl(params.title, params.subject, offset);
+  if (!isExcludedUrl(pollUrl, exclude)) return { url: pollUrl, alt };
+
+  const picsum = picsumFallbackUrl(params.title, offset + 1);
+  if (!isExcludedUrl(picsum, exclude)) return { url: picsum, alt };
+
+  return { url: pollinationsImageUrl(params.title, params.subject, offset + 2), alt };
 }
 
-/** Prefetch hero images for all cluster topics in parallel (runs while GPT writes). */
+/** Prefetch hero images for all cluster topics (runs while GPT writes). */
 export async function prefetchTopicImages(
   topics: ReadonlyArray<{ title: string; slug: string }>,
   subject: string,
-  concurrency = 4
+  _concurrency = 4
 ): Promise<Record<string, ResolvedImage>> {
-  const rows = await mapWithConcurrency(topics, concurrency, async (topic) => {
-    const image = await resolveFastImageUrl({ title: topic.title, subject });
-    return { slug: topic.slug, image };
-  });
-
+  const usedUrls: string[] = [];
   const out: Record<string, ResolvedImage> = {};
-  for (const row of rows) {
-    if (row.image.url) out[row.slug] = row.image;
+
+  for (const topic of topics) {
+    const image = await resolveFastImageUrl({
+      title: topic.title,
+      subject,
+      excludeUrls: usedUrls,
+    });
+    if (image.url) {
+      usedUrls.push(image.url);
+      out[topic.slug] = image;
+    }
   }
+
   return out;
 }
 

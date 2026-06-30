@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import {
   Crown,
@@ -21,6 +21,20 @@ import {
   Clock,
   MessageCircle,
 } from "lucide-react";
+import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
+
+const FB_LOADING_STEPS = [
+  "AI is scanning trending angles in your niche…",
+  "Finding the highest-click hooks for Facebook…",
+  "Analyzing buyer-intent triggers…",
+  "Testing curiosity angles that stop the scroll…",
+  "Mapping posts to your site articles…",
+  "Crafting personal-story openers…",
+  "Writing helpful-tip variations…",
+  "Polishing copy for group engagement…",
+  "Running a final engagement pass…",
+  "Almost done — packaging your 10 posts…",
+];
 
 const POSTING_GUIDE = [
   {
@@ -82,9 +96,42 @@ export default function AcceleratorPage() {
 
   const [posts, setPosts] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [origin, setOrigin] = useState("");
+
+  const messageTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!generating) {
+      if (messageTimer.current) clearInterval(messageTimer.current);
+      if (progressTimer.current) clearInterval(progressTimer.current);
+      return;
+    }
+
+    setLoadingStep(0);
+    setLoadingProgress(0);
+
+    messageTimer.current = setInterval(() => {
+      setLoadingStep((step) => (step + 1) % FB_LOADING_STEPS.length);
+    }, 2800);
+
+    progressTimer.current = setInterval(() => {
+      setLoadingProgress((current) => {
+        if (current >= 92) return current;
+        const bump = current < 35 ? 2.8 : current < 65 ? 1.4 : 0.5;
+        return Math.min(92, current + bump);
+      });
+    }, 450);
+
+    return () => {
+      if (messageTimer.current) clearInterval(messageTimer.current);
+      if (progressTimer.current) clearInterval(progressTimer.current);
+    };
+  }, [generating]);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -135,6 +182,7 @@ export default function AcceleratorPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
+      setLoadingProgress(100);
       setPosts(Array.isArray(data.posts) ? data.posts : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
@@ -325,13 +373,36 @@ export default function AcceleratorPage() {
               className="btn-primary py-3.5 self-start px-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {generating ? (
-                <><Loader2 className="animate-spin" size={16} /> Writing 10 posts…</>
+                <><Loader2 className="animate-spin" size={16} /> Generating…</>
               ) : posts.length > 0 ? (
                 <><RefreshCw size={16} /> Regenerate 10 Posts</>
               ) : (
                 <><Sparkles size={16} /> Generate 10 Facebook Posts</>
               )}
             </button>
+
+            <AnimatePresence>
+              {generating && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="rounded-xl border border-accent/20 bg-accent/[0.06] p-4 sm:p-5 flex flex-col gap-3"
+                >
+                  <AiLoadingBar
+                    label={FB_LOADING_STEPS[loadingStep]}
+                    progress={loadingProgress}
+                    active
+                    className="w-full"
+                  />
+                  <p className="text-[11px] text-text-muted leading-relaxed">
+                    Writing 10 unique posts for{" "}
+                    <span className="text-text-secondary font-semibold">{selectedSite?.title}</span>.
+                    This usually takes 15–30 seconds.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {error && <p className="text-sm text-red-400/90">{error}</p>}
 

@@ -3,6 +3,28 @@ import { stripAffiliateBlocks, weaveAffiliateLinks } from "./affiliate";
 import { insertAfterH2 } from "./html-insert";
 
 const LEADING_FIGURE_RE = /^<figure[^>]*>[\s\S]*?<\/figure>\s*/i;
+const INLINE_FIGURE_RE = /<figure[^>]*class="sms-inline-figure"[\s\S]*?<\/figure>/gi;
+
+function urlKey(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.hostname}${parsed.pathname}`;
+  } catch {
+    return url.split("?")[0] ?? url;
+  }
+}
+
+/** Drop inline figures whose image matches the layout hero (avoids showing the same photo twice). */
+export function stripFiguresMatchingUrl(html: string, imageUrl?: string | null): string {
+  if (!imageUrl?.trim()) return html;
+  const key = urlKey(imageUrl);
+  return html.replace(INLINE_FIGURE_RE, (figure) => {
+    if (figure.includes(imageUrl) || figure.includes(key.split("/").pop() ?? key)) {
+      return "";
+    }
+    return figure;
+  });
+}
 
 export function heroFigureHtml(imageUrl: string, alt: string): string {
   const safeAlt = alt.replace(/"/g, "&quot;");
@@ -43,12 +65,9 @@ export function prepareArticleHtml(post: {
   armedLinks?: ArmedLink[];
   siteId?: string;
 }): string {
-  const alt = post.image_alt ?? post.title;
+  // Featured hero is rendered by ArticleLayout — strip any duplicate of it from the body.
   let html = stripLeadingHeroFigure(post.html, post.image_url);
-
-  if (post.image_url && !html.includes(post.image_url)) {
-    html = injectMidArticleFigure(html, post.image_url, alt);
-  }
+  html = stripFiguresMatchingUrl(html, post.image_url);
 
   if (post.armedLinks?.length && post.siteId) {
     html = weaveAffiliateLinks(html, post.armedLinks, post.id, post.siteId);

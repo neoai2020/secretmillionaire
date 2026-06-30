@@ -48,9 +48,6 @@ export function stripAffiliateBlocks(html: string): string {
     .trim();
 }
 
-function disclosureHtml(): string {
-  return `<p class="affiliate-disclosure"><em>Disclosure: some links below are affiliate links. If you buy through them we may earn a small commission at no extra cost to you — it never changes which products we recommend.</em></p>`;
-}
 
 export function renderCtaButton(label: string, href: string): string {
   return `<div class="affiliate-cta">
@@ -101,13 +98,11 @@ function applyInlinePlaceholders(html: string, tracked: string): { html: string;
 
 /**
  * Weave the primary affiliate offer into the article:
- *  1. an FTC disclosure above the fold (trust / E-E-A-T),
- *  2. ONE contextual inline link inside the prose (from the model's placeholder,
+ *  1. ONE contextual inline link inside the prose (from the model's placeholder,
  *     or a natural fallback paragraph after the first H2),
- *  3. a single end-of-article CTA pointing at the same offer.
+ *  2. a single end-of-article CTA pointing at the same offer.
  *
- * Keeps affiliate-link density low and the placement natural, per current
- * Google Helpful Content guidance for affiliate sites.
+ * Site-wide FTC disclosure lives in the footer — not repeated inside each article.
  */
 export function weaveAffiliateLinks(
   html: string,
@@ -139,5 +134,5 @@ export function weaveAffiliateLinks(
 
   const cta = renderCtaButton("Check Today's Price", tracked);
 
-  return `${disclosureHtml()}${withInline}${cta}${related}`;
+  return `${withInline}${cta}${related}`;
 }

@@ -13,6 +13,30 @@ import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
 import { mapWithConcurrency } from "./concurrency";
 import type { ArmedLink, BlogPost, BlogSite, ClusterTopic, ContentTier } from "../types";
 
+/** Hero goes to image_url (layout); body gets a distinct inline photo when possible. */
+async function weaveDistinctPostImages(params: {
+  html: string;
+  hero: ResolvedImage;
+  title: string;
+  territory: string;
+}): Promise<string> {
+  let html = stripLeadingHeroFigure(params.html, params.hero.url);
+  if (!params.hero.url) return html;
+
+  const inline = await resolveFastImageUrl({
+    title: params.title,
+    subject: params.territory,
+    pickOffset: 1,
+    excludeUrls: [params.hero.url],
+  });
+
+  if (inline.url && inline.url !== params.hero.url) {
+    html = injectMidArticleFigure(html, inline.url, inline.alt);
+  }
+
+  return html;
+}
+
 /**
  * GPT text calls share one RapidAPI quota. A small pool (not strictly serial)
  * cuts bulk generation time ~Nx while per-post retry/backoff absorbs the
@@ -171,7 +195,12 @@ export async function generateAndSavePost(
 
   let html = content.html;
   if (imageUrl) {
-    html = injectMidArticleFigure(html, imageUrl, imageAlt);
+    html = await weaveDistinctPostImages({
+      html,
+      hero: { url: imageUrl, alt: imageAlt },
+      title: content.title,
+      territory,
+    });
   }
 
   html = weaveAffiliateLinks(html, armedLinks, postId, site.id);
@@ -260,7 +289,12 @@ export async function regenerateAndSavePost(params: GeneratePostParams): Promise
 
   let html = content.html;
   if (imageUrl) {
-    html = injectMidArticleFigure(html, imageUrl, imageAlt);
+    html = await weaveDistinctPostImages({
+      html,
+      hero: { url: imageUrl, alt: imageAlt },
+      title: content.title,
+      territory,
+    });
   }
 
   html = weaveAffiliateLinks(html, armedLinks, postId, site.id);
@@ -323,8 +357,12 @@ export async function attachImageToPost(params: {
     params.prefetched ??
     (await resolveFastImageUrl({ title: post.title, subject: territory }));
   if (fast.url) {
-    const bodyHtml = stripLeadingHeroFigure(post.html, post.image_url);
-    const html = injectMidArticleFigure(bodyHtml, fast.url, fast.alt);
+    const html = await weaveDistinctPostImages({
+      html: post.html,
+      hero: fast,
+      title: post.title,
+      territory,
+    });
 
     const { data: updated, error } = await params.supabase
       .from("posts")
@@ -363,8 +401,12 @@ export async function attachImageToPost(params: {
 
   if (!image.url) return post;
 
-  const bodyHtml = stripLeadingHeroFigure(post.html, post.image_url);
-  const html = injectMidArticleFigure(bodyHtml, image.url, image.alt);
+  const html = await weaveDistinctPostImages({
+    html: post.html,
+    hero: image,
+    title: post.title,
+    territory,
+  });
 
   const { data: updated, error } = await params.supabase
     .from("posts")
