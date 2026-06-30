@@ -19,6 +19,7 @@ async function weaveDistinctPostImages(params: {
   hero: ResolvedImage;
   title: string;
   territory: string;
+  hobby?: string;
 }): Promise<string> {
   let html = stripLeadingHeroFigure(params.html, params.hero.url);
   if (!params.hero.url) return html;
@@ -26,8 +27,10 @@ async function weaveDistinctPostImages(params: {
   const inline = await resolveFastImageUrl({
     title: params.title,
     subject: params.territory,
-    pickOffset: 1,
+    hobby: params.hobby,
+    pickOffset: 5,
     excludeUrls: [params.hero.url],
+    excludeStockIds: params.hero.stockId ? [params.hero.stockId] : [],
   });
 
   if (inline.url && inline.url !== params.hero.url) {
@@ -175,7 +178,7 @@ export async function generateAndSavePost(
   if (!skipImage) {
     if (fastImage) {
       // Fast: show a direct URL now, cache it to storage afterwards.
-      const image = await resolveFastImageUrl({ title: content.title, subject: territory });
+      const image = await resolveFastImageUrl({ title: content.title, subject: territory, hobby: site.hobby });
       imageUrl = image.url || null;
       imageAlt = image.alt;
       externalImageUrl = image.url || null;
@@ -200,6 +203,7 @@ export async function generateAndSavePost(
       hero: { url: imageUrl, alt: imageAlt },
       title: content.title,
       territory,
+      hobby: site.hobby,
     });
   }
 
@@ -270,7 +274,7 @@ export async function regenerateAndSavePost(params: GeneratePostParams): Promise
 
   if (!skipImage) {
     if (fastImage) {
-      const image = await resolveFastImageUrl({ title: content.title, subject: territory });
+      const image = await resolveFastImageUrl({ title: content.title, subject: territory, hobby: site.hobby });
       imageUrl = image.url || null;
       imageAlt = image.alt;
       externalImageUrl = image.url || null;
@@ -294,6 +298,7 @@ export async function regenerateAndSavePost(params: GeneratePostParams): Promise
       hero: { url: imageUrl, alt: imageAlt },
       title: content.title,
       territory,
+      hobby: site.hobby,
     });
   }
 
@@ -355,13 +360,14 @@ export async function attachImageToPost(params: {
 
   const fast =
     params.prefetched ??
-    (await resolveFastImageUrl({ title: post.title, subject: territory }));
+    (await resolveFastImageUrl({ title: post.title, subject: territory, hobby: site.hobby }));
   if (fast.url) {
     const html = await weaveDistinctPostImages({
       html: post.html,
       hero: fast,
       title: post.title,
       territory,
+      hobby: site.hobby,
     });
 
     const { data: updated, error } = await params.supabase
@@ -406,6 +412,7 @@ export async function attachImageToPost(params: {
     hero: image,
     title: post.title,
     territory,
+    hobby: site.hobby,
   });
 
   const { data: updated, error } = await params.supabase

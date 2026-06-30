@@ -34,16 +34,45 @@ const STOP_WORDS = new Set([
   "the", "a", "an", "and", "or", "for", "to", "of", "in", "on", "with", "your",
   "best", "top", "guide", "review", "reviews", "vs", "under", "how", "what",
   "why", "is", "are", "buyers", "buyer", "buying", "tips", "avoid", "mistakes",
+  "honest", "worth", "picks", "week", "simple", "plan", "first", "beginner",
+  "beginners", "advanced", "pro", "insider", "maximize", "results", "budget",
+  "growth", "tools", "tool", "magic", "tube", "2026", "2025", "2024",
 ]);
 
-/** Build a concise Pixabay search query from the article title + niche. */
-function buildPixabayQuery(title: string, subject: string): string {
-  const words = `${subject} ${title}`
+/** Visual search phrases that match what stock libraries actually have. */
+const HOBBY_VISUAL_QUERIES: Record<string, string> = {
+  "YouTube / AI Tools": "youtube creator video editing laptop studio",
+  "Pet Training": "dog training happy owner puppy",
+  "Health Supplements": "health wellness vitamins supplements",
+  "Online Education": "online learning student laptop classroom",
+  "Financial Education": "personal finance budget planning desk",
+  "Presentations / Software": "business presentation laptop office",
+  "Affiliate Marketing": "online business entrepreneur laptop",
+  "Dating / Relationships": "happy couple relationship together",
+  "AI Writing Tools": "writer laptop content creation desk",
+  "AI Platform": "artificial intelligence technology computer office",
+};
+
+function tokenizeForQuery(text: string): string[] {
+  return text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
     .filter((w) => w.length > 2 && !STOP_WORDS.has(w) && !/^\d+$/.test(w));
+}
 
+/** Build a concise Pixabay search query — hobby visuals first, not product brand names. */
+function buildPixabayQuery(title: string, subject: string, hobby?: string): string {
+  const hobbyHint = hobby?.trim() ? HOBBY_VISUAL_QUERIES[hobby.trim()] : undefined;
+  const subjectTokens = new Set(tokenizeForQuery(subject));
+  const titleTokens = tokenizeForQuery(title).filter((w) => !subjectTokens.has(w));
+
+  if (hobbyHint) {
+    const extra = titleTokens.slice(0, 2).join(" ");
+    return `${hobbyHint}${extra ? ` ${extra}` : ""}`.slice(0, 100);
+  }
+
+  const words = tokenizeForQuery(`${subject} ${title}`);
   const seen = new Set<string>();
   const unique: string[] = [];
   for (const w of words) {
@@ -57,6 +86,7 @@ function buildPixabayQuery(title: string, subject: string): string {
 }
 
 interface PixabayHit {
+  id?: number;
   largeImageURL?: string;
   webformatURL?: string;
   imageWidth?: number;
@@ -66,6 +96,15 @@ interface PixabayHit {
 interface ImagePickOptions {
   pickOffset?: number;
   excludeUrls?: string[];
+  excludeStockIds?: string[];
+  hobby?: string;
+  /** Extra seed variation (e.g. post index) so similar titles pick different hits. */
+  seedBoost?: number;
+}
+
+export interface StockImageResult {
+  url: string;
+  stockId: string;
 }
 
 function normalizeImageUrl(url: string): string {
@@ -82,22 +121,24 @@ function isExcludedUrl(url: string, excludeUrls: string[]): boolean {
   return excludeUrls.some((ex) => normalizeImageUrl(ex) === key || ex === url);
 }
 
+function stockIdForHit(hit: PixabayHit, imageUrl: string): string {
+  return hit.id ? `pixabay:${hit.id}` : normalizeImageUrl(imageUrl);
+}
+
 /**
- * Look up a relevant free stock photo from Pixabay. Returns a downloadable URL
- * (image bytes are cached to Supabase by the caller, per Pixabay's terms).
- * Much faster than AI generation, so this runs first.
+ * Look up a relevant free stock photo from Pixabay.
  */
-async function fetchPixabayImageUrl(
+export async function fetchPixabayImage(
   title: string,
   subject: string,
   options?: ImagePickOptions
-): Promise<string | null> {
+): Promise<StockImageResult | null> {
   if (!PIXABAY_API_KEY) {
     console.warn("[images] PIXABAY_API_KEY not set — skipping stock photos");
     return null;
   }
 
-  const query = buildPixabayQuery(title, subject);
+  const query = buildPixabayQuery(title, subject, options?.hobby);
   if (!query) return null;
 
   const url = new URL("https://pixabay.com/api/");
@@ -107,7 +148,7 @@ async function fetchPixabayImageUrl(
   url.searchParams.set("orientation", "horizontal");
   url.searchParams.set("safesearch", "true");
   url.searchParams.set("order", "popular");
-  url.searchParams.set("per_page", "12");
+  url.searchParams.set("per_page", "40");
   url.searchParams.set("min_width", "1200");
 
   try {
@@ -120,23 +161,35 @@ async function fetchPixabayImageUrl(
     );
     if (hits.length === 0) return null;
 
-    // Deterministic pick keyed off the title so regenerating a post is stable.
-    const seed = title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const seed =
+      title.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) + (options?.seedBoost ?? 0) * 17;
     const offset = options?.pickOffset ?? 0;
     const exclude = options?.excludeUrls ?? [];
+    const excludeIds = new Set(options?.excludeStockIds ?? []);
 
     for (let i = 0; i < hits.length; i++) {
       const hit = hits[(seed + offset + i) % hits.length];
       const imageUrl = hit.largeImageURL || hit.webformatURL || null;
-      if (imageUrl && !isExcludedUrl(imageUrl, exclude)) {
-        console.info("[images] pixabay hit", query.slice(0, 40));
-        return imageUrl;
-      }
+      if (!imageUrl) continue;
+      const stockId = stockIdForHit(hit, imageUrl);
+      if (excludeIds.has(stockId)) continue;
+      if (isExcludedUrl(imageUrl, exclude)) continue;
+      console.info("[images] pixabay hit", query.slice(0, 48));
+      return { url: imageUrl, stockId };
     }
     return null;
   } catch {
     return null;
   }
+}
+
+async function fetchPixabayImageUrl(
+  title: string,
+  subject: string,
+  options?: ImagePickOptions
+): Promise<string | null> {
+  const hit = await fetchPixabayImage(title, subject, options);
+  return hit?.url ?? null;
 }
 
 export function pollinationsImageUrl(title: string, subject: string, seedOffset = 0): string {
@@ -505,43 +558,50 @@ export async function uploadUserImage(params: {
 export interface ResolvedImage {
   url: string;
   alt: string;
+  stockId?: string;
 }
 
 /**
- * FAST path: return a directly-usable image URL with NO download/upload, so the
- * image can be shown to the user immediately. Pixabay search (~300ms) →
- * Pollinations (AI, generated on first load) → picsum. The caller should kick
- * off `persistExternalImage` in the background to cache it to Supabase.
+ * FAST path: return a directly-usable image URL with NO download/upload.
  */
 export async function resolveFastImageUrl(params: {
   title: string;
   subject: string;
+  hobby?: string;
   pickOffset?: number;
+  seedBoost?: number;
   excludeUrls?: string[];
+  excludeStockIds?: string[];
 }): Promise<ResolvedImage> {
   const alt = `${params.title} — ${params.subject}`;
   const offset = params.pickOffset ?? 0;
   const exclude = params.excludeUrls ?? [];
+  const excludeStockIds = params.excludeStockIds ?? [];
 
-  // Stock first (free + fast + topical), then your RapidAPI AI generator, then
-  // Pollinations as a no-key fallback. The returned URL is cached to Supabase
-  // shortly after by the caller's background persist step.
-  const pixabay = await fetchPixabayImageUrl(params.title, params.subject, {
+  const pixabay = await fetchPixabayImage(params.title, params.subject, {
     pickOffset: offset,
     excludeUrls: exclude,
+    excludeStockIds,
+    hobby: params.hobby,
+    seedBoost: params.seedBoost,
   });
-  if (pixabay) return { url: pixabay, alt };
+  if (pixabay) return { url: pixabay.url, alt, stockId: pixabay.stockId };
 
   const ai = await prLabsImageUrl(buildHeroImagePrompt(params.title, params.subject));
-  if (ai && !isExcludedUrl(ai, exclude)) return { url: ai, alt };
+  if (ai && !isExcludedUrl(ai, exclude)) return { url: ai, alt, stockId: normalizeImageUrl(ai) };
 
-  const pollUrl = pollinationsImageUrl(params.title, params.subject, offset);
-  if (!isExcludedUrl(pollUrl, exclude)) return { url: pollUrl, alt };
+  const pollUrl = pollinationsImageUrl(params.title, params.subject, offset + (params.seedBoost ?? 0));
+  if (!isExcludedUrl(pollUrl, exclude)) {
+    return { url: pollUrl, alt, stockId: normalizeImageUrl(pollUrl) };
+  }
 
-  const picsum = picsumFallbackUrl(params.title, offset + 1);
-  if (!isExcludedUrl(picsum, exclude)) return { url: picsum, alt };
+  const picsum = picsumFallbackUrl(params.title, offset + (params.seedBoost ?? 0) + 1);
+  if (!isExcludedUrl(picsum, exclude)) {
+    return { url: picsum, alt, stockId: normalizeImageUrl(picsum) };
+  }
 
-  return { url: pollinationsImageUrl(params.title, params.subject, offset + 2), alt };
+  const fallback = pollinationsImageUrl(params.title, params.subject, offset + (params.seedBoost ?? 0) + 2);
+  return { url: fallback, alt, stockId: normalizeImageUrl(fallback) };
 }
 
 /** Prefetch hero images for all cluster topics (runs while GPT writes). */

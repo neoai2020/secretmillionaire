@@ -25,16 +25,22 @@ function stripAllInlineFigures(html: string): string {
 async function resolvePersistedImage(params: {
   title: string;
   subject: string;
+  hobby: string;
   userId: string;
   supabase: SupabaseClient;
   excludeUrls: string[];
+  excludeStockIds: string[];
   pickOffset?: number;
-}): Promise<{ url: string; alt: string } | null> {
+  seedBoost?: number;
+}): Promise<{ url: string; alt: string; stockId?: string } | null> {
   const resolved = await resolveFastImageUrl({
     title: params.title,
     subject: params.subject,
+    hobby: params.hobby,
     pickOffset: params.pickOffset ?? 0,
+    seedBoost: params.seedBoost,
     excludeUrls: params.excludeUrls,
+    excludeStockIds: params.excludeStockIds,
   });
   if (!resolved.url) return null;
 
@@ -44,7 +50,11 @@ async function resolvePersistedImage(params: {
     supabase: params.supabase,
   });
 
-  return { url: persisted ?? resolved.url, alt: resolved.alt };
+  return {
+    url: persisted ?? resolved.url,
+    alt: resolved.alt,
+    stockId: resolved.stockId,
+  };
 }
 
 /** Refresh hero + inline images and strip in-article disclosure for one post. */
@@ -52,9 +62,12 @@ export async function repairRecurringPost(params: {
   supabase: SupabaseClient;
   site: BlogSite;
   post: BlogPost;
+  postIndex: number;
   usedImageUrls: string[];
+  usedStockIds: string[];
 }): Promise<{ updated: boolean; reason?: string }> {
   const territory = getSiteTerritory(params.site);
+  const hobby = params.site.hobby?.trim() || territory;
   const armed = (params.site.armed_links ?? []) as ArmedLink[];
 
   let html = stripArticleDisclosure(params.post.html ?? "");
@@ -65,27 +78,35 @@ export async function repairRecurringPost(params: {
   const hero = await resolvePersistedImage({
     title: params.post.title,
     subject: territory,
+    hobby,
     userId: params.post.user_id,
     supabase: params.supabase,
     excludeUrls: params.usedImageUrls,
+    excludeStockIds: params.usedStockIds,
     pickOffset: 0,
+    seedBoost: params.postIndex,
   });
   if (!hero?.url) return { updated: false, reason: "no hero image" };
 
   params.usedImageUrls.push(hero.url);
+  if (hero.stockId) params.usedStockIds.push(hero.stockId);
 
   const inline = await resolvePersistedImage({
     title: params.post.title,
     subject: territory,
+    hobby,
     userId: params.post.user_id,
     supabase: params.supabase,
     excludeUrls: params.usedImageUrls,
-    pickOffset: 2,
+    excludeStockIds: params.usedStockIds,
+    pickOffset: 5,
+    seedBoost: params.postIndex + 1,
   });
 
   if (inline?.url && inline.url !== hero.url) {
     html = injectMidArticleFigure(html, inline.url, inline.alt);
     params.usedImageUrls.push(inline.url);
+    if (inline.stockId) params.usedStockIds.push(inline.stockId);
   }
 
   html = armed.length
@@ -120,17 +141,21 @@ export async function repairRecurringSite(params: {
 
   const rows = ((posts ?? []) as BlogPost[]).slice(0, params.postLimit ?? 999);
   const usedImageUrls: string[] = [];
+  const usedStockIds: string[] = [];
   let repaired = 0;
   let failed = 0;
   let skipped = 0;
 
-  for (const post of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const post = rows[i];
     try {
       const result = await repairRecurringPost({
         supabase: params.admin,
         site: params.site,
         post,
+        postIndex: i,
         usedImageUrls,
+        usedStockIds,
       });
       if (result.updated) repaired += 1;
       else skipped += 1;
