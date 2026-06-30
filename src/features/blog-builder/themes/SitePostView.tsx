@@ -2,7 +2,7 @@ import { PublicSiteRoot } from "./components/PublicSiteRoot";
 import { SiteNav } from "./components/SiteNav";
 import { ArticleLayout } from "./components/ArticleLayout";
 import { SiteFooter } from "./components/SiteFooter";
-import { resolveTheme } from "./resolve-theme";
+import { isRecurringWealthSite, resolvePublicSiteTheme } from "./resolve-theme";
 import type { PublicPost, PublicPostSummary, PublicSite } from "./types";
 
 interface SitePostViewProps {
@@ -14,11 +14,12 @@ interface SitePostViewProps {
 }
 
 export function SitePostView({ site, siteSlug, post, relatedPosts, jsonLd }: SitePostViewProps) {
-  const theme = resolveTheme(site.theme);
+  const premium = isRecurringWealthSite(site);
+  const theme = resolvePublicSiteTheme(site);
   const homeHref = `/sites/${siteSlug}`;
 
   return (
-    <PublicSiteRoot theme={theme}>
+    <PublicSiteRoot theme={theme} premium={premium}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteNav site={site} siteSlug={siteSlug} backHref={homeHref} />
       <main className="flex-1">

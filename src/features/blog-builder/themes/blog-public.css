@@ -777,7 +777,83 @@
 .blog-home-centered h1 {
   font-size: clamp(2rem, 5vw, 3.25rem);
   line-height: 1.08;
-  color: var(--blog-text);
+}
+
+/* Stack cards always show a thumbnail on archive pages */
+.blog-card-stack {
+  overflow: hidden;
+}
+
+@media (max-width: 639px) {
+  .blog-card-stack {
+    grid-template-columns: 7.5rem 1fr;
+  }
+
+  .blog-card-stack .blog-stack-thumb {
+    min-height: 100%;
+  }
+}
+
+@media (min-width: 640px) {
+  .blog-card-stack {
+    grid-template-columns: 10rem 1fr;
+  }
+}
+
+/* Recurring Wealth premium sites — richer cards, stronger hero, editorial polish */
+.blog-premium-recurring {
+  --blog-radius: 1.35rem;
+  --blog-radius-lg: 2rem;
+  --blog-shadow: 0 2px 4px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.08);
+  --blog-shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.06), 0 20px 48px rgba(0, 0, 0, 0.12);
+}
+
+.blog-premium-recurring .blog-nav {
+  background: color-mix(in srgb, var(--blog-surface) 92%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--blog-accent) 18%, var(--blog-border));
+}
+
+.blog-premium-recurring .blog-brand {
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+}
+
+.blog-premium-recurring .blog-hero-featured {
+  border: 1px solid color-mix(in srgb, var(--blog-accent) 22%, var(--blog-border));
+  box-shadow: var(--blog-shadow-hover);
+}
+
+.blog-premium-recurring .blog-hero-featured-media {
+  min-height: 16rem;
+}
+
+.blog-premium-recurring .blog-card {
+  border-radius: var(--blog-radius);
+}
+
+.blog-premium-recurring .blog-bento-featured .blog-card-title {
+  font-size: clamp(1.35rem, 2.8vw, 2rem);
+}
+
+.blog-premium-recurring .blog-section-head {
+  border-bottom: 1px solid var(--blog-border);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.blog-premium-recurring .blog-section-title {
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+}
+
+.blog-premium-recurring .blog-thumb-aspect,
+.blog-premium-recurring .blog-bento-item .blog-thumb {
+  aspect-ratio: 16 / 9;
+}
+
+.blog-premium-recurring .blog-article-featured {
+  border-radius: var(--blog-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--blog-shadow);
 }
 
 .blog-home-centered p {

@@ -33,7 +33,7 @@ export default async function SiteHomePage({ params }: Props) {
 
   const { data: site } = await supabase
     .from("sites")
-    .select("id, title, tagline, slug, hobby, territory, theme")
+    .select("id, title, tagline, slug, hobby, territory, theme, template_key")
     .eq("slug", siteSlug)
     .eq("status", "live")
     .maybeSingle();

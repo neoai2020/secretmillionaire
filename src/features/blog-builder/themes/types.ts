@@ -58,6 +58,8 @@ export interface PublicSite {
   territory?: string | null;
   theme: string;
   armed_links?: ArmedLink[];
+  template_key?: string | null;
+  is_template?: boolean;
 }
 
 export interface PublicPostSummary {

@@ -6,7 +6,7 @@ import { scrapePage, buildProductContext } from "./scrape";
 import { fetchTrendingAngles } from "./trends";
 import { mapWithConcurrency } from "./concurrency";
 import { slugify } from "./seo";
-import { pickThemeForSite, buildSiteTitle, buildSiteTagline } from "../themes";
+import { pickThemeForRecurringSite, buildSiteTitle, buildSiteTagline } from "../themes";
 import type { ArmedLink, BlogPost, BlogSite } from "../types";
 
 export const TEMPLATE_ARTICLE_COUNT = 25;
@@ -86,7 +86,7 @@ export async function seedProductTemplate(
         title: buildSiteTitle(product.niche),
         tagline: buildSiteTagline(product.niche),
         slug,
-        theme: pickThemeForSite(product.name, ownerId),
+        theme: pickThemeForRecurringSite(),
         armed_links: [] as ArmedLink[],
         status: "draft",
         is_template: true,
@@ -147,7 +147,7 @@ function createUserSiteRow(
       title: buildSiteTitle(product.niche),
       tagline: buildSiteTagline(product.niche),
       slug,
-      theme: pickThemeForSite(product.name, userId),
+      theme: pickThemeForRecurringSite(),
       armed_links: armedLinks,
       status: "live",
       is_template: false,

@@ -85,17 +85,20 @@ export function PostCard({ post, siteSlug, layout, featured }: PostCardProps) {
   }
 
   return (
-    <article className="blog-card blog-card-body">
-      {post.is_pillar && <span className="blog-chip-gold blog-chip mb-2">Main guide</span>}
-      <h2 className="blog-card-title text-lg">
-        <Link href={href}>{post.title}</Link>
-      </h2>
-      {post.excerpt && <p className="blog-meta">{post.excerpt}</p>}
-      <div className="flex items-center justify-between mt-2">
-        <span className="blog-meta">{formatDate(post.created_at)}</span>
-        <Link href={href} className="blog-link text-sm">
-          Read →
-        </Link>
+    <article className="blog-card blog-card-horizontal blog-card-stack">
+      <PostThumb href={href} imageUrl={post.image_url} alt={post.title} className="blog-stack-thumb" />
+      <div className="blog-card-body">
+        {post.is_pillar && <span className="blog-chip-gold blog-chip mb-2">Main guide</span>}
+        <h2 className="blog-card-title text-lg">
+          <Link href={href}>{post.title}</Link>
+        </h2>
+        {post.excerpt && <p className="blog-meta line-clamp-2">{post.excerpt}</p>}
+        <div className="flex items-center justify-between mt-2">
+          <span className="blog-meta">{formatDate(post.created_at)}</span>
+          <Link href={href} className="blog-link text-sm">
+            Read →
+          </Link>
+        </div>
       </div>
     </article>
   );

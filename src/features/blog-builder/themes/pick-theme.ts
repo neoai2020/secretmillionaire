@@ -1,4 +1,9 @@
 import { PRESET_IDS } from "./presets";
+import { RECURRING_PREMIUM_THEME_KEY } from "./resolve-theme";
+
+export function pickThemeForRecurringSite(): string {
+  return RECURRING_PREMIUM_THEME_KEY;
+}
 
 /** Composites pair a strong homepage with a focused reading layout. */
 const COMPOSITE_THEMES = [

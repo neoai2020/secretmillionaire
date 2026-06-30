@@ -141,6 +141,39 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
     },
   },
 
+  "recurring-premium": {
+    id: "recurring-premium",
+    name: "Society Premium",
+    tagline: "Recurring Wealth — image-rich bento hub with editorial polish",
+    fonts: {
+      heading: "'Playfair Display', Georgia, serif",
+      body: "'Source Sans 3', system-ui, sans-serif",
+      googleUrl:
+        "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap",
+    },
+    colors: {
+      bg: "#f4f1ea",
+      surface: "#ffffff",
+      text: "#121212",
+      muted: "#5c574f",
+      accent: "#0d9488",
+      accentHover: "#0f766e",
+      border: "rgba(18, 18, 18, 0.09)",
+      pillar: "#b45309",
+      heroOverlay: "rgba(13, 148, 136, 0.07)",
+      gradientFrom: "#14b8a6",
+      gradientTo: "#0f766e",
+      accentSoft: "rgba(13, 148, 136, 0.12)",
+    },
+    modules: {
+      header: "split",
+      hero: "featured-pillar",
+      homeList: "bento",
+      postLayout: "wide",
+      footer: "rich",
+    },
+  },
+
   "affiliate-pro": {
     id: "affiliate-pro",
     name: "Affiliate Pro",

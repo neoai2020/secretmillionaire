@@ -5,10 +5,11 @@ import type { ResolvedTheme } from "../types";
 
 interface PublicSiteRootProps {
   theme: ResolvedTheme;
+  premium?: boolean;
   children: ReactNode;
 }
 
-export function PublicSiteRoot({ theme, children }: PublicSiteRootProps) {
+export function PublicSiteRoot({ theme, premium = false, children }: PublicSiteRootProps) {
   useEffect(() => {
     const prevBg = document.body.style.backgroundColor;
     const prevColor = document.body.style.color;
@@ -47,7 +48,10 @@ export function PublicSiteRoot({ theme, children }: PublicSiteRootProps) {
     <>
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href={theme.fonts.googleUrl} />
-      <div className="blog-public-root flex flex-col min-h-dvh" style={style}>
+      <div
+        className={`blog-public-root flex flex-col min-h-dvh${premium ? " blog-premium-recurring" : ""}`}
+        style={style}
+      >
         {children}
       </div>
     </>
