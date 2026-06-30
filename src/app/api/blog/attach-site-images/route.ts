@@ -64,13 +64,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "items array is required" }, { status: 400 });
   }
 
+  const seedRaw = body.seed;
+  const seed =
+    seedRaw && typeof seedRaw === "object"
+      ? {
+          excludeUrls: Array.isArray((seedRaw as { excludeUrls?: unknown }).excludeUrls)
+            ? ((seedRaw as { excludeUrls: unknown[] }).excludeUrls.filter(
+                (u): u is string => typeof u === "string"
+              ) as string[])
+            : [],
+          excludeStockIds: Array.isArray((seedRaw as { excludeStockIds?: unknown }).excludeStockIds)
+            ? ((seedRaw as { excludeStockIds: unknown[] }).excludeStockIds.filter(
+                (id): id is string => typeof id === "string"
+              ) as string[])
+            : [],
+        }
+      : undefined;
+
   try {
-    const { posts, attached } = await attachSiteImages({
+    const { posts, attached, pool } = await attachSiteImages({
       supabase,
       userId: user.id,
       items,
+      seed,
     });
-    return NextResponse.json({ posts, attached, count: posts.length });
+    return NextResponse.json({ posts, attached, count: posts.length, pool });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Image attach failed";
     return NextResponse.json({ error: msg }, { status: 500 });

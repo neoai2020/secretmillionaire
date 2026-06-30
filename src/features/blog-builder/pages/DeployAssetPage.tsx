@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Rocket, ArrowRight, CheckCircle2, RotateCcw } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
@@ -23,6 +23,20 @@ interface PrefetchedImage {
 }
 
 const DEPLOY_TEXT_WAVE_SIZE = 3;
+
+const DEPLOY_LOADING_STEPS = [
+  "Scanning your affiliate offer page…",
+  "Mapping keyword clusters for your niche…",
+  "Gathering trending angles in your territory…",
+  "Prefetching unique hero images…",
+  "AI is writing your pillar guide…",
+  "Weaving affiliate links into the copy…",
+  "Crafting SEO titles and meta descriptions…",
+  "Drafting supporting cluster articles…",
+  "Selecting distinct photos for each post…",
+  "Building internal links between articles…",
+  "Polishing your first article for publish…",
+];
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
 
@@ -121,6 +135,7 @@ export default function DeployAssetPage() {
   const [resumeLabel, setResumeLabel] = useState("");
   const [quota, setQuota] = useState<GenerationQuota | null>(null);
   const [previewPostId, setPreviewPostId] = useState<string | null>(null);
+  const [loadingStep, setLoadingStep] = useState(0);
   const slotProgressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressCreepTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const deployRunning = useRef(false);
@@ -217,6 +232,31 @@ export default function DeployAssetPage() {
     };
   }, [sessionLoaded, deployed, hobby, territory, deployArmedLinks]);
 
+  const pillarSlot = useMemo(
+    () => postSlots.find((s) => s.topic.isPillar) ?? postSlots[0],
+    [postSlots]
+  );
+
+  const firstPostReady = Boolean(
+    pillarSlot?.status === "complete" &&
+      pillarSlot.post?.image_url &&
+      pillarSlot.post.html
+  );
+
+  const bootstrapping =
+    phase === "setup" || (phase === "generating" && !firstPostReady);
+
+  useEffect(() => {
+    if (!bootstrapping) return;
+
+    setLoadingStep(0);
+    const timer = setInterval(() => {
+      setLoadingStep((step) => (step + 1) % DEPLOY_LOADING_STEPS.length);
+    }, 2800);
+
+    return () => clearInterval(timer);
+  }, [bootstrapping]);
+
   const prepareFreshDeploy = () => {
     beginNewSiteGeneration();
     setPhase("idle");
@@ -288,14 +328,16 @@ export default function DeployAssetPage() {
     async (
       posts: BlogPost[],
       topics: ReturnType<typeof buildClusterTopics>,
-      cache: Record<string, PrefetchedImage>
-    ) => {
+      cache: Record<string, PrefetchedImage>,
+      seed?: { excludeUrls: string[]; excludeStockIds: string[] }
+    ): Promise<{ excludeUrls: string[]; excludeStockIds: string[] } | undefined> => {
       const needsImage = posts.filter((p) => !p.image_url);
-      if (needsImage.length === 0) return;
+      if (needsImage.length === 0) return seed;
 
-      appendLog(`Adding ${needsImage.length} hero + inline images (no duplicates)...`);
+      appendLog(`Adding images for ${needsImage.length} post${needsImage.length === 1 ? "" : "s"}...`);
 
       const { ok, data } = await postJson("/api/blog/attach-site-images", {
+        seed,
         items: needsImage.map((post) => {
           const topicIndex = topics.findIndex((t) => t.slug === post.slug);
           return {
@@ -311,8 +353,17 @@ export default function DeployAssetPage() {
           updatePostInSlots(updated);
         }
         const attached = typeof data.attached === "number" ? data.attached : needsImage.length;
-        appendLog(`Images attached: ${attached}/${needsImage.length}.`);
+        appendLog(`Images ready: ${attached}/${needsImage.length}.`);
+        const pool = data.pool as { excludeUrls?: string[]; excludeStockIds?: string[] } | undefined;
+        if (pool) {
+          return {
+            excludeUrls: Array.isArray(pool.excludeUrls) ? pool.excludeUrls : [],
+            excludeStockIds: Array.isArray(pool.excludeStockIds) ? pool.excludeStockIds : [],
+          };
+        }
       }
+
+      return seed;
     },
     [appendLog]
   );
@@ -374,7 +425,7 @@ export default function DeployAssetPage() {
       }
 
       appendLog(
-        `Writing ${topics.length - startIndex} articles — prefetching all hero images in parallel...`
+        `Writing ${topics.length - startIndex} articles — hero images prefetch in parallel...`
       );
       bumpProgress(22);
 
@@ -385,7 +436,7 @@ export default function DeployAssetPage() {
       }).then((res) => {
         if (res.ok && res.data?.images && typeof res.data.images === "object") {
           const count = Object.keys(res.data.images as object).length;
-          appendLog(`Hero images ready: ${count}/${topics.length} (Pixabay / fallback).`);
+          appendLog(`Hero images prefetched: ${count}/${topics.length}.`);
           return res.data.images as Record<string, PrefetchedImage>;
         }
         appendLog("Image prefetch skipped — will attach per post.");
@@ -393,6 +444,7 @@ export default function DeployAssetPage() {
       });
 
       const generatedPosts: BlogPost[] = [];
+      let imagePoolSeed: { excludeUrls: string[]; excludeStockIds: string[] } | undefined;
 
       for (let waveStart = startIndex; waveStart < topics.length; waveStart += DEPLOY_TEXT_WAVE_SIZE) {
         const waveEnd = Math.min(waveStart + DEPLOY_TEXT_WAVE_SIZE, topics.length);
@@ -427,6 +479,9 @@ export default function DeployAssetPage() {
           error?: string;
         }>;
 
+        const wavePosts: BlogPost[] = [];
+        const imageCache = await imagePrefetchPromise;
+
         for (const row of results) {
           const i = typeof row.index === "number" ? row.index : -1;
           if (i < 0) continue;
@@ -435,9 +490,27 @@ export default function DeployAssetPage() {
             const post = row.post as BlogPost;
             setSlotComplete(i, post);
             generatedPosts.push(post);
+            wavePosts.push(post);
             appendLog(`Post ${i + 1}/${topics.length} saved.`);
           } else if (row.error) {
             setSlotError(i, String(row.error));
+          }
+        }
+
+        if (wavePosts.length > 0) {
+          const byIndex = [...wavePosts].sort((a, b) => {
+            const ia = topics.findIndex((t) => t.slug === a.slug);
+            const ib = topics.findIndex((t) => t.slug === b.slug);
+            return ia - ib;
+          });
+
+          for (const post of byIndex) {
+            imagePoolSeed = await attachSiteImagesBatch(
+              [post],
+              topics,
+              imageCache,
+              imagePoolSeed
+            );
           }
         }
 
@@ -454,11 +527,6 @@ export default function DeployAssetPage() {
 
       clearSlotProgressTimer();
       bumpProgress(90);
-
-      if (generatedPosts.length > 0) {
-        const imageCache = await imagePrefetchPromise;
-        await attachSiteImagesBatch(generatedPosts, topics, imageCache);
-      }
 
       return generatedPosts;
     },
@@ -676,13 +744,16 @@ export default function DeployAssetPage() {
           : "idle";
 
   const completedPosts = postSlots.filter((s) => s.status === "complete").length;
-  const showResults =
-    site &&
-    (phase === "generating" ||
-      phase === "publishing" ||
+  const postsWithImages = postSlots.filter(
+    (s) => s.status === "complete" && s.post?.image_url
+  ).length;
+
+  const showContent =
+    Boolean(site) &&
+    (firstPostReady ||
       phase === "complete" ||
-      (phase === "idle" && canResume) ||
-      (phase === "error" && postSlots.length > 0));
+      phase === "publishing" ||
+      (phase === "error" && postSlots.some((s) => s.status === "complete")));
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
@@ -710,11 +781,30 @@ export default function DeployAssetPage() {
         )}
       </div>
 
+      {bootstrapping && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-[#45A29E]/20 bg-black/40 p-4 sm:p-5 flex flex-col gap-3"
+        >
+          <AiLoadingBar
+            label={DEPLOY_LOADING_STEPS[loadingStep]}
+            progress={progress}
+            active
+            className="w-full"
+          />
+          <p className="text-[11px] text-[#6b7280] leading-relaxed">
+            Building your money site — your first article and hero image will appear here as soon
+            as they&apos;re ready. The rest keep generating in the background.
+          </p>
+        </motion.div>
+      )}
+
       {phase === "setup" && (
         <GenerationTerminal phase={terminalPhase} progress={progress} logLines={generationLog} />
       )}
 
-      {showResults && site && (
+      {showContent && site && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -727,7 +817,9 @@ export default function DeployAssetPage() {
               label={
                 phase === "publishing"
                   ? "Publishing money site live"
-                  : `Generating content — ${completedPosts}/${postSlots.length} posts ready`
+                  : postsWithImages < postSlots.length
+                    ? `Generating content — ${postsWithImages}/${postSlots.length} posts with images`
+                    : `Finalizing — ${completedPosts}/${postSlots.length} posts ready`
               }
               progress={progress}
               active
@@ -749,6 +841,10 @@ export default function DeployAssetPage() {
             </div>
           )}
         </motion.div>
+      )}
+
+      {phase === "idle" && canResume && site && postSlots.length > 0 && !showContent && (
+        <DeployPostGrid slots={postSlots} onViewPost={setPreviewPostId} />
       )}
 
       {phase === "complete" && (

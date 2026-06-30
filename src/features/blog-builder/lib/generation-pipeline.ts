@@ -509,8 +509,15 @@ export async function attachSiteImages(params: {
     prefetched?: ResolvedImage | null;
     postIndex?: number;
   }>;
-}): Promise<{ posts: BlogPost[]; attached: number }> {
+  /** Carry forward used URLs/stock IDs from earlier waves in the same deploy. */
+  seed?: { excludeUrls?: string[]; excludeStockIds?: string[] };
+}): Promise<{
+  posts: BlogPost[];
+  attached: number;
+  pool: { excludeUrls: string[]; excludeStockIds: string[] };
+}> {
   const pool = new SiteImagePool();
+  pool.seedExcludes(params.seed?.excludeUrls, params.seed?.excludeStockIds);
   pool.seed(
     params.items
       .map((item) => item.prefetched)
@@ -537,7 +544,7 @@ export async function attachSiteImages(params: {
     }
   }
 
-  return { posts, attached };
+  return { posts, attached, pool: pool.snapshot() };
 }
 
 /**

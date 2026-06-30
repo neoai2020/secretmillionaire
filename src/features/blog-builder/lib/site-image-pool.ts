@@ -21,6 +21,16 @@ export class SiteImagePool {
     for (const image of images) this.track(image);
   }
 
+  /** Resume dedupe state from a prior attach batch (next wave / API call). */
+  seedExcludes(excludeUrls: string[] = [], excludeStockIds: string[] = []) {
+    for (const url of excludeUrls) {
+      if (url) this.usedUrls.add(normalizeImageUrl(url));
+    }
+    for (const id of excludeStockIds) {
+      if (id) this.usedStockIds.add(id);
+    }
+  }
+
   snapshot(): { excludeUrls: string[]; excludeStockIds: string[] } {
     return {
       excludeUrls: [...this.usedUrls],
