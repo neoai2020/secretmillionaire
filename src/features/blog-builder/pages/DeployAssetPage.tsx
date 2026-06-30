@@ -13,13 +13,15 @@ import { PostPreviewModal } from "../components/PostPreviewModal";
 import { buildClusterTopics } from "../lib/templates";
 import { buildDeploySlots, firstQueuedSlotIndex } from "../lib/deploy-slots";
 import { getSiteTerritory } from "../lib/site-territory";
-import { POST_GENERATION_ATTEMPTS } from "../lib/generation-pipeline";
+import { TEXT_GENERATION_CONCURRENCY } from "../lib/generation-pipeline";
 import type { ArmedLink, BlogPost, BlogSite } from "../types";
 
 interface PrefetchedImage {
   url: string;
   alt: string;
 }
+
+const DEPLOY_TEXT_WAVE_SIZE = 3;
 
 type DeployPhase = "idle" | "setup" | "generating" | "publishing" | "complete" | "error";
 
@@ -76,10 +78,6 @@ function siteMatchesWizard(
   const siteLinks = linkFingerprint((site.armed_links ?? []) as ArmedLink[]);
   const currentLinks = linkFingerprint(armedLinks);
   return Boolean(niche) && siteNiche === niche && siteLinks === currentLinks;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function deployProgress(completed: number, total: number, slotProgress = 0): number {
@@ -258,22 +256,6 @@ export default function DeployAssetPage() {
     }, 900);
   };
 
-  const setSlotGenerating = (index: number, completed: number, total: number) => {
-    setPostSlots((prev) =>
-      prev.map((s, idx) => {
-        if (idx === index) {
-          return { ...s, status: "generating", progress: 6, error: undefined };
-        }
-        if (idx > index && s.status === "generating") {
-          return { ...s, status: "queued", progress: 0 };
-        }
-        return s;
-      })
-    );
-    setProgress(deployProgress(completed, total, 6));
-    startActiveSlotProgress(index, completed, total);
-  };
-
   const setSlotComplete = (index: number, post: BlogPost) => {
     setPostSlots((prev) => {
       const next = prev.map((s, idx) =>
@@ -334,6 +316,21 @@ export default function DeployAssetPage() {
     [appendLog, attachSingleImage]
   );
 
+  const setWaveGenerating = (indices: number[], completedBefore: number, total: number) => {
+    setPostSlots((prev) =>
+      prev.map((s, idx) => {
+        if (indices.includes(idx)) {
+          return { ...s, status: "generating", progress: 6, error: undefined };
+        }
+        return s;
+      })
+    );
+    if (indices.length > 0) {
+      setProgress(deployProgress(completedBefore, total, 6));
+      startActiveSlotProgress(indices[0], completedBefore, total);
+    }
+  };
+
   const runPostGeneration = useCallback(
     async (params: {
       siteId: string;
@@ -389,53 +386,66 @@ export default function DeployAssetPage() {
 
       const generatedPosts: BlogPost[] = [];
 
-      for (let i = startIndex; i < topics.length; i++) {
-        const topic = topics[i];
-        const completedBefore = i;
-        setSlotGenerating(i, completedBefore, topics.length);
-        appendLog(`Post ${i + 1}/${topics.length}: ${topic.title.slice(0, 60)}...`);
+      for (let waveStart = startIndex; waveStart < topics.length; waveStart += DEPLOY_TEXT_WAVE_SIZE) {
+        const waveEnd = Math.min(waveStart + DEPLOY_TEXT_WAVE_SIZE, topics.length);
+        const waveIndices = Array.from(
+          { length: waveEnd - waveStart },
+          (_, offset) => waveStart + offset
+        );
 
-        let post: BlogPost | null = null;
-        let lastError = "Generation failed";
+        setWaveGenerating(waveIndices, waveStart, topics.length);
+        appendLog(
+          `Writing posts ${waveStart + 1}–${waveEnd} in parallel (${TEXT_GENERATION_CONCURRENCY} at a time on server)...`
+        );
 
-        for (let attempt = 0; attempt < POST_GENERATION_ATTEMPTS; attempt++) {
-          if (attempt > 0) {
-            appendLog(`Retrying post ${i + 1} (attempt ${attempt + 1}/${POST_GENERATION_ATTEMPTS})...`);
-            await sleep(2000 * attempt);
-          }
-
-          const { ok, status, data } = await postJson("/api/blog/generate-one-post", {
+        const { ok: batchOk, status: batchStatus, data: batchData } = await postJson(
+          "/api/blog/generate-deploy-batch",
+          {
             siteId,
-            topic,
             productContext,
             trendContext,
-            contentTier: "deploy",
-            skipImage: true,
-          });
-
-          if (ok && data?.post) {
-            post = data.post as BlogPost;
-            break;
+            startIndex: waveStart,
+            limit: waveEnd - waveStart,
           }
+        );
 
-          lastError = (data?.error as string) || busyError(status);
+        if (!batchOk || !batchData) {
+          throw new Error((batchData?.error as string) || busyError(batchStatus));
         }
 
-        if (!post) {
-          setSlotError(i, lastError);
+        const results = (Array.isArray(batchData.results) ? batchData.results : []) as Array<{
+          index: number;
+          post?: BlogPost;
+          error?: string;
+        }>;
+
+        for (const row of results) {
+          const i = typeof row.index === "number" ? row.index : -1;
+          if (i < 0) continue;
+
+          if (row.post) {
+            const post = row.post as BlogPost;
+            setSlotComplete(i, post);
+            generatedPosts.push(post);
+            appendLog(`Post ${i + 1}/${topics.length} saved.`);
+
+            void imagePrefetchPromise.then((cache) => {
+              attachSingleImage(post, cache[topics[i].slug] ?? null);
+            });
+          } else if (row.error) {
+            setSlotError(i, String(row.error));
+          }
+        }
+
+        setProgress(deployProgress(waveEnd, topics.length));
+
+        const failures = Array.isArray(batchData.failures) ? batchData.failures : [];
+        if (failures.length > 0) {
+          clearSlotProgressTimer();
           throw new Error(
-            `Post ${i + 1} failed after ${POST_GENERATION_ATTEMPTS} tries: ${lastError}`
+            `${failures.length} article${failures.length === 1 ? "" : "s"} failed in this batch. Click Try Deploy Again to resume.`
           );
         }
-
-        setSlotComplete(i, post);
-        generatedPosts.push(post);
-        setProgress(deployProgress(i + 1, topics.length));
-        appendLog(`Post ${i + 1}/${topics.length} saved.`);
-
-        void imagePrefetchPromise.then((cache) => {
-          attachSingleImage(post, cache[topic.slug] ?? null);
-        });
       }
 
       clearSlotProgressTimer();
@@ -525,6 +535,9 @@ export default function DeployAssetPage() {
               productContext =
                 scrapeData.context ||
                 `${scrapeData.data.title}. ${scrapeData.data.description}`;
+              appendLog(
+                scrapeData.cached ? "Offer page loaded from cache." : "Offer page scanned."
+              );
             }
           } catch {
             // Non-fatal
@@ -593,6 +606,9 @@ export default function DeployAssetPage() {
             productContext =
               scrapeData.context ||
               `${scrapeData.data.title}. ${scrapeData.data.description}`;
+            appendLog(
+              scrapeData.cached ? "Offer page loaded from cache." : "Offer page scanned."
+            );
           }
         } catch {
           // Non-fatal

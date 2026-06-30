@@ -16,7 +16,7 @@ import type { ClusterTopic } from "@/features/blog-builder/types";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-/** Generate all pending deploy posts in one server request (text only — images attached later). */
+/** Generate deploy posts in parallel on the server (text only — images prefetched separately). */
 export async function POST(request: Request) {
   const guard = featureApiGuard("blog-builder");
   if (guard) return guard;
@@ -27,7 +27,10 @@ export async function POST(request: Request) {
   const body = await request.json();
   const siteId = typeof body.siteId === "string" ? body.siteId : "";
   const productContext = typeof body.productContext === "string" ? body.productContext : "";
+  const clientTrendContext = typeof body.trendContext === "string" ? body.trendContext : "";
   const startIndex = typeof body.startIndex === "number" ? Math.max(0, body.startIndex) : 0;
+  const limit =
+    typeof body.limit === "number" ? Math.max(1, Math.min(body.limit, 7)) : undefined;
 
   if (!siteId) {
     return NextResponse.json({ error: "siteId is required" }, { status: 400 });
@@ -38,13 +41,17 @@ export async function POST(request: Request) {
 
   const territory = getSiteTerritory(site);
   const topics = buildClusterTopics(territory, site.hobby);
-  const pending = topics.slice(startIndex);
+  const pendingAll = topics.slice(startIndex);
+  const pending = limit ? pendingAll.slice(0, limit) : pendingAll;
 
-  // Niche trend angles: computed once and shared across every post in the batch.
-  const trendContext = await fetchTrendingAngles(territory, site.hobby);
+  if (pending.length === 0) {
+    return NextResponse.json({ results: [], posts: [], failures: [], completedCount: 0, totalCount: 0 });
+  }
 
-  // Generate posts in a bounded concurrency pool instead of one-at-a-time.
-  // Each post keeps its own retry/backoff so a 429 only delays that worker.
+  const trendContext =
+    clientTrendContext ||
+    (await fetchTrendingAngles(territory, site.hobby));
+
   const results = await mapWithConcurrency(
     pending,
     TEXT_GENERATION_CONCURRENCY,
@@ -90,5 +97,6 @@ export async function POST(request: Request) {
     failures: failures.map((f) => ({ index: f.index, slug: f.topic.slug, error: f.error })),
     completedCount: posts.length,
     totalCount: pending.length,
+    concurrency: TEXT_GENERATION_CONCURRENCY,
   });
 }

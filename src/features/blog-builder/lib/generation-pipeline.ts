@@ -19,7 +19,7 @@ import type { ArmedLink, BlogPost, BlogSite, ClusterTopic, ContentTier } from ".
  * occasional 429. Tune via env if the quota tier changes.
  */
 export const TEXT_GENERATION_CONCURRENCY = Number(
-  process.env.TEXT_GENERATION_CONCURRENCY ?? 2
+  process.env.TEXT_GENERATION_CONCURRENCY ?? 3
 );
 export const POST_GENERATION_ATTEMPTS = 3;
 

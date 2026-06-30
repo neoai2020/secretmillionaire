@@ -85,7 +85,7 @@ export function buildArticleUserPrompt(params: {
   const tier = params.contentTier ?? "full";
   const wordSpec =
     tier === "deploy"
-      ? "- html: 400-550 words of useful content; 3-4 <h2> sections; mix of <p> and <ul>/<li>; optional short FAQ (1-2 questions)."
+      ? "- html: 300-400 words of useful content; 3 <h2> sections; mix of <p> and <ul>/<li>; optional brief FAQ (1-2 questions)."
       : "- html: 650-950 words of genuinely useful content; 4-5 <h2> sections; mix of <p>, <ul>/<li>, and a short FAQ (2-3 buyer questions answered in prose or a final <h2>FAQ).";
 
   const parts = [
