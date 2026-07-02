@@ -82,7 +82,7 @@ function PreparingStep({ onContinue }: { onContinue: () => void }) {
   const allDone = rows.every((r) => r.completed);
 
   return (
-    <section className="flex flex-col min-h-0 flex-1 justify-center w-full max-w-2xl mx-auto gap-4 px-1 sm:px-0">
+    <section className="flex flex-col min-h-0 flex-1 justify-start w-full max-w-2xl mx-auto gap-4 px-1 sm:px-0">
       <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white text-center">
         {onboardingContent.preparing.title}
       </h1>
@@ -147,7 +147,7 @@ function WelcomeCompleteStep({
   const skipCta = showPartnerCta ? partnerOffer.qualification.noThanksCta : null;
 
   return (
-    <section className="flex flex-col min-h-0 flex-1 justify-center w-full max-w-2xl mx-auto gap-6 text-center">
+    <section className="flex flex-col min-h-0 flex-1 justify-start w-full max-w-2xl mx-auto gap-6 text-center">
       <div
         className="w-16 h-16 mx-auto rounded-full flex items-center justify-center"
         style={{ backgroundColor: "rgba(69, 162, 158, 0.15)" }}
@@ -202,15 +202,15 @@ export function OnboardingFlow() {
 
   return (
     <div className="fixed inset-0 z-[300] h-[100dvh] max-h-[100dvh] overflow-y-auto" style={{ backgroundColor: PAGE_BG }}>
-      <div className="relative z-10 flex flex-col min-h-[100dvh] px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-7 safe-top safe-bottom">
-        <header className="flex flex-col items-center gap-3 shrink-0">
+      <div className="relative z-10 flex flex-col min-h-[100dvh] px-4 sm:px-6 md:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 safe-top safe-bottom">
+        <header className="flex flex-col items-center gap-2 shrink-0 mb-4 sm:mb-5">
           <BrandLogo size="md" showTagline={false} />
           <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">
             {brand.memberLabel} Onboarding
           </span>
         </header>
 
-        <div className="flex flex-col min-h-0 flex-1 mt-6">
+        <div className="flex flex-col min-h-0 flex-1">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}

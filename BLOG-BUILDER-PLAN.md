@@ -51,7 +51,7 @@ Pulled from `src/config/brand.config.ts` and existing features. **All new UI mus
 |---------|----------|
 | User / member | **Initiate** |
 | Dashboard | **Command Center** |
-| Support | **Q's Team** |
+| Support | **Support** |
 | Premium area | **Society Access** |
 | A generated blog | **Cash Asset** / **Money Site** |
 | Publish | **Deploy** |

@@ -10,19 +10,19 @@ interface BrandLogoProps {
 
 const SIZES = {
   sm: {
-    box: "w-9 h-9 sm:w-10 sm:h-10",
+    imgHeight: "h-9 sm:h-10",
     img: 40,
     title: "text-sm sm:text-base lg:text-[18px]",
     tagline: "text-[9px] sm:text-[10px]",
   },
   md: {
-    box: "w-10 h-10 sm:w-12 sm:h-12",
+    imgHeight: "h-10 sm:h-12",
     img: 48,
     title: "text-base sm:text-[20px]",
     tagline: "text-[10px]",
   },
   lg: {
-    box: "w-16 h-16 sm:w-20 sm:h-20",
+    imgHeight: "h-16 sm:h-20",
     img: 80,
     title: "text-xl sm:text-[28px]",
     tagline: "text-xs sm:text-sm",
@@ -34,24 +34,16 @@ export function BrandLogo({ size = "sm", showTagline = true, compact = false }: 
 
   return (
     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-      <div
-        className={`${s.box} relative shrink-0 rounded-lg overflow-hidden flex items-center justify-center`}
-        style={{
-          background: "transparent",
-          boxShadow: "none",
-        }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={brand.logo.src}
-          alt={brand.logo.alt}
-          width={s.img}
-          height={s.img}
-          className="object-contain w-full h-full p-0.5"
-          loading="eager"
-          decoding="async"
-        />
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={brand.logo.src}
+        alt={brand.logo.alt}
+        width={s.img}
+        height={s.img}
+        className={`${s.imgHeight} w-auto object-contain shrink-0`}
+        loading="eager"
+        decoding="async"
+      />
       <div className="flex flex-col min-w-0">
         <span
           className={`brand-font ${compact ? "text-xs sm:text-sm leading-tight" : s.title} text-text-primary tracking-tight leading-tight line-clamp-2 sm:line-clamp-none`}

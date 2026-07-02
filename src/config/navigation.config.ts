@@ -67,7 +67,7 @@ export const workflowSteps: NavItem[] = [
 /** Always visible — Training & Support for every Initiate */
 export const coreResourceNav: NavItem[] = [
   { path: "/training", label: "Member Training", icon: "GraduationCap" },
-  { path: "/support", label: "Contact Q's Team", icon: "Headphones" },
+  { path: "/support", label: "Support", icon: "Headphones" },
 ];
 
 export const blogBuilderWorkflowSteps: NavItem[] = [

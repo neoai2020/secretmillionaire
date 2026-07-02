@@ -8,7 +8,7 @@ Elite financial extraction terminal — built on the [product-skeleton](../produ
 2. **Scan** (`/scanner`) — Parse retail data streams for unclaimed commissions
 3. **Extract** (`/extraction`) — Route located funds to your account
 
-**Sidebar (always on):** Member Training (`/training`) · Contact Q's Team (`/support`)
+**Sidebar (always on):** Member Training (`/training`) · Support (`/support`)
 
 ## Brand
 
