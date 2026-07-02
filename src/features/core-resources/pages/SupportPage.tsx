@@ -40,6 +40,13 @@ export default function SupportPage() {
           {support.ctaLabel}
         </a>
 
+        <p className="text-sm text-text-muted">
+          Or email us directly:{" "}
+          <a href={contactHref} className="text-accent hover:underline break-all">
+            {support.email}
+          </a>
+        </p>
+
         <ul className="grid gap-3 sm:grid-cols-3">
           {support.stats.map((stat) => {
             const Icon = STAT_ICONS[stat.icon as keyof typeof STAT_ICONS] ?? Star;

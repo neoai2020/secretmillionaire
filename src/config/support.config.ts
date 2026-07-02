@@ -1,6 +1,6 @@
 export const support = {
-  email: "support@secretmillionairesociety.com",
-  contactUrl: "mailto:support@secretmillionairesociety.com",
+  email: "SecretMillionairesociety@neoai.freshdesk.com",
+  contactUrl: "mailto:SecretMillionairesociety@neoai.freshdesk.com",
   helpCenterUrl: "",
   headline: "Contact Q's Team",
   pageTitle: "Support",
