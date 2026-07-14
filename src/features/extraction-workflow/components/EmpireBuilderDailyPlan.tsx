@@ -65,14 +65,14 @@ export function EmpireBuilderDailyPlan({ allocatedAmount }: EmpireBuilderDailyPl
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl border border-[#D4AF37]/25 bg-[#12141a] p-5 sm:p-8 text-left"
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-2">
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-2">
         Affiliate Marketing, Simplified
       </p>
       <h2 className="brand-font text-xl sm:text-2xl text-[#C5C6C7] mb-2">
         Your path to ${dailyTarget.toFixed(2)}/day (~${weeklyTarget.toFixed(2)}/week)
       </h2>
-      <p className="text-sm text-[#6b7280] mb-4 leading-relaxed">
-        That matches your ${dailyTarget.toFixed(2)} Total Expected Balance — the daily affiliate
+      <p className="text-base text-[#9fb0b5] mb-4 leading-relaxed">
+        That matches your ${dailyTarget.toFixed(2)}/day earning target — the daily affiliate
         income members in your position aim for. Run Empire Builder consistently: publish content
         people search for, and get paid when readers buy through your links.
       </p>
@@ -91,10 +91,10 @@ export function EmpireBuilderDailyPlan({ allocatedAmount }: EmpireBuilderDailyPl
             <step.icon size={20} className="text-[#45A29E] shrink-0 mt-0.5" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="font-semibold text-[#C5C6C7] text-sm">{step.label}</span>
-                <span className="text-xs text-[#D4AF37] font-medium">{step.usage}</span>
+                <span className="font-semibold text-[#C5C6C7] text-base">{step.label}</span>
+                <span className="text-sm text-[#D4AF37] font-medium">{step.usage}</span>
               </div>
-              <p className="text-xs text-[#6b7280] mt-1">{step.detail}</p>
+              <p className="text-sm text-[#9fb0b5] mt-1 leading-relaxed">{step.detail}</p>
             </div>
           </li>
         ))}

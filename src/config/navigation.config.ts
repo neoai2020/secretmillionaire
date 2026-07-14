@@ -41,26 +41,10 @@ export const homeNav: NavItem = {
 export const workflowSteps: NavItem[] = [
   {
     path: "/dashboard",
-    label: "Click 1: Connect",
+    label: "Activate",
     icon: "Wifi",
     feature: "extraction-workflow",
-    workflowStep: 1,
-  },
-  {
-    path: "/scanner",
-    label: "Click 2: Scan",
-    icon: "Activity",
-    feature: "extraction-workflow",
-    workflowStep: 2,
-    requiresWorkflowStep: 1,
-  },
-  {
-    path: "/extraction",
-    label: "Click 3: Claim",
-    icon: "Wallet",
-    feature: "extraction-workflow",
     workflowStep: 3,
-    requiresWorkflowStep: 2,
   },
 ];
 

@@ -63,6 +63,8 @@
     background-color: var(--bg-page);
     color: var(--text-primary);
     font-family: var(--font-ui);
+    font-size: 1rem;
+    line-height: 1.6;
     @apply antialiased min-h-screen;
     background-image:
       radial-gradient(ellipse 80% 60% at 10% 0%, rgba(69, 162, 158, 0.14) 0%, transparent 55%),

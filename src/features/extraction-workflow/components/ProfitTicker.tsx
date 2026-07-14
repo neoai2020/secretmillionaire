@@ -43,10 +43,12 @@ export function ProfitTicker({ large = false }: { large?: boolean }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#45A29E] mb-1">
-        Total Expected Balance
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#45A29E] mb-1">
+        Daily Earning Target
       </p>
-      <p className="text-[9px] text-[#6b7280] mb-1">Daily affiliate income target</p>
+      <p className="text-xs text-[#9fb0b5] mb-1">
+        Your goal — earned when people buy through your links
+      </p>
       <p
         className={`brand-font font-bold text-[#C5C6C7] tabular-nums ${
           large ? "text-3xl sm:text-4xl lg:text-5xl" : "text-xl sm:text-2xl"

@@ -1,10 +1,6 @@
-import { FeatureGuard } from "@/components/layout/FeatureGuard";
-import ScannerPage from "@/features/extraction-workflow/pages/ScannerPage";
+import { redirect } from "next/navigation";
 
+/** The scan step now lives inside the Activation Console on /dashboard. */
 export default function Page() {
-  return (
-    <FeatureGuard feature="extraction-workflow">
-      <ScannerPage />
-    </FeatureGuard>
-  );
+  redirect("/dashboard");
 }

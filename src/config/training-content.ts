@@ -66,7 +66,7 @@ const product = brand.productName;
 export const trainingContentData = {
   intro: {
     headline: "How the Society Works",
-    body: `${product} gives you two ways to launch SEO money sites that rank for buyer-intent searches and weave in your affiliate links. Run the Extraction Protocol once, then choose your path: build a custom territory site in Empire Builder, or clone a tested 25-article site from Recurring Wealth Streams.`,
+    body: `${product} gives you two ways to launch SEO money sites that rank for buyer-intent searches and weave in your affiliate links. Run Activation once from your dashboard, then choose your path: build a custom territory site in Empire Builder, or clone a tested 25-article site from Recurring Wealth Streams.`,
   },
 
   paths: [
@@ -101,25 +101,25 @@ export const trainingContentData = {
       step: 1,
       title: "Connect",
       icon: "wifi" as TrainingIconId,
-      description: "Link your account and confirm your Initiate profile so the terminal can route commissions securely.",
-      tips: ["Complete this once after signup", "Required before Scan and Claim unlock"],
+      description: "Hit Begin Activation on your dashboard — the console links you to the Society's private network.",
+      tips: ["Complete this once after signup", "The whole activation takes about 30 seconds"],
       href: "/dashboard",
     },
     {
       step: 2,
       title: "Scan",
       icon: "activity" as TrainingIconId,
-      description: "Run the marketplace scan to surface commission opportunities aligned with your profile.",
-      tips: ["Unlocks after Connect", "Review results before moving to Claim"],
-      href: "/scanner",
+      description: "The console scans live affiliate platforms for commission opportunities and maps your daily earning target.",
+      tips: ["Runs automatically right after Connect", "Your target is a goal, not a balance — you earn it through your links"],
+      href: "/dashboard",
     },
     {
       step: 3,
-      title: "Claim",
+      title: "Lock Your Target",
       icon: "wallet" as TrainingIconId,
-      description: "Finalize extraction setup so your dashboard, vaults, and deploy tools are fully armed.",
-      tips: ["Complete all three clicks before your first deploy", "You can revisit anytime from the sidebar"],
-      href: "/extraction",
+      description: "Lock in your daily earning target so your dashboard, vaults, and deploy tools are fully armed.",
+      tips: ["Complete activation before your first deploy", "You can revisit your dashboard anytime from the sidebar"],
+      href: "/dashboard",
     },
   ] satisfies TrainingStep[],
 
@@ -245,7 +245,7 @@ export const trainingContentData = {
   ] satisfies TrainingTip[],
 
   quickStartChecklist: [
-    "Complete Extraction Protocol: Connect → Scan → Claim",
+    "Complete Activation: Connect → Scan → Lock Your Target",
     "Path A: Choose territory → Arm links → Deploy (7-article site)",
     "Path B: Recurring Wealth → pick offer → Get Website (25-article clone)",
     "Arm a recurring offer link even if you started with Empire Builder",
@@ -267,7 +267,7 @@ export const trainingContentData = {
         },
         {
           q: "What should I do first after login?",
-          a: "Finish Extraction Protocol (Connect → Scan → Claim), then either start Empire Builder at Choose Territory or open Recurring Wealth and click Get Website on an offer you like.",
+          a: "Finish Activation on your dashboard (Connect → Scan → Lock Your Target), then either start Empire Builder at Choose Territory or open Recurring Wealth and click Get Website on an offer you like.",
         },
         {
           q: "Can I use this on mobile?",
@@ -359,5 +359,5 @@ export const trainingContentData = {
   },
 
   videoPlaceholder:
-    "Member walkthrough videos are being prepared. Until then, follow the step guides below — they cover Extraction Protocol, Empire Builder, and Recurring Wealth Get Website.",
+    "Member walkthrough videos are being prepared. Until then, follow the step guides below — they cover Activation, Empire Builder, and Recurring Wealth Get Website.",
 } as const;

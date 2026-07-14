@@ -14,7 +14,6 @@ import {
 import { ConnectionStatus } from "@/features/extraction-workflow/components/ConnectionStatus";
 import { WithdrawPopup } from "@/features/dopamine/components/WithdrawPopup";
 import { SocialProofToast } from "@/features/dopamine/components/SocialProofToast";
-import { SystemStatusToast } from "@/features/dopamine/components/SystemStatusToast";
 import { FreeTrainingPopup } from "@/features/dopamine/components/FreeTrainingPopup";
 import { isFeatureEnabled } from "@/config/features.config";
 
@@ -113,7 +112,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {showDopamine && (
         <>
           <WithdrawPopup onVisibilityChange={setWithdrawVisible} />
-          <SystemStatusToast paused={withdrawVisible} />
           <SocialProofToast paused={withdrawVisible} />
           <FreeTrainingPopup />
         </>

@@ -1,10 +1,6 @@
-import { FeatureGuard } from "@/components/layout/FeatureGuard";
-import ExtractionPage from "@/features/extraction-workflow/pages/ExtractionPage";
+import { redirect } from "next/navigation";
 
+/** The target/claim step now lives inside the Activation Console on /dashboard. */
 export default function Page() {
-  return (
-    <FeatureGuard feature="extraction-workflow">
-      <ExtractionPage />
-    </FeatureGuard>
-  );
+  redirect("/dashboard");
 }

@@ -5,12 +5,12 @@ import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
 
 const SCAN_LINES = [
   "Initializing encrypted handshake...",
-  "Accessing online data streams...",
-  "Parsing unclaimed commission ledgers...",
-  "Cross-referencing affiliate networks...",
-  "Identifying lost digital chances...",
-  "Validating extraction pathways...",
-  "Commissions located — awaiting claim.",
+  "Connecting to live affiliate networks...",
+  "Reading commission rates on top-selling offers...",
+  "Cross-referencing product demand data...",
+  "Identifying commission opportunities...",
+  "Mapping your daily earning potential...",
+  "Target mapped — ready to lock in.",
 ];
 
 export function ScanTerminal({ active }: { active: boolean }) {
@@ -38,7 +38,7 @@ export function ScanTerminal({ active }: { active: boolean }) {
   return (
     <div className="rounded-xl border border-[#45A29E]/25 bg-black/60 overflow-hidden">
       {loading && <AiLoadingBar label="Scanning data streams" className="px-3 sm:px-4 pt-3 sm:pt-4" />}
-      <div className="p-3 sm:p-4 pt-2 font-mono text-[11px] sm:text-xs text-[#45A29E] h-40 sm:h-48 overflow-y-auto">
+      <div className="p-3 sm:p-4 pt-2 font-mono text-xs sm:text-sm text-[#45A29E] h-40 sm:h-48 overflow-y-auto">
         {lines.length === 0 ? (
           <p className="text-[#6b7280]">&gt; Awaiting scan command...</p>
         ) : (
