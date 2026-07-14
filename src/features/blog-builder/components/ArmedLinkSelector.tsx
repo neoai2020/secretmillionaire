@@ -142,7 +142,7 @@ export function ArmedLinkSelector({
                 type="button"
                 onClick={() => toggle(i)}
                 aria-pressed={isSelected}
-                aria-label={`${isSelected ? "Deselect" : "Select"} armed link ${i + 1}`}
+                aria-label={`${isSelected ? "Deselect" : "Select"} product link ${i + 1}`}
                 className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
                   isSelected
                     ? "border-accent bg-accent text-[#0B0C10]"
@@ -155,7 +155,7 @@ export function ArmedLinkSelector({
               <div className="flex flex-col gap-1 flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs text-text-muted uppercase tracking-widest font-bold">
-                    Armed Link {i + 1}
+                    Product Link {i + 1}
                   </span>
                   {isPrimary && (
                     <span className="status-pill-gold text-[9px] py-0.5">Primary CTA</span>
@@ -214,11 +214,11 @@ export function ArmedLinkSelector({
         className="inline-flex items-center gap-2 text-sm text-accent font-medium self-start hover:underline"
       >
         <Plus size={16} />
-        Add another armed link
+        Add another product link
       </button>
 
       <p className="text-xs text-text-muted leading-relaxed">
-        Check at least one link to weave into this money site. The first selected link becomes the
+        Check at least one link to weave into this website. The first selected link becomes the
         primary in-content recommendation and end CTA. Valid links save to Link Vault automatically.
       </p>
     </div>

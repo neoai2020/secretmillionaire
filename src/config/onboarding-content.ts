@@ -11,27 +11,27 @@ export const ONBOARDING_META_KEY = "onboarding_completed" as const;
 
 export const onboardingContent = {
   welcome: {
-    title: "Welcome, Initiate",
-    body: "Your private extraction terminal is ready. You now have access to the same data streams used by elite wealth managers — simplified into three clicks.",
-    continueCta: "Enter Command Center",
+    title: "Welcome",
+    body: "Your account is ready. Next you'll set a simple daily goal, then build a website that recommends products — and you earn when people buy through your links.",
+    continueCta: "Go to Home",
   },
   preparing: {
-    title: "Establishing secure connection",
+    title: "Getting your account ready",
     rows: [
       {
-        label: "Initiate credentials verified",
-        description: "Your membership has been authenticated on the private network.",
+        label: "Membership confirmed",
+        description: "You're signed in and ready to use the member tools.",
       },
       {
-        label: "Private server allocation confirmed",
-        description: "A dedicated extraction node has been reserved for your account.",
+        label: "Home dashboard unlocked",
+        description: "You'll see video training, simple steps, and quick links on Home.",
       },
       {
-        label: "Extraction terminal unlocked",
-        description: "Connect → Scan → Extract is now available in your Command Center.",
+        label: "Website tools ready",
+        description: "Pick a topic, add your product links, then launch your website.",
       },
     ],
-    tip: "Complete all three clicks in order. The system will guide you at each step.",
+    tip: "On Home, follow the three steps from top to bottom. Support is in the sidebar if you get stuck.",
     continueCta: "Continue",
   },
   partnerOffer: {

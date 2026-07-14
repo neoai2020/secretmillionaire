@@ -149,10 +149,10 @@ export default function TrainingPage() {
       <section className="flex flex-col gap-6">
         <div className="flex items-center gap-2">
           <Zap size={16} className="text-accent" />
-          <h2 className="text-lg font-bold text-text-heading">Activation</h2>
+          <h2 className="text-lg font-bold text-text-heading">Getting Started on Home</h2>
         </div>
         <p className="text-sm text-text-muted -mt-2">
-          Run this once from your dashboard — one button covers all three phases and unlocks your deploy tools.
+          Open Home first. Finish the short setup if it appears, then follow the three website steps.
         </p>
         <div className="flex flex-col gap-4">
           {extractionSteps.map((step, i) => (

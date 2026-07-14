@@ -22,7 +22,7 @@ import { SOCIAL_NICHES, SOCIAL_POSTS } from "../data/posts";
 
 const STEPS = [
   { n: 1, title: "Pick Your Niche", text: "Choose from 8 proven niches that people spend money in every day." },
-  { n: 2, title: "Pick Your Link", text: "Choose a saved armed link from your vault or add a new one — every post uses it automatically." },
+  { n: 2, title: "Pick Your Link", text: "Choose a saved product link from your vault or add a new one — every post uses it automatically." },
   { n: 3, title: "Copy & Paste Posts", text: "One-click copy into any Facebook group and start earning commissions." },
 ];
 

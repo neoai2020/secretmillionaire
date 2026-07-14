@@ -109,7 +109,7 @@ export function AffiliateLinkPicker({ value, onChange }: AffiliateLinkPickerProp
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
-              Saved armed links
+              Saved product links
             </p>
             <Link
               href="/link-vault"
@@ -176,7 +176,7 @@ export function AffiliateLinkPicker({ value, onChange }: AffiliateLinkPickerProp
           <div className="flex items-center gap-2">
             <Link2 className="text-accent" size={16} />
             <p className="text-sm font-bold text-text-heading">
-              {vaultLinks.length > 0 ? "Add a new armed link" : "Enter your affiliate link"}
+              {vaultLinks.length > 0 ? "Add a new product link" : "Enter your affiliate link"}
             </p>
           </div>
 

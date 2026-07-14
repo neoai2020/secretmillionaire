@@ -139,7 +139,7 @@ export default function LoginPage() {
           <strong className="text-[#45A29E]">
             {socialProof.networkCapacity.current}/{socialProof.networkCapacity.max}
           </strong>{" "}
-          Initiates online
+          Members online
         </p>
       )}
     </AuthLayout>

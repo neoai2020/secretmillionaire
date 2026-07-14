@@ -48,7 +48,7 @@ export function ArmedLinkInput({ links, onChange }: ArmedLinkInputProps) {
             className="glass-card p-4 flex flex-col gap-3"
           >
             <label className="text-xs text-text-muted uppercase tracking-widest font-bold">
-              Armed Link {i + 1}
+              Product Link {i + 1}
             </label>
             <input
               type="text"
@@ -91,7 +91,7 @@ export function ArmedLinkInput({ links, onChange }: ArmedLinkInputProps) {
         onClick={add}
         className="text-sm text-accent font-medium self-start hover:underline"
       >
-        + Add another armed link
+        + Add another product link
       </button>
       <p className="text-xs text-text-muted leading-relaxed">
         Paste your DigiStore affiliate URL (must include https://). Valid links save to Link Vault

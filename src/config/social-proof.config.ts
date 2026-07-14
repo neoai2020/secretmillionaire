@@ -9,10 +9,10 @@ export const socialProof = {
   ticker: {
     onlineCount: 24,
     messages: [
-      "Data stream active — scanning retail networks",
-      "Member Associate routed $127 in unclaimed commissions",
-      "Encrypted node synchronized — extraction ready",
-      "Initiate verified — private server connected",
+      "Members are building websites right now",
+      "New product links added across the network",
+      "Support team online for members",
+      "Another website just went live",
     ],
   },
   toast: {
@@ -24,11 +24,5 @@ export const socialProof = {
     ],
     intervalMinMs: 15000,
     intervalMaxMs: 25000,
-  },
-  systemStatus: {
-    initialDelayMs: 5000,
-    visibleMs: 4500,
-    intervalMinMs: 10000,
-    intervalMaxMs: 18000,
   },
 } as const;

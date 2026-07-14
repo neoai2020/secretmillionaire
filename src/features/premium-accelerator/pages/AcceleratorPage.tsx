@@ -234,7 +234,7 @@ export default function AcceleratorPage() {
         </div>
         <h1 className="brand-font text-3xl md:text-4xl text-text-heading tracking-tight mb-3">Accelerator</h1>
         <p className="text-text-muted text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-          Your unlocked perks: build unlimited money sites, and spin up ready-to-post Facebook
+          Your unlocked perks: build unlimited websites, and spin up ready-to-post Facebook
           content for any site you&apos;ve generated.
         </p>
       </motion.div>
@@ -299,7 +299,7 @@ export default function AcceleratorPage() {
             </div>
 
             <h2 className="brand-font text-2xl sm:text-3xl text-text-heading tracking-tight leading-tight">
-              Build Money Sites{" "}
+              Build Websites{" "}
               <span
                 className="bg-clip-text text-transparent"
                 style={{ backgroundImage: "linear-gradient(90deg, #D4AF37, #f1dc94, #D4AF37)" }}
@@ -355,7 +355,7 @@ export default function AcceleratorPage() {
           <h2 className="brand-font text-lg text-text-heading">Generate Facebook Posts For Your Sites</h2>
         </div>
         <p className="text-sm text-text-muted -mt-2">
-          Pick a money site you&apos;ve generated and we&apos;ll write 10 ready-to-post Facebook
+          Pick a website you&apos;ve generated and we&apos;ll write 10 ready-to-post Facebook
           posts that drive traffic to it. Copy, paste into a group, done.
         </p>
 
@@ -366,7 +366,7 @@ export default function AcceleratorPage() {
         ) : sites.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6 text-center flex flex-col items-center gap-3">
             <Globe className="text-text-muted/60" size={28} />
-            <p className="text-sm text-text-muted">You haven&apos;t generated any money sites yet.</p>
+            <p className="text-sm text-text-muted">You haven&apos;t generated any websites yet.</p>
             <Link href="/territory" className="btn-primary h-10 px-5 text-xs rounded-lg uppercase tracking-wider">
               <Rocket size={14} /> Build your first site <ArrowRight size={14} />
             </Link>
@@ -510,7 +510,7 @@ export default function AcceleratorPage() {
           <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
           <p className="text-xs text-text-secondary leading-relaxed">
             <span className="font-bold text-[#D4AF37]">Pro tip:</span> generate a fresh batch above for
-            each money site, then work through 3–5 groups a day. The more quality posts you have
+            each website, then work through 3–5 groups a day. The more quality posts you have
             circulating, the more traffic flows back to your sites.
           </p>
         </div>

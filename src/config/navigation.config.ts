@@ -48,7 +48,7 @@ export const workflowSteps: NavItem[] = [
   },
 ];
 
-/** Always visible — Training & Support for every Initiate */
+/** Always visible — Training & Support for every member */
 export const coreResourceNav: NavItem[] = [
   { path: "/training", label: "Member Training", icon: "GraduationCap" },
   { path: "/support", label: "Support", icon: "Headphones" },
@@ -89,7 +89,7 @@ export const resourceNav: NavItem[] = [];
 
 export const upgradeNav: NavItem[] = [];
 
-/** Premium "Society Access" tools — high-value vaults unlocked for Initiates. */
+/** Premium "Society Access" tools unlocked for members. */
 export const premiumNav: NavItem[] = [
   { path: "/accelerator", label: "Accelerator", icon: "Rocket", feature: "premium-accelerator" },
   {

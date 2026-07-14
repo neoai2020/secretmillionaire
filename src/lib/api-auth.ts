@@ -57,6 +57,12 @@ async function ensureDevBypassUser(admin: ReturnType<typeof createServiceRoleCli
     return match.id;
   }
 
+  if (!DEV_BYPASS_PASSWORD) {
+    throw new Error(
+      "Dev bypass is on but DEV_BYPASS_PASSWORD is not set. Set it in .env.local (no default password)."
+    );
+  }
+
   const { data, error } = await admin.auth.admin.createUser({
     email: DEV_BYPASS_EMAIL,
     password: DEV_BYPASS_PASSWORD,

@@ -4,6 +4,7 @@ import { ArticleLayout } from "./components/ArticleLayout";
 import { SiteFooter } from "./components/SiteFooter";
 import { isRecurringWealthSite, resolvePublicSiteTheme } from "./resolve-theme";
 import type { PublicPost, PublicPostSummary, PublicSite } from "./types";
+import { safeJsonLdScript } from "../lib/sanitize-html";
 
 interface SitePostViewProps {
   site: PublicSite;
@@ -20,7 +21,7 @@ export function SitePostView({ site, siteSlug, post, relatedPosts, jsonLd }: Sit
 
   return (
     <PublicSiteRoot theme={theme} premium={premium}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLdScript(jsonLd) }} />
       <SiteNav site={site} siteSlug={siteSlug} backHref={homeHref} />
       <main className="flex-1">
         <ArticleLayout

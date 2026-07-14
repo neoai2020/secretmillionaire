@@ -105,14 +105,14 @@ export default function AssetCommandPage() {
         <div className="rounded-xl border border-dashed border-white/15 p-10 text-center flex flex-col items-center gap-4">
           <FolderOpen className="text-[#6b7280]" size={40} strokeWidth={1.25} />
           <p className="text-[#6b7280] text-sm max-w-md">
-            Your vault is empty. Deploy a money site and it will appear here as a saved folder.
+            Your vault is empty. Deploy a website and it will appear here as a saved folder.
           </p>
           <Link
             href="/territory"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#45A29E] text-[#0B0C10] text-sm font-bold"
           >
             <Globe size={16} />
-            Start Empire Builder
+            Pick Your Topic
           </Link>
         </div>
       </div>
@@ -150,7 +150,7 @@ export default function AssetCommandPage() {
             <div className="rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/5 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] font-bold mb-1">
-                  Public money site
+                  Public website
                 </p>
                 <p className="text-sm text-[#C5C6C7] break-all">{publicUrl}</p>
               </div>
@@ -269,7 +269,7 @@ export default function AssetCommandPage() {
               <Plus size={22} />
             </div>
             <div>
-              <p className="text-sm font-medium text-text-heading">New money site</p>
+              <p className="text-sm font-medium text-text-heading">New website</p>
               <p className="text-xs text-text-muted mt-1">{quota.remaining} generations left today</p>
             </div>
           </Link>

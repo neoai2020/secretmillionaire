@@ -103,7 +103,7 @@ function GetWebsitePopup({
               </div>
               <h2 className="brand-font text-xl text-text-heading mb-1">Get Website: {product.name}</h2>
               <p className="text-sm text-text-muted">
-                We&apos;ll drop a ready-made {25}-article money site for this offer straight into your
+                We&apos;ll drop a ready-made {25}-article website for this offer straight into your
                 Asset Vault — with <strong className="text-text-secondary">your</strong> affiliate
                 link already woven in.
               </p>
@@ -149,7 +149,7 @@ export default function RecurringWealthPage() {
         <h1 className="brand-font text-3xl md:text-4xl text-text-heading tracking-tight mb-3">Recurring Wealth Streams</h1>
         <p className="text-text-muted text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
           Offers that pay you <span className="text-text-primary font-semibold">every month</span> for every customer you
-          refer. Pick one and get a ready-made money site with tested-to-convert content dropped into
+          refer. Pick one and get a ready-made website with tested-to-convert content dropped into
           your vault — with your own link.
         </p>
       </motion.div>

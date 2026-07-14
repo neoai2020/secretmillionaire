@@ -1,9 +1,5 @@
 # training
 
-Member training page: videos, two-path overview, Extraction Protocol, Empire Builder steps, premium tools, FAQ.
+Member training page: videos placeholder, two path overview (build your own website vs Recurring Wealth), Home getting-started steps, Build Your Website steps, Society Access tools, FAQ.
 
-Enable with `"training"` in `features.config.ts`.
-
-- **Copy:** `src/config/training-content.ts`
-- **Page shell:** `src/config/training.config.ts` (title, videos, external URL)
-- **UI:** `src/features/training/pages/TrainingPage.tsx` + `components/`
+Copy lives in `src/config/training.config.ts` and `src/config/training-content.ts`.

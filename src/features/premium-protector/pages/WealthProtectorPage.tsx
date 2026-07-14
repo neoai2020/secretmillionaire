@@ -18,10 +18,10 @@ import { supabase } from "@/lib/supabase";
 import { brand } from "@/config/brand.config";
 
 const securityChecks = [
-  { label: "Initiate Verified", description: "Your email has been verified and your access confirmed.", icon: UserCheck },
+  { label: "Member Verified", description: "Your email has been verified and your access confirmed.", icon: UserCheck },
   { label: "Secure Connection", description: "All data is transmitted over an encrypted HTTPS tunnel.", icon: Lock },
   { label: "Session Protected", description: "Your session is authenticated with a rotating secure token.", icon: KeyRound },
-  { label: "Vault Encryption", description: "Your armed links and account data are encrypted at rest.", icon: Eye },
+  { label: "Vault Encryption", description: "Your product links and account data are encrypted at rest.", icon: Eye },
   { label: "Network Status", description: `All ${brand.productName} extraction nodes are online and operational.`, icon: Server },
   { label: "Payout Connectivity", description: "The connection to your affiliate network is stable and monitored.", icon: Wifi },
 ];
@@ -135,7 +135,7 @@ export default function WealthProtectorPage() {
               </div>
               <div className="flex items-center justify-between py-2 border-b border-white/5">
                 <span className="text-xs text-text-muted">Membership</span>
-                <span className="text-xs text-green-400 font-bold">Active Initiate</span>
+                <span className="text-xs text-green-400 font-bold">Active Member</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-white/5">
                 <span className="text-xs text-text-muted">Secure Token</span>

@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { assertPublicHttpsUrl } from "@/lib/safe-url";
 
 export interface ScrapedPageInfo {
   title: string;
@@ -145,7 +146,15 @@ function extractFeatures($: cheerio.CheerioAPI): string[] {
 }
 
 export async function scrapePage(url: string): Promise<ScrapedPageInfo | null> {
-  const html = await fetchHtml(url);
+  // Defense in depth — route also validates; keep private hosts out of direct fetch.
+  let safeUrl: string;
+  try {
+    safeUrl = assertPublicHttpsUrl(url).toString();
+  } catch {
+    return null;
+  }
+
+  const html = await fetchHtml(safeUrl);
   if (!html) return null;
 
   try {

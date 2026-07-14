@@ -12,6 +12,7 @@ import { getSiteTerritory } from "./site-territory";
 import { injectMidArticleFigure, stripLeadingHeroFigure } from "./article-html";
 import { SiteImagePool } from "./site-image-pool";
 import type { ArmedLink, BlogPost, BlogSite, ClusterTopic, ContentTier } from "../types";
+import { sanitizePostHtml } from "./sanitize-html";
 
 /** Hero goes to image_url (layout); body gets a distinct inline photo when possible. */
 async function weaveDistinctPostImages(params: {
@@ -620,7 +621,7 @@ export function validatePostUpdate(body: PostUpdatePayload): PostUpdatePayload |
   }
 
   if (typeof body.html === "string") {
-    const h = body.html.trim();
+    const h = sanitizePostHtml(body.html.trim());
     if (h.length < 100) return null;
     out.html = h;
   }

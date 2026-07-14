@@ -53,7 +53,7 @@ export function GenerationTerminal({ phase, progress, logLines = [] }: Generatio
     <div className="rounded-xl border border-[#45A29E]/25 bg-black/60 overflow-hidden">
       {phase === "running" && (
         <AiLoadingBar
-          label="AI deploying your money site"
+          label="AI building your website"
           progress={progress}
           active={phase === "running"}
           className="px-3 sm:px-4 pt-3 sm:pt-4"
@@ -64,7 +64,7 @@ export function GenerationTerminal({ phase, progress, logLines = [] }: Generatio
       )}
       <div className="p-3 sm:p-4 pt-2 font-mono text-[11px] sm:text-xs text-[#45A29E] h-40 sm:h-48 overflow-y-auto">
         {phase === "idle" && (
-          <p className="text-[#6b7280]">&gt; Ready to deploy. Click below to publish your money site live.</p>
+          <p className="text-[#6b7280]">&gt; Ready to launch. Click below to put your website online.</p>
         )}
         {phase === "complete" && displayLines.length === 0 && (
           <p className="text-[#45A29E]">&gt; Money site is live — traffic routing enabled.</p>

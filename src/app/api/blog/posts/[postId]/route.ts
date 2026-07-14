@@ -6,6 +6,7 @@ import {
   loadOwnedPost,
   validatePostUpdate,
 } from "@/features/blog-builder/lib/generation-pipeline";
+import { sanitizePostHtml } from "@/features/blog-builder/lib/sanitize-html";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   const updates = validatePostUpdate(body);
   if (!updates) {
     return NextResponse.json({ error: "Invalid update payload" }, { status: 400, headers: NO_STORE_HEADERS });
+  }
+
+  if (typeof updates.html === "string") {
+    updates.html = sanitizePostHtml(updates.html);
+    if (updates.html.length < 100) {
+      return NextResponse.json({ error: "Invalid update payload" }, { status: 400, headers: NO_STORE_HEADERS });
+    }
   }
 
   const { data: post, error } = await supabase

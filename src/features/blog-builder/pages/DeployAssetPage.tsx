@@ -27,7 +27,7 @@ const DEPLOY_TEXT_WAVE_SIZE = 3;
 const DEPLOY_LOADING_STEPS = [
   "Scanning your affiliate offer page…",
   "Mapping keyword clusters for your niche…",
-  "Gathering trending angles in your territory…",
+  "Gathering trending angles for your topic…",
   "Prefetching unique hero images…",
   "AI is writing your pillar guide…",
   "Weaving affiliate links into the copy…",
@@ -215,7 +215,7 @@ export default function DeployAssetPage() {
             setProgress(100);
           } else if (total > 0 && completed === total && !data.session?.deployed) {
             setCanResume(true);
-            setResumeLabel(`Publish money site (${completed}/${total} posts ready)`);
+            setResumeLabel(`Publish website (${completed}/${total} posts ready)`);
           } else if (data.canResume) {
             setCanResume(true);
             setResumeLabel(`Continue deployment (${completed}/${total} posts ready)`);
@@ -536,7 +536,7 @@ export default function DeployAssetPage() {
   const publishSite = async (siteId: string, siteSlug: string) => {
     setPhase("publishing");
     bumpProgress(92);
-    appendLog("Publishing money site live...");
+    appendLog("Publishing your website...");
 
     const { ok: pubOk, status: pubStatus, data: pubData } = await postJson(
       "/api/blog/publish",
@@ -770,10 +770,10 @@ export default function DeployAssetPage() {
         {quota && (
           <p className="text-xs text-[#45A29E]/90">
             {quota.unlimited ? (
-              <>Unlimited money sites · {quota.usedToday} generated today.</>
+              <>Unlimited websites · {quota.usedToday} generated today.</>
             ) : (
               <>
-                {quota.remaining} of {quota.limit} new money sites remaining today (
+                {quota.remaining} of {quota.limit} new websites remaining today (
                 {quota.usedToday} generated).
               </>
             )}
@@ -794,7 +794,7 @@ export default function DeployAssetPage() {
             className="w-full"
           />
           <p className="text-[11px] text-[#6b7280] leading-relaxed">
-            Building your money site — your first article and hero image will appear here as soon
+            Building your website — your first article and hero image will appear here as soon
             as they&apos;re ready. The rest keep generating in the background.
           </p>
         </motion.div>
@@ -816,7 +816,7 @@ export default function DeployAssetPage() {
             <AiLoadingBar
               label={
                 phase === "publishing"
-                  ? "Publishing money site live"
+                  ? "Publishing your website"
                   : postsWithImages < postSlots.length
                     ? `Generating content — ${postsWithImages}/${postSlots.length} posts with images`
                     : `Finalizing — ${completedPosts}/${postSlots.length} posts ready`

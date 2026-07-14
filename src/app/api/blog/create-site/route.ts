@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   if (!quota.unlimited && (quota.remaining ?? 0) <= 0) {
     return NextResponse.json(
       {
-        error: `Daily limit reached (${quota.limit} new money sites per day). Try again tomorrow.`,
+        error: `Daily limit reached (${quota.limit} new websites per day). Try again tomorrow.`,
         quota,
       },
       { status: 429 }
