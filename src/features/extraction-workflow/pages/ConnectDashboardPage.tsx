@@ -24,6 +24,9 @@ import { ScanTerminal } from "@/features/extraction-workflow/components/ScanTerm
 import { ProfitTicker } from "@/features/extraction-workflow/components/ProfitTicker";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
 import { brand } from "@/config/brand.config";
+import { trainingContent, vimeoEmbedUrl } from "@/config/training.config";
+
+const INTRO_VIDEO = trainingContent.videos[0];
 
 const HOW_IT_WORKS = [
   {
@@ -182,14 +185,30 @@ export default function ConnectDashboardPage() {
       <section className="rounded-2xl border border-[#D4AF37]/25 bg-[#12141a] p-5 sm:p-6 flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <PlayCircle size={22} className="text-[#D4AF37]" />
-          <h2 className="brand-font text-xl sm:text-2xl text-[#E2E8F0]">Video training</h2>
+          <h2 className="brand-font text-xl sm:text-2xl text-[#E2E8F0]">
+            {INTRO_VIDEO?.title ?? "Video training"}
+          </h2>
         </div>
-        <div className="relative aspect-video w-full rounded-xl border border-[#1e2128] bg-[#0B0C10] flex flex-col items-center justify-center gap-2 text-center px-4">
-          <PlayCircle size={40} className="text-[#6b7280]" />
-          <p className="text-base text-[#9fb0b5] leading-relaxed max-w-lg">
-            Walkthrough videos are coming soon. Until then, use the written guides.
-          </p>
-        </div>
+        {INTRO_VIDEO ? (
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-[#1e2128] bg-[#0B0C10]">
+            <iframe
+              src={vimeoEmbedUrl(INTRO_VIDEO.id)}
+              className="absolute inset-0 h-full w-full"
+              frameBorder="0"
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              title={INTRO_VIDEO.title}
+            />
+          </div>
+        ) : (
+          <div className="relative aspect-video w-full rounded-xl border border-[#1e2128] bg-[#0B0C10] flex flex-col items-center justify-center gap-2 text-center px-4">
+            <PlayCircle size={40} className="text-[#6b7280]" />
+            <p className="text-base text-[#9fb0b5] leading-relaxed max-w-lg">
+              Walkthrough videos are coming soon. Until then, use the written guides.
+            </p>
+          </div>
+        )}
         <Link
           href="/training"
           className="inline-flex items-center justify-center gap-2 min-h-12 px-4 rounded-xl font-bold text-[#0B0C10] text-base max-w-md"

@@ -1,12 +1,36 @@
 import { brand } from "./brand.config";
 import { PARTNER_LINK_PLACEHOLDER } from "./offers.config";
 
+/** Vimeo embed URL with uploader/channel chrome hidden (no byline, portrait, or title). */
+export function vimeoEmbedUrl(videoId: string): string {
+  return `https://player.vimeo.com/video/${videoId}?badge=0&autopause=0&player_id=0&app_id=58479&title=0&byline=0&portrait=0`;
+}
+
 /** Page shell metadata; body copy lives in `training-content.ts`. */
 export const trainingContent = {
   pageTitle: "Member Training",
   pageSubtitle: `Simple step-by-step guides for ${brand.productName} members`,
   externalTrainingUrl: PARTNER_LINK_PLACEHOLDER,
-  videos: [] as { id: string; title: string; description: string }[],
+  videos: [
+    {
+      id: "1209908982",
+      title: "Welcome & Getting Started",
+      description:
+        "Start here — a quick intro to how the platform works and what to do first as a member.",
+    },
+    {
+      id: "1209909366",
+      title: "Build Your Website",
+      description:
+        "Step-by-step walkthrough for building your website, adding product links, and getting it live.",
+    },
+    {
+      id: "1209920923",
+      title: "Premium Features",
+      description:
+        "Walkthrough of Society Access premium tools — what they do and how to use them.",
+    },
+  ] as { id: string; title: string; description: string }[],
 } as const;
 
 export { trainingContentData } from "./training-content";

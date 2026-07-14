@@ -13,7 +13,7 @@ import {
   Route,
 } from "lucide-react";
 import Link from "next/link";
-import { trainingContent } from "@/config/training.config";
+import { trainingContent, vimeoEmbedUrl } from "@/config/training.config";
 import { trainingContentData } from "@/config/training-content";
 import { TrainingFaqItem } from "../components/TrainingFaqItem";
 import { TrainingStepCard } from "../components/TrainingStepCard";
@@ -79,11 +79,12 @@ export default function TrainingPage() {
               >
                 <div className="relative w-full bg-black" style={{ paddingBottom: "56.25%" }}>
                   <iframe
-                    src={`https://player.vimeo.com/video/${video.id}?badge=0&autopause=0&player_id=0&app_id=58479`}
+                    src={vimeoEmbedUrl(video.id)}
                     className="absolute inset-0 w-full h-full"
                     frameBorder="0"
                     allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
                     allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
                     title={video.title}
                   />
                 </div>
