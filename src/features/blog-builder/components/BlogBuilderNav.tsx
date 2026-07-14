@@ -64,8 +64,8 @@ export function BlogBuilderNav({ pathname, onNavClick }: BlogBuilderNavProps) {
 
   return (
     <>
-      <span className="text-[10px] font-black tracking-[0.25em] text-[#6b7280] uppercase px-3 sm:px-5 mt-4 mb-2">
-        Empire Builder
+      <span className="text-xs font-black tracking-[0.25em] text-[#6b7280] uppercase px-3 sm:px-5 mt-4 mb-2">
+        Build Your Website
       </span>
       {blogSteps.map(renderNavLink)}
       {blogResources.map(renderNavLink)}

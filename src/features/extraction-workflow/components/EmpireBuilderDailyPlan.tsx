@@ -11,42 +11,41 @@ interface EmpireBuilderDailyPlanProps {
 const USAGE_STEPS = [
   {
     icon: MapPin,
-    label: "Choose Territory",
-    usage: "Once — pick your niche",
+    label: "Step 1: Pick Your Topic",
+    usage: "Do this once",
     detail:
-      "Select a hobby or topic you enjoy. Your money site will rank for it and attract buyers in that space.",
+      "Choose something you enjoy — gardening, fishing, cooking, anything. Your website will be about this topic.",
     href: "/territory",
   },
   {
     icon: Link2,
-    label: "Arm Your Links",
-    usage: "2–3 products to promote",
+    label: "Step 2: Add Your Links",
+    usage: "2–3 products",
     detail:
-      "Add DigiStore affiliate links — these are the products you recommend and earn commission on when someone buys.",
+      "Paste in your special product links. When somebody buys through one of them, the company pays you.",
     href: "/arm-links",
   },
   {
     icon: Rocket,
-    label: "Deploy Asset",
-    usage: "1 deploy — 7 SEO posts",
+    label: "Step 3: Launch Your Website",
+    usage: "One button",
     detail:
-      "AI builds your blog with helpful articles and your affiliate links built in. This is your commission engine.",
+      "Press one button and the system builds your website for you — articles, pictures, and your links, all included.",
     href: "/deploy",
   },
   {
     icon: Globe,
-    label: "Asset Command",
-    usage: "Daily — 5 min check",
+    label: "My Websites",
+    usage: "Check daily — 5 minutes",
     detail:
-      "Watch traffic and clicks on your live site. Every click is a potential commission.",
+      "See your live website, how many people visited, and how many clicked your links.",
     href: "/asset",
   },
   {
     icon: FileText,
     label: "Link Vault",
-    usage: "Weekly — fresh offers",
-    detail:
-      "Swap in new affiliate products as you grow. More relevant offers = more commissions.",
+    usage: "Once a week",
+    detail: "All your product links are saved here. Add new ones whenever you like.",
     href: "/link-vault",
   },
 ] as const;
@@ -57,7 +56,6 @@ function roundMoney(n: number) {
 
 export function EmpireBuilderDailyPlan({ allocatedAmount }: EmpireBuilderDailyPlanProps) {
   const dailyTarget = roundMoney(allocatedAmount);
-  const weeklyTarget = roundMoney(dailyTarget * 7);
 
   return (
     <motion.div
@@ -66,20 +64,19 @@ export function EmpireBuilderDailyPlan({ allocatedAmount }: EmpireBuilderDailyPl
       className="rounded-2xl border border-[#D4AF37]/25 bg-[#12141a] p-5 sm:p-8 text-left"
     >
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-2">
-        Affiliate Marketing, Simplified
+        Your Simple Plan
       </p>
-      <h2 className="brand-font text-xl sm:text-2xl text-[#C5C6C7] mb-2">
-        Your path to ${dailyTarget.toFixed(2)}/day (~${weeklyTarget.toFixed(2)}/week)
+      <h2 className="brand-font text-xl sm:text-2xl text-[#C5C6C7] mb-3">
+        Your goal: ${dailyTarget.toFixed(2)} a day
       </h2>
       <p className="text-base text-[#9fb0b5] mb-4 leading-relaxed">
-        That matches your ${dailyTarget.toFixed(2)}/day earning target — the daily affiliate
-        income members in your position aim for. Run Empire Builder consistently: publish content
-        people search for, and get paid when readers buy through your links.
+        How do you get there? You get your own website. It recommends products to people. When
+        somebody buys a product through your website, the company pays you a commission. The three
+        steps below set it all up — the system does the hard work for you.
       </p>
-      <p className="text-sm text-[#C5C6C7]/90 mb-6 leading-relaxed rounded-lg border border-[#1e2128] bg-[#0B0C10]/60 px-4 py-3">
-        You&apos;re not selling face-to-face or running ads. You&apos;re building a small corner of
-        the internet that recommends products and earns while you sleep. That&apos;s affiliate
-        marketing — and Empire Builder makes it push-button simple.
+      <p className="text-base text-[#C5C6C7]/90 mb-6 leading-relaxed rounded-lg border border-[#1e2128] bg-[#0B0C10]/60 px-4 py-3">
+        You never sell anything yourself. You never talk to customers or ship boxes. Your website
+        does the recommending — you collect the commission, even while you sleep.
       </p>
 
       <ul className="flex flex-col gap-3 mb-6">
@@ -108,7 +105,7 @@ export function EmpireBuilderDailyPlan({ allocatedAmount }: EmpireBuilderDailyPl
           boxShadow: "0 0 40px rgba(69, 162, 158, 0.35)",
         }}
       >
-        Build My Commission Site — Click 1
+        Start Step 1: Pick Your Topic
         <ArrowRight size={20} />
       </Link>
     </motion.div>

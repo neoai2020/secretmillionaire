@@ -27,11 +27,11 @@ export function DeploySitePreview({ site }: DeploySitePreviewProps) {
       <div className="mt-4 flex flex-wrap gap-3 text-xs">
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#45A29E]/30 bg-[#45A29E]/10 px-3 py-1.5 text-[#45A29E]">
           <Globe size={14} />
-          Territory: {site.hobby}
+          Topic: {site.hobby}
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#1e2128] bg-[#12141a] px-3 py-1.5 text-[#C5C6C7]">
           <Link2 size={14} className="text-[#D4AF37]" />
-          {armedCount} armed link{armedCount === 1 ? "" : "s"}
+          {armedCount} product link{armedCount === 1 ? "" : "s"}
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#1e2128] bg-[#12141a] px-3 py-1.5 text-[#6b7280] font-mono truncate max-w-full">
           {publicPath}

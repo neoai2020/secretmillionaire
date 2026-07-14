@@ -562,7 +562,7 @@ export default function DeployAssetPage() {
 
     const niche = territory.trim() || hobby.trim();
     if (!niche) {
-      setError("Missing territory — go back to Choose Territory and pick a niche first.");
+      setError("Missing topic — go back to Step 1 and pick a topic first.");
       setPhase("error");
       setGenerating(false);
       deployRunning.current = false;
@@ -570,7 +570,7 @@ export default function DeployAssetPage() {
     }
 
     if (deployArmedLinks.length === 0 && !resume) {
-      setError("No armed links found — go back to Arm Your Links and add at least one affiliate URL.");
+      setError("No product links found — go back to Step 2 and add at least one product link.");
       setPhase("error");
       setGenerating(false);
       deployRunning.current = false;
@@ -758,14 +758,14 @@ export default function DeployAssetPage() {
   return (
     <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Click 3</p>
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Step 3</p>
         <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-[#C5C6C7] tracking-tight">
-          Deploy Asset
+          Launch Your Website
         </h1>
-        <p className="text-[#6b7280] text-sm sm:text-base max-w-2xl leading-relaxed">
-          The system will generate your pillar post, six cluster articles, images, SEO metadata, and
-          weave in your armed links — then publish your money site live. All progress is saved to
-          your account on our servers — nothing is stored in your browser.
+        <p className="text-[#9fb0b5] text-base sm:text-lg max-w-2xl leading-relaxed">
+          Press one button and we build your website for you — helpful articles, pictures, and your
+          product links included. Then it goes live on the internet. Everything is saved to your
+          account.
         </p>
         {quota && (
           <p className="text-xs text-[#45A29E]/90">
@@ -854,7 +854,7 @@ export default function DeployAssetPage() {
           className="flex flex-col items-center gap-3 text-center"
         >
           <CheckCircle2 className="text-[#45A29E]" size={28} />
-          <p className="text-sm text-[#C5C6C7]">Your money site is live and ready for traffic.</p>
+          <p className="text-base text-[#C5C6C7]">Your website is live and ready for visitors.</p>
           <AiLoadingBar label="Deploy complete" progress={100} className="w-full max-w-md" />
         </motion.div>
       )}
@@ -901,7 +901,7 @@ export default function DeployAssetPage() {
         >
           <span className="flex items-center justify-center gap-3">
             <Rocket size={22} />
-            Deploy Money Site Live
+            Turn On My Website
             <ArrowRight size={22} />
           </span>
         </motion.button>

@@ -1,9 +1,9 @@
 export const brand = {
   productName: "Secret Millionaire Society",
-  tagline: "Elite Financial Extraction",
-  authTagline: "Secure Initiate Access",
+  tagline: "Affiliate Websites Made Simple",
+  authTagline: "Member Sign In",
   signupTagline: "Join the Society",
-  memberLabel: "Initiate",
+  memberLabel: "Member",
   logo: {
     type: "image" as const,
     src: "/logo.png",
@@ -34,9 +34,9 @@ export const brand = {
     ui: "Inter",
   },
   metadata: {
-    title: "Secret Millionaire Society | Private Extraction Terminal",
+    title: "Secret Millionaire Society | Affiliate Websites Made Simple",
     description:
-      "Elite financial extraction made push-button simple. Connect, scan, and route unclaimed commissions.",
+      "Get your own website that recommends products. When people buy through your links, you earn a commission.",
   },
 } as const;
 

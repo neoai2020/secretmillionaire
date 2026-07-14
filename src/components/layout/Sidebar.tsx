@@ -129,7 +129,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
           {workflowSteps.length > 0 && (
             <>
               <span className="text-xs font-black tracking-[0.25em] text-text-muted uppercase px-3 sm:px-5 mb-2">
-                Start Here
+                Menu
               </span>
               {workflowSteps.map((step) => renderNavLink(step, workflowProgress))}
             </>

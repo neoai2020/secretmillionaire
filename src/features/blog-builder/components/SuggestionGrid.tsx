@@ -19,9 +19,9 @@ export function SuggestionGrid({
   if (loading) {
     return (
       <div className="glass-card p-6 flex flex-col gap-4">
-        <AiLoadingBar label="Scanning profitable territories" />
-        <p className="text-xs text-text-muted text-center">
-          This can take 10–30 seconds while AI maps your best angles.
+        <AiLoadingBar label="Finding good topics for you" />
+        <p className="text-sm text-text-muted text-center">
+          This can take 10–30 seconds. Hang tight.
         </p>
       </div>
     );
@@ -29,8 +29,8 @@ export function SuggestionGrid({
 
   if (suggestions.length === 0) {
     return (
-      <p className="text-xs text-text-muted text-center py-2">
-        Territory suggestions will appear here after you click Suggest.
+      <p className="text-sm text-text-muted text-center py-2">
+        Topic ideas will appear here after you press the Suggest button.
       </p>
     );
   }

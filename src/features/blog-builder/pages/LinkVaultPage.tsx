@@ -66,11 +66,11 @@ export default function LinkVaultPage() {
   return (
     <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Vault</p>
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Saved Links</p>
         <h1 className="brand-font text-2xl sm:text-3xl text-[#C5C6C7] tracking-tight">Link Vault</h1>
-        <p className="text-[#6b7280] text-sm sm:text-base max-w-2xl leading-relaxed">
-          Your DigiStore armed links are saved here automatically whenever you add or edit them in
-          Click 2 or on this page.
+        <p className="text-[#9fb0b5] text-base sm:text-lg max-w-2xl leading-relaxed">
+          Your DigiStore product links are saved here automatically whenever you add or edit them
+          in Step 2 or on this page.
         </p>
       </div>
 

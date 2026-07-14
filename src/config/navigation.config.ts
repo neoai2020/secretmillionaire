@@ -34,15 +34,15 @@ export interface NavItem {
 
 export const homeNav: NavItem = {
   path: "/dashboard",
-  label: "Command Center",
+  label: "Home",
   icon: "LayoutGrid",
 };
 
 export const workflowSteps: NavItem[] = [
   {
     path: "/dashboard",
-    label: "Activate",
-    icon: "Wifi",
+    label: "Home",
+    icon: "LayoutGrid",
     feature: "extraction-workflow",
     workflowStep: 3,
   },
@@ -57,14 +57,14 @@ export const coreResourceNav: NavItem[] = [
 export const blogBuilderWorkflowSteps: NavItem[] = [
   {
     path: "/territory",
-    label: "Click 1: Choose Territory",
+    label: "Step 1: Pick Your Topic",
     icon: "MapPin",
     feature: "blog-builder",
     workflowStep: 1,
   },
   {
     path: "/arm-links",
-    label: "Click 2: Arm Your Links",
+    label: "Step 2: Add Your Links",
     icon: "Link2",
     feature: "blog-builder",
     workflowStep: 2,
@@ -72,7 +72,7 @@ export const blogBuilderWorkflowSteps: NavItem[] = [
   },
   {
     path: "/deploy",
-    label: "Click 3: Deploy Asset",
+    label: "Step 3: Launch Your Website",
     icon: "Rocket",
     feature: "blog-builder",
     workflowStep: 3,
@@ -81,7 +81,7 @@ export const blogBuilderWorkflowSteps: NavItem[] = [
 ];
 
 export const blogBuilderResourceNav: NavItem[] = [
-  { path: "/asset", label: "Asset Vault", icon: "Globe", feature: "blog-builder" },
+  { path: "/asset", label: "My Websites", icon: "Globe", feature: "blog-builder" },
   { path: "/link-vault", label: "Link Vault", icon: "FileText", feature: "blog-builder" },
 ];
 

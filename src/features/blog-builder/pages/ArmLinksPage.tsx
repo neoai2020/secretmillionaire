@@ -82,7 +82,7 @@ export default function ArmLinksPage() {
 
   const handleContinue = () => {
     if (selected.size === 0) {
-      setLinkError("Select at least one armed link for this deploy — or add a new one and check it.");
+      setLinkError("Tick at least one link for your website — or add a new one and tick its box.");
       return;
     }
 
@@ -92,8 +92,8 @@ export default function ArmLinksPage() {
       const selectedHasText = [...selected].some((i) => links[i]?.url.trim());
       setLinkError(
         selectedHasText
-          ? "Fix the selected affiliate URL — it must be a valid link starting with https:// (e.g. https://www.digistore24.com/...)."
-          : "Add a valid https affiliate URL to your selected link before continuing."
+          ? "Please check the link you ticked — it must start with https:// (for example: https://www.digistore24.com/...)."
+          : "Please paste a product link (starting with https://) into the box you ticked before continuing."
       );
       return;
     }
@@ -118,14 +118,14 @@ export default function ArmLinksPage() {
   return (
     <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Click 2</p>
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Step 2</p>
         <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-[#C5C6C7] tracking-tight">
-          Arm Your Links
+          Add Your Links
         </h1>
-        <p className="text-[#6b7280] text-sm sm:text-base max-w-2xl leading-relaxed">
-          Choose which affiliate links to weave into your{" "}
-          <strong className="text-[#C5C6C7]">{territory || hobby}</strong> money site. Select at
-          least one from your vault — or add a new link and check it.
+        <p className="text-[#9fb0b5] text-base sm:text-lg max-w-2xl leading-relaxed">
+          These are your product links — when somebody buys through one, you get paid. Pick at
+          least one for your <strong className="text-[#C5C6C7]">{territory || hobby}</strong>{" "}
+          website, or paste in a new link and tick its box.
         </p>
       </div>
 
@@ -163,12 +163,12 @@ export default function ArmLinksPage() {
           {loading ? (
             <>
               <Loader2 className="animate-spin" size={22} />
-              Securing links...
+              Saving your links...
             </>
           ) : (
             <>
               <Link2 size={22} />
-              Deploy Asset
+              Next: Launch Your Website
               {selectedReady.length > 0 && (
                 <span className="text-sm font-semibold opacity-90">
                   ({selectedReady.length} link{selectedReady.length === 1 ? "" : "s"})

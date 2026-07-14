@@ -95,7 +95,7 @@ export default function AssetCommandPage() {
   };
 
   if (loading) {
-    return <p className="text-[#6b7280] text-sm animate-pulse">Loading asset vault...</p>;
+    return <p className="text-[#9fb0b5] text-base animate-pulse">Loading your websites...</p>;
   }
 
   if (summaries.length === 0) {
@@ -130,7 +130,7 @@ export default function AssetCommandPage() {
           className="inline-flex items-center gap-2 text-sm text-[#45A29E] hover:underline w-fit"
         >
           <ArrowLeft size={16} />
-          Back to Asset Vault
+          Back to My Websites
         </button>
 
         {detailLoading || !selectedSite ? (
@@ -289,15 +289,15 @@ function VaultHeader({
   return (
     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">
-          Asset Vault
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D4AF37]">
+          My Websites
         </p>
         <h1 className="brand-font text-2xl sm:text-3xl text-[#C5C6C7] tracking-tight">
-          Your money sites
+          Your websites
         </h1>
-        <p className="text-[#6b7280] text-sm max-w-2xl leading-relaxed">
-          Each deploy is saved as its own folder. Open a folder to view posts, stats, and your public
-          URL.
+        <p className="text-[#9fb0b5] text-base max-w-2xl leading-relaxed">
+          Every website you launch is saved here. Open one to see its articles, visitor clicks, and
+          public link.
         </p>
       </div>
       <div className="flex flex-col items-start sm:items-end gap-1 shrink-0">

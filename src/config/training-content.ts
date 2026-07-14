@@ -66,20 +66,20 @@ const product = brand.productName;
 export const trainingContentData = {
   intro: {
     headline: "How the Society Works",
-    body: `${product} gives you two ways to launch SEO money sites that rank for buyer-intent searches and weave in your affiliate links. Run Activation once from your dashboard, then choose your path: build a custom territory site in Empire Builder, or clone a tested 25-article site from Recurring Wealth Streams.`,
+    body: `${product} gives you two ways to get a website that recommends products and pays you when people buy. Start from your Home dashboard, then either build your own website (3 simple steps), or copy a ready-made 25-article website from Recurring Wealth.`,
   },
 
   paths: [
     {
-      title: "Empire Builder — Custom Territory Site",
-      subtitle: "You pick the niche. We generate 7 interlinked articles (1 pillar + 6 clusters), images, SEO, and your affiliate CTA — then publish live.",
+      title: "Build Your Own Website",
+      subtitle: "You pick a topic. We write 7 helpful articles, add pictures, put in your product links, and put the website online.",
       icon: "rocket" as TrainingIconId,
       bullets: [
-        "Best when you already know a profitable buyer-intent angle",
-        "Territory → Arm Links → Deploy in three clicks",
-        "Manage everything in Asset Vault and Link Vault",
+        "Best when you already know a topic you enjoy",
+        "Pick topic → Add links → Launch website",
+        "Find everything later in My Websites and Link Vault",
       ],
-      ctaLabel: "Choose Territory",
+      ctaLabel: "Pick Your Topic",
       ctaHref: "/territory",
     },
     {
@@ -117,8 +117,8 @@ export const trainingContentData = {
       step: 3,
       title: "Lock Your Target",
       icon: "wallet" as TrainingIconId,
-      description: "Lock in your daily earning target so your dashboard, vaults, and deploy tools are fully armed.",
-      tips: ["Complete activation before your first deploy", "You can revisit your dashboard anytime from the sidebar"],
+      description: "Lock in your daily earning goal so your account is ready to build websites.",
+      tips: ["Finish this before you launch your first website", "You can reopen Home anytime from the sidebar"],
       href: "/dashboard",
     },
   ] satisfies TrainingStep[],
@@ -126,14 +126,14 @@ export const trainingContentData = {
   empireBuilderSteps: [
     {
       step: 1,
-      title: "Choose Your Territory",
+      title: "Pick Your Topic",
       icon: "mapPin",
       description:
-        "Pick a specific, buyer-intent niche — the exact angle your money site will rank for. The system suggests territories with real search demand, not vague one-word topics.",
+        "Choose what your website will be about. Pick something people search for and buy — we suggest good ideas based on a hobby you enjoy.",
       tips: [
-        "Go narrow: \"standing desks for small apartments\" beats \"furniture\"",
-        "Match the territory to an affiliate offer you can promote",
-        "Buyer-intent beats traffic for its own sake — people ready to purchase convert best",
+        "Go specific: \"standing desks for small apartments\" beats \"furniture\"",
+        "Match the topic to a product you can recommend",
+        "Topics with people ready to buy work better than vague interests",
       ],
       examples: [
         "beginner metal detectors under $300",
@@ -145,23 +145,23 @@ export const trainingContentData = {
     },
     {
       step: 2,
-      title: "Arm Your Links",
+      title: "Add Your Links",
       icon: "link2",
       description:
-        "Paste affiliate links (e.g. from DigiStore24) into the Link Vault. Your primary offer is woven naturally into every article and the closing call-to-action.",
+        "Paste your DigiStore24 (or other) product links. We place them naturally in every article so you get paid when readers buy.",
       tips: [
-        "Add at least one valid https affiliate link before deploying",
-        "Save multiple offers — the best link is used across your cluster",
-        "Links persist in Link Vault for every future site you deploy",
+        "Add at least one valid https product link before launching",
+        "You can save more than one — we use your chosen links in the articles",
+        "Links stay saved in Link Vault for future websites",
       ],
       href: "/arm-links",
     },
     {
       step: 3,
-      title: "Deploy Your Money Site",
+      title: "Launch Your Website",
       icon: "rocket",
       description:
-        "One click generates a complete site: a pillar guide plus six supporting articles, hero images, SEO metadata, internal links, and affiliate CTAs — then publishes it live.",
+        "One click builds a complete website: a main guide plus six helpful articles, pictures, and your product links — then puts it online.",
       tips: [
         "Each article targets E-E-A-T and commercial search intent",
         "One contextual in-content link plus an end CTA per post (with disclosure)",
@@ -174,11 +174,11 @@ export const trainingContentData = {
       title: "Manage & Scale",
       icon: "globe",
       description:
-        "Track live sites in Asset Vault, monitor affiliate clicks, and spin up new territories or Recurring Wealth clones whenever you want another income stream.",
+        "See your live websites in My Websites, check how many people clicked your product links, and launch another site anytime you want.",
       tips: [
-        "Asset Vault shows each live site and its performance",
-        "Refresh Link Vault weekly with new offers",
-        "Stack multiple sites — volume of quality assets wins",
+        "My Websites shows each live website and its clicks",
+        "Update Link Vault weekly with new product links",
+        "More good websites usually means more chances to earn",
       ],
       href: "/asset",
     },
@@ -188,25 +188,25 @@ export const trainingContentData = {
     {
       title: "Accelerator",
       icon: "rocket",
-      text: "Done-for-you campaign blueprints across five proven niches. Arm a matching affiliate link and deploy as a money site.",
+      text: "Ready-made campaign ideas for five popular topics. Pick one, add your product link, and launch a website.",
       href: "/accelerator",
     },
     {
       title: "Recurring Wealth Streams",
       icon: "repeat",
-      text: "Curated subscription offers with tested 25-article template sites. Get Website clones the full site with your link in one flow.",
+      text: "Ready-made 25-article websites for subscription products. Click Get Website and we copy one into your account with your link.",
       href: "/recurring-wealth",
     },
     {
       title: "Social Payouts",
       icon: "megaphone",
-      text: "Story-style social posts ready to copy. Paste your link once — every post in your chosen niche is armed instantly.",
+      text: "Ready-to-copy social posts. Paste your product link once, then share posts that send people to your website.",
       href: "/social-payouts",
     },
     {
       title: "Wealth Protector",
       icon: "shieldCheck",
-      text: "Account security overview — verification, encryption, and session monitoring so your assets stay protected.",
+      text: "A simple security check for your account — so you can see that your login and sessions are protected.",
       href: "/protector",
     },
   ] satisfies TrainingToolCard[],
@@ -214,43 +214,43 @@ export const trainingContentData = {
   proTips: [
     {
       icon: "target",
-      title: "Niche beats broad",
-      text: "Specific buyer-intent territories rank faster and convert better than generic topics.",
+      title: "Specific beats broad",
+      text: "A clear topic people already want to buy ranks and converts better than something vague.",
     },
     {
       icon: "repeat",
       title: "Use Recurring Wealth for speed",
-      text: "When you want a full 25-post site without waiting on generation, clone a template from Recurring Wealth.",
+      text: "Want a 25-article website without waiting? Copy a ready-made one from Recurring Wealth.",
     },
     {
       icon: "dollarSign",
-      title: "Favor recurring commissions",
-      text: "Offers that pay every month compound income. Arm several from Recurring Wealth Streams.",
+      title: "Prefer monthly commissions",
+      text: "Products that pay you every month can grow income better than one-time sales.",
     },
     {
       icon: "megaphone",
-      title: "Stack free traffic",
-      text: "Social Payouts gives you daily post copy — share in groups and send traffic to your live sites.",
+      title: "Share free posts",
+      text: "Social Payouts gives you daily post copy — share in groups and send visitors to your websites.",
     },
     {
       icon: "link2",
       title: "Keep Link Vault current",
-      text: "Add fresh offers weekly so every deploy weaves in links you actually want to promote.",
+      text: "Add fresh product links weekly so new websites use products you still want to recommend.",
     },
     {
       icon: "star",
-      title: "Deploy more assets",
-      text: "Each live money site is another entry point. Custom territories plus Recurring clones multiply your reach.",
+      title: "Launch more websites",
+      text: "Each live website is another way for buyers to find you. Build your own topics and copy Recurring websites as you grow.",
     },
   ] satisfies TrainingTip[],
 
   quickStartChecklist: [
-    "Complete Activation: Connect → Scan → Lock Your Target",
-    "Path A: Choose territory → Arm links → Deploy (7-article site)",
-    "Path B: Recurring Wealth → pick offer → Get Website (25-article clone)",
-    "Arm a recurring offer link even if you started with Empire Builder",
-    "Post daily with Social Payouts to drive free traffic",
-    "Review Asset Vault for clicks; add new offers to Link Vault weekly",
+    "Open Home and finish the short setup if asked",
+    "Path A: Pick topic → Add links → Launch website (7 articles)",
+    "Path B: Recurring Wealth → pick offer → Get Website (25 articles)",
+    "Add a product link even if you started with Path A",
+    "Post daily with Social Payouts to send free visitors",
+    "Check My Websites for clicks; add new links to Link Vault weekly",
   ],
 
   faqSections: [
@@ -259,40 +259,40 @@ export const trainingContentData = {
       items: [
         {
           q: "How do I earn with this?",
-          a: `${product} publishes SEO money sites packed with buyer-intent articles. Your affiliate link appears in-content and in the closing CTA. When a reader buys through your link, you earn commission. Stack Empire Builder sites, Recurring Wealth clones, Accelerator blueprints, and Social Payouts for more traffic and offers.`,
+          a: `${product} puts your own websites online with helpful articles and your product links inside. When a reader buys through your link, you earn a commission. You can build your own site, copy a Recurring Wealth site, use Accelerator ideas, and share Social Payouts posts for free visitors.`,
         },
         {
           q: "Do I need technical skills?",
-          a: "No. The system writes articles, generates images, handles SEO, and weaves links. You choose a territory or recurring offer, paste affiliate links, and deploy. If you can use a browser, you can run this.",
+          a: "No. The system writes articles, adds pictures, and puts in your links. You pick a topic or a ready-made offer, paste product links, and launch. If you can use a browser, you can run this.",
         },
         {
           q: "What should I do first after login?",
-          a: "Finish Activation on your dashboard (Connect → Scan → Lock Your Target), then either start Empire Builder at Choose Territory or open Recurring Wealth and click Get Website on an offer you like.",
+          a: "Open Home on your dashboard. If asked, finish the short setup. Then either start Step 1 (Pick Your Topic) or open Recurring Wealth and click Get Website on an offer you like.",
         },
         {
           q: "Can I use this on mobile?",
-          a: `Yes. ${product} works in any modern mobile browser — deploy sites, arm links, and copy social posts from your phone.`,
+          a: `Yes. ${product} works in any modern phone browser — launch websites, add links, and copy social posts from your phone.`,
         },
       ],
     },
     {
-      title: "Empire Builder",
+      title: "Build Your Website",
       items: [
         {
-          q: "What gets generated when I deploy?",
-          a: "A live, interlinked site: one pillar guide plus six cluster articles. Each post includes a hero image, SEO title and meta description, internal links, affiliate disclosure, in-content recommendation link, and closing CTA.",
+          q: "What do I get when I launch a website?",
+          a: "A live website with one main guide plus six helpful articles. Each article has a picture, a clear title, your product link, and a short note that you may earn a commission.",
         },
         {
-          q: "How are affiliate links used?",
-          a: "Your primary Link Vault offer is placed once naturally in the body (after the first major section) and again as the end CTA. This keeps content trustworthy and compliant while still converting.",
+          q: "How are product links used?",
+          a: "Your chosen Link Vault link is placed once in the article body and again at the end. That keeps the writing helpful while still giving readers a clear way to buy.",
         },
         {
-          q: "What makes a good territory?",
-          a: "Specific niches where people are researching a purchase — product category + use case, skill level, or budget tier. \"Budget espresso machines for apartments\" outperforms \"coffee\" every time.",
+          q: "What makes a good topic?",
+          a: "Something specific people are already thinking of buying — product type plus use case, skill level, or budget. \"Budget espresso machines for apartments\" works better than \"coffee.\"",
         },
         {
-          q: "Where do I get affiliate links?",
-          a: "DigiStore24 and similar networks. Create a free account, find a product that fits your territory, click Promote, and paste your tracking link into Link Vault.",
+          q: "Where do I get product links?",
+          a: "DigiStore24 and similar networks. Create a free account, find a product that fits your topic, click Promote, and paste your tracking link into Link Vault.",
         },
       ],
     },
@@ -301,15 +301,15 @@ export const trainingContentData = {
       items: [
         {
           q: "What does Get Website do?",
-          a: "It clones a pre-seeded 25-article template site for that recurring offer into your Asset Vault, swaps in your affiliate link across all posts, and publishes it live. Content is API-generated, buyer-focused, and already interlinked.",
+          a: "It copies a ready-made 25-article website for that offer into My Websites, puts your product link into the articles, and puts the site online.",
         },
         {
-          q: "Empire Builder vs Recurring Wealth — which should I use?",
-          a: "Use Empire Builder when you want a custom niche you picked yourself (7 articles, fast deploy). Use Recurring Wealth when you want a full 25-post site around a proven subscription offer without writing anything.",
+          q: "Build Your Own vs Recurring Wealth — which should I use?",
+          a: "Build your own when you want a topic you picked yourself (7 articles). Use Recurring Wealth when you want a full 25-article website around a subscription offer without writing anything.",
         },
         {
           q: "Can I use both?",
-          a: "Yes — that's the recommended stack. Deploy custom territories for angles you discover, and clone Recurring templates for offers that pay monthly commissions.",
+          a: "Yes — that is the best approach. Build your own topics you discover, and copy Recurring websites for offers that pay monthly commissions.",
         },
       ],
     },
@@ -318,15 +318,15 @@ export const trainingContentData = {
       items: [
         {
           q: "What is the Accelerator?",
-          a: "Fifteen done-for-you campaign blueprints across five niches. Each includes an angle and recommended offers. Arm a link and save it to Link Vault for your next deploy.",
+          a: "Fifteen ready-made campaign ideas across five topics. Each one suggests an angle and products. Add a link to Link Vault for your next website.",
         },
         {
           q: "How does Social Payouts work?",
-          a: "Choose a niche, paste your affiliate link once, and copy story-style posts written to feel personal — not like ads. Share them in social feeds and groups to send traffic to your sites.",
+          a: "Choose a topic, paste your product link once, and copy story-style posts that sound personal — not like ads. Share them online to send visitors to your websites.",
         },
         {
           q: "What is Wealth Protector?",
-          a: "A security dashboard showing verification status, encryption, and session activity for your Initiate account.",
+          a: "A simple security page that shows whether your account and sessions look protected.",
         },
       ],
     },
@@ -335,29 +335,29 @@ export const trainingContentData = {
       items: [
         {
           q: "Best strategy to maximize income?",
-          a: "Complete Extraction, deploy at least one Empire Builder site, clone one Recurring Wealth template, arm Social Payouts for daily traffic, and add new offers to Link Vault every week. More armed links and live sites = more chances to earn.",
+          a: "Finish Home setup, launch at least one of your own websites, copy one Recurring Wealth website, use Social Payouts for daily visitors, and add new product links every week. More good websites and links usually means more chances to earn.",
         },
         {
           q: "High-ticket or low-ticket offers?",
-          a: "Higher commissions usually win per sale. Recurring subscription offers are especially powerful because they pay monthly, not once.",
+          a: "Higher commissions usually win per sale. Subscription offers are especially useful because they can pay monthly, not just once.",
         },
         {
           q: "How often should I add new sites?",
-          a: "Deploy new territories or Recurring clones regularly. Search engines favor fresh, focused content — and each site is another doorway for buyers to find you.",
+          a: "Launch new topics or Recurring websites regularly. Search engines like fresh, focused pages — and each website is another doorway for buyers to find you.",
         },
       ],
     },
   ] satisfies TrainingFaqSection[],
 
   cta: {
-    title: "Ready to deploy your first asset?",
-    subtitle: "Start with a territory you know, or clone a Recurring Wealth site in one click.",
-    primaryLabel: "Choose Territory",
+    title: "Ready to launch your first website?",
+    subtitle: "Start with a topic you know, or copy a Recurring Wealth website in one click.",
+    primaryLabel: "Pick Your Topic",
     primaryHref: "/territory",
     secondaryLabel: "Recurring Wealth",
     secondaryHref: "/recurring-wealth",
   },
 
   videoPlaceholder:
-    "Member walkthrough videos are being prepared. Until then, follow the step guides below — they cover Activation, Empire Builder, and Recurring Wealth Get Website.",
+    "Member walkthrough videos are being prepared. Until then, follow the step guides below — they cover Home setup, building your website, and Recurring Wealth Get Website.",
 } as const;

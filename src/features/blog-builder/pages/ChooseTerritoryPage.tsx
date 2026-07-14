@@ -22,7 +22,7 @@ export default function ChooseTerritoryPage() {
     const trimmed = hobby.trim();
     if (!trimmed) {
       setSuggestError(null);
-      setSuggestHint("Enter a hobby or interest above first — e.g. fly fishing, yoga, crypto.");
+      setSuggestHint("Type a hobby or interest in the box above first — for example: gardening, fishing, or cooking.");
       return;
     }
 
@@ -43,8 +43,8 @@ export default function ChooseTerritoryPage() {
         setSuggestions(fallback);
         setSuggestError(
           data.error
-            ? `${data.error} — showing starter territories below.`
-            : "Could not reach AI — showing starter territories below."
+            ? `${data.error} — showing starter topic ideas below.`
+            : "Could not reach AI — showing starter topic ideas below."
         );
         return;
       }
@@ -53,11 +53,11 @@ export default function ChooseTerritoryPage() {
         setSuggestions(data.suggestions);
       } else {
         setSuggestions(localTerritorySuggestions(trimmed));
-        setSuggestError("No AI suggestions returned — showing starter territories below.");
+        setSuggestError("No AI suggestions returned — showing starter topic ideas below.");
       }
     } catch {
       setSuggestions(localTerritorySuggestions(trimmed));
-      setSuggestError("Network error — showing starter territories below.");
+      setSuggestError("Network error — showing starter topic ideas below.");
     } finally {
       setFetching(false);
     }
@@ -74,20 +74,20 @@ export default function ChooseTerritoryPage() {
   return (
     <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
       <div className="flex flex-col gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Click 1</p>
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Step 1</p>
         <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-text-heading tracking-tight">
-          Choose Territory
+          Pick Your Topic
         </h1>
-        <p className="text-[#6b7280] text-sm sm:text-base max-w-2xl leading-relaxed">
-          Enter a hobby you enjoy — or let the system suggest profitable territories your money site
-          can rank for.
+        <p className="text-[#9fb0b5] text-base sm:text-lg max-w-2xl leading-relaxed">
+          What will your website be about? Type in a hobby or interest you enjoy — or press the
+          button and we&apos;ll suggest good topics for you.
         </p>
       </div>
 
       <GenerationQuotaWidget />
 
       <div className="flex flex-col gap-3">
-        <label className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">
+        <label className="text-xs font-bold uppercase tracking-widest text-[#9fb0b5]">
           Your hobby or interest
         </label>
         <input
@@ -103,7 +103,7 @@ export default function ChooseTerritoryPage() {
               void fetchSuggestions();
             }
           }}
-          placeholder="e.g. fly fishing, yoga, crypto..."
+          placeholder="e.g. gardening, fishing, cooking..."
           className="input-base w-full py-4"
         />
         <button
@@ -115,12 +115,12 @@ export default function ChooseTerritoryPage() {
           {fetching ? (
             <>
               <Loader2 className="animate-spin" size={16} />
-              Scanning territories…
+              Finding topic ideas…
             </>
           ) : (
             <>
               <Sparkles size={16} />
-              Suggest profitable territories
+              Suggest topics for me
               <ArrowRight size={16} />
             </>
           )}
@@ -159,12 +159,12 @@ export default function ChooseTerritoryPage() {
           {loading ? (
             <>
               <Loader2 className="animate-spin" size={22} />
-              Locking territory...
+              Saving your topic...
             </>
           ) : (
             <>
               <MapPin size={22} />
-              Arm Your Links
+              Next: Add Your Links
               <ArrowRight size={22} />
             </>
           )}

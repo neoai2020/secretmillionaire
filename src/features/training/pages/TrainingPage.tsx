@@ -164,10 +164,10 @@ export default function TrainingPage() {
       <section className="flex flex-col gap-6">
         <div className="flex items-center gap-2">
           <BookOpen size={16} className="text-accent" />
-          <h2 className="text-lg font-bold text-text-heading">Empire Builder — Step by Step</h2>
+          <h2 className="text-lg font-bold text-text-heading">Build Your Website — Step by Step</h2>
         </div>
-        <p className="text-[13px] text-text-muted -mt-2">
-          Custom territory sites: 1 pillar guide + 6 cluster articles, published live with your affiliate links.
+        <p className="text-sm text-text-muted -mt-2">
+          Your own website: 1 main guide + 6 helpful articles, put online with your product links.
         </p>
         <div className="flex flex-col gap-4">
           {empireBuilderSteps.map((step, i) => (
