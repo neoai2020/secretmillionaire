@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Search, ArrowRight, History, Loader2, Zap } from "lucide-react";
 import { useSearch } from "@/features/core-workflow/context/SearchContext";
 import { motion } from "framer-motion";
-import { SuccessCelebration } from "@/features/dopamine/components/SuccessCelebration";
 
 export default function SearchPage() {
     const {
@@ -14,8 +13,6 @@ export default function SearchPage() {
         history, addToHistory
     } = useSearch();
     const [loading, setLoading] = useState(false);
-    const [showCelebration, setShowCelebration] = useState(false);
-    const [foundCount, setFoundCount] = useState(0);
     const router = useRouter();
 
     const handleSearch = async (val?: string) => {
@@ -40,8 +37,7 @@ export default function SearchPage() {
 
             setVariations(data.variations || []);
             setActiveChip(data.variations?.[0] || "");
-            setFoundCount(data.variations?.length || 0);
-            setShowCelebration(true);
+            router.push("/analysis");
         } catch (e) {
             console.error(e);
             alert("A network error occurred. Please check your connection.");
@@ -56,13 +52,6 @@ export default function SearchPage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center min-h-[70vh] gap-10 max-w-xl mx-auto w-full"
         >
-            <SuccessCelebration
-                show={showCelebration}
-                title={`Found ${foundCount} Ad Angles!`}
-                subtitle="Great start. Let's check which ones have the most demand."
-                onDone={() => { setShowCelebration(false); router.push("/analysis"); }}
-            />
-
             {/* Header */}
             <div className="text-center flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2 px-3 py-1 bg-accent/5 rounded-full border border-accent/15">

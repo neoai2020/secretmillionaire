@@ -6,15 +6,13 @@ export type PromoTemplate =
   | "horizontal-banner"
   | "footer-card"
   | "sidebar-card"
-  | "modal"
-  | "toast";
+  | "modal";
 
 export type PromoPlacement =
   | "global-top"
   | "global-footer"
   | "sidebar"
-  | "modal"
-  | "toast-bl";
+  | "modal";
 
 export interface PromoSlot {
   id: string;
@@ -34,8 +32,6 @@ export interface PromoSlot {
     title?: string;
     stats?: { icon: string; text: string; highlight?: string }[];
     sidebarSubtitle?: string;
-    toastAmount?: string;
-    toastMessage?: string;
   };
   behavior?: {
     delayMs?: number;
@@ -130,7 +126,7 @@ export const promoSlots: PromoSlot[] = [
   },
   {
     id: "modal-training",
-    enabled: true,
+    enabled: false,
     template: "modal",
     placement: "modal",
     content: {
@@ -149,41 +145,6 @@ export const promoSlots: PromoSlot[] = [
     behavior: {
       delayMs: 800,
       sessionKey: "sms_training_popup",
-    },
-  },
-  {
-    id: "toast-withdraw",
-    enabled: false,
-    template: "toast",
-    placement: "toast-bl",
-    content: {
-      headline: "Withdrawal Available",
-      toastAmount: "$0.00",
-      toastMessage: "You may be eligible to withdraw earnings",
-      ctaLabel: "Claim Now",
-      ctaUrl: offers.withdrawRouting,
-    },
-    behavior: {
-      delayMs: 2500,
-      sessionKey: "sms_withdraw_shown",
-      priority: 10,
-    },
-  },
-  {
-    id: "toast-social",
-    enabled: false,
-    template: "toast",
-    placement: "toast-bl",
-    content: {
-      headline: "Member Activity",
-      toastMessage: "just earned",
-      toastAmount: "$0",
-    },
-    behavior: {
-      intervalMinMs: 15000,
-      intervalMaxMs: 25000,
-      pauseWhenSlotId: "toast-withdraw",
-      priority: 1,
     },
   },
 ];

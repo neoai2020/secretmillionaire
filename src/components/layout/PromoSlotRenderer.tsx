@@ -71,7 +71,7 @@ function ScarcityBar({ current, total }: { current: number; total: number }) {
 }
 
 export function PromoSlotRenderer({ slot, onClose }: PromoSlotRendererProps) {
-  const { template, content, id } = slot;
+  const { template, content } = slot;
   const Icon = content.icon ? getNavIcon(content.icon) : null;
   const bodies = Array.isArray(content.body) ? content.body : content.body ? [content.body] : [];
 
@@ -369,78 +369,6 @@ export function PromoSlotRenderer({ slot, onClose }: PromoSlotRendererProps) {
             </motion.button>
           )}
         </motion.div>
-      </motion.div>
-    );
-  }
-
-  if (template === "toast") {
-    const isWithdraw = id === "toast-withdraw";
-    return (
-      <motion.div
-        initial={{ opacity: 0, x: 40, scale: 0.95 }}
-        animate={{ opacity: 1, x: 0, scale: 1 }}
-        exit={{ opacity: 0, x: 40, scale: 0.95 }}
-        className="fixed z-[9998] w-[min(calc(100vw-2rem),22rem)] rounded-2xl p-4 overflow-hidden"
-        style={{
-          right: "max(1rem, env(safe-area-inset-right))",
-          bottom: "max(1rem, env(safe-area-inset-bottom))",
-          background: "linear-gradient(135deg, #141a18 0%, #0d1014 100%)",
-          border: `1px solid ${isWithdraw ? "rgba(212, 175, 55, 0.45)" : "rgba(69, 162, 158, 0.35)"}`,
-          boxShadow: isWithdraw
-            ? "0 8px 32px rgba(212, 175, 55, 0.25), 0 0 24px rgba(212, 175, 55, 0.12)"
-            : "0 8px 32px rgba(69, 162, 158, 0.2), 0 0 24px rgba(69, 162, 158, 0.1)",
-        }}
-      >
-        <div className="promo-shimmer absolute inset-0 rounded-2xl opacity-30 pointer-events-none" aria-hidden />
-        <div className="flex gap-3 relative z-10 pr-6">
-          <motion.div
-            animate={{ scale: [1, 1.15, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{
-              background: isWithdraw
-                ? "linear-gradient(135deg, rgba(212,175,55,0.35), rgba(212,175,55,0.12))"
-                : "linear-gradient(135deg, rgba(69,162,158,0.3), rgba(69,162,158,0.1))",
-            }}
-          >
-            {isWithdraw ? (
-              <GoldCoinsIcon size={22} />
-            ) : (
-              <Sparkles size={18} style={{ color: brand.colors.encryptedGreen }} />
-            )}
-          </motion.div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-white leading-snug">{content.headline}</p>
-            <p className="text-xs text-text-muted mt-1 leading-relaxed">
-              {content.toastMessage}{" "}
-              {content.toastAmount && (
-                <span className="font-bold" style={{ color: brand.colors.vaultGold }}>
-                  {content.toastAmount}
-                </span>
-              )}
-            </p>
-            {content.ctaLabel && content.ctaUrl && (
-              <button
-                type="button"
-                onClick={() => window.open(content.ctaUrl, "_blank")}
-                className="text-xs font-bold mt-2 hover:underline"
-                style={{ color: brand.colors.encryptedGreen }}
-              >
-                {content.ctaLabel} →
-              </button>
-            )}
-          </div>
-        </div>
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute top-2.5 right-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-            aria-label="Dismiss"
-          >
-            <X size={14} strokeWidth={2.5} />
-          </button>
-        )}
       </motion.div>
     );
   }
