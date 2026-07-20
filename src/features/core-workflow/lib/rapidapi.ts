@@ -61,8 +61,8 @@ export function sanitizePosts(posts: any[]): any[] {
 
 // ─── Strategy 1: ScraperAPI (Google scrape) ─────────────────────────
 async function fetchViaScraperAPI(keyword: string): Promise<any[]> {
-    const scraperKey = process.env.SCRAPERAPI_KEY?.trim();
-    if (!scraperKey) throw new Error("Missing SCRAPERAPI_KEY");
+    const scraperKey = (process.env.SCRAPERAPI_KEY || process.env.SCRAPER_API_KEY)?.trim();
+    if (!scraperKey) throw new Error("Missing SCRAPERAPI_KEY / SCRAPER_API_KEY");
 
     console.log(`[SEARCH] Strategy 1: ScraperAPI for "${keyword}"`);
     const targetUrl = `https://www.google.com/search?q=site%3Areddit.com+OR+site%3Ayoutube.com+${encodeURIComponent(keyword)}+after%3A2024-01-01`;

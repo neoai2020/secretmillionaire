@@ -322,7 +322,7 @@ Provider order lives behind a single switch in `images.ts` so it's easy to tune.
 **In `.env.local` now — nothing else required to build:**
 - `RAPIDAPI_KEY=e58a784d0dmsh8c00f2f58365008p103943jsn729926f8c316` — text (ChatGPT-42) + images (nano-banana).
 - `RAPIDAPI_HOST=chatgpt-42.p.rapidapi.com`.
-- `SCRAPER_API_KEY=32b75ca1bab9047cfa6197108747e16f` — scrape product/affiliate pages.
+- `SCRAPER_API_KEY=<from ScraperAPI dashboard>` — scrape product/affiliate pages.
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_PRODUCT_NAME`.
 
 **Free, no key:** Pollinations image fallback.
