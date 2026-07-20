@@ -21,6 +21,9 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { WelcomeOfferBanner } from "@/components/ui/welcome-offer-banner";
+import { PageHeader } from "@/components/ui/page-header";
 import { FacebookPostCard } from "@/features/blog-builder/components/FacebookPostCard";
 import type { SavedFacebookPost } from "@/features/blog-builder/lib/facebook-posts-vault";
 
@@ -98,6 +101,7 @@ export default function AcceleratorPage() {
   const [posts, setPosts] = useState<SavedFacebookPost[]>([]);
   const [loadingSaved, setLoadingSaved] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [showOfferBanner, setShowOfferBanner] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -202,6 +206,7 @@ export default function AcceleratorPage() {
   const handleGenerate = async () => {
     if (!selectedSiteId) return;
     setGenerating(true);
+    setShowOfferBanner(true);
     setError(null);
     try {
       const res = await fetch("/api/blog/facebook-posts", {
@@ -415,22 +420,17 @@ export default function AcceleratorPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
-                  className="rounded-xl border border-accent/20 bg-accent/[0.06] p-4 sm:p-5 flex flex-col gap-3"
+                  className="rounded-xl border border-accent/20 bg-accent/[0.06] p-4 sm:p-5"
                 >
-                  <AiLoadingBar
+                  <GenerationProgress
                     label={FB_LOADING_STEPS[loadingStep]}
-                    progress={loadingProgress}
-                    active
-                    className="w-full"
+                    offer="welcome"
                   />
-                  <p className="text-[11px] text-text-muted leading-relaxed">
-                    Writing 10 unique posts for{" "}
-                    <span className="text-text-secondary font-semibold">{selectedSite?.title}</span>.
-                    This usually takes 15–30 seconds.
-                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {showOfferBanner && !generating && <WelcomeOfferBanner />}
 
             {error && <p className="text-sm text-red-400/90">{error}</p>}
 

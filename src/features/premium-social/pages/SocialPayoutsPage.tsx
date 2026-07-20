@@ -17,6 +17,8 @@ import {
   Users,
 } from "lucide-react";
 import { AffiliateLinkPicker } from "@/components/AffiliateLinkPicker";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { WelcomeOfferBanner } from "@/components/ui/welcome-offer-banner";
 import { isValidAffiliateUrl } from "@/features/blog-builder/lib/affiliate-url";
 import { SOCIAL_NICHES, SOCIAL_POSTS } from "../data/posts";
 
@@ -30,6 +32,8 @@ export default function SocialPayoutsPage() {
   const [activeNiche, setActiveNiche] = useState<string>("All");
   const [affiliateLink, setAffiliateLink] = useState("");
   const [showPosts, setShowPosts] = useState(false);
+  const [showOfferBanner, setShowOfferBanner] = useState(false);
+  const [revealing, setRevealing] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const filtered = useMemo(
@@ -51,8 +55,13 @@ export default function SocialPayoutsPage() {
   };
 
   const handleShow = () => {
-    if (!isValidAffiliateUrl(affiliateLink)) return;
-    setShowPosts(true);
+    if (!isValidAffiliateUrl(affiliateLink) || revealing) return;
+    setRevealing(true);
+    setShowOfferBanner(true);
+    window.setTimeout(() => {
+      setShowPosts(true);
+      setRevealing(false);
+    }, 4200);
   };
 
   return (
@@ -143,11 +152,19 @@ export default function SocialPayoutsPage() {
 
         <button
           onClick={handleShow}
-          disabled={!isValidAffiliateUrl(affiliateLink)}
+          disabled={!isValidAffiliateUrl(affiliateLink) || revealing}
           className="btn-primary px-6 py-3.5 mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Eye size={18} /> Show My Posts
+          <Eye size={18} /> {revealing ? "Loading posts…" : "Show My Posts"}
         </button>
+
+        {revealing && (
+          <div className="mt-5">
+            <GenerationProgress label="Preparing your posts…" offer="welcome" />
+          </div>
+        )}
+
+        {showOfferBanner && !revealing && <WelcomeOfferBanner />}
       </div>
 
       {/* Posts */}

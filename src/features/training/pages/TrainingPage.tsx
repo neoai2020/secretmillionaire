@@ -13,11 +13,13 @@ import {
   Route,
 } from "lucide-react";
 import Link from "next/link";
-import { trainingContent, vimeoEmbedUrl } from "@/config/training.config";
+import { trainingContent } from "@/config/training.config";
 import { trainingContentData } from "@/config/training-content";
 import { TrainingFaqItem } from "../components/TrainingFaqItem";
 import { TrainingStepCard } from "../components/TrainingStepCard";
 import { TrainingIcon } from "../lib/training-icons";
+import { PageHeader } from "@/components/ui/page-header";
+import { VideoThumbnailCard } from "@/components/ui/video-thumbnail-card";
 
 const VIDEOS = trainingContent.videos.filter((v) => v.id);
 const {
@@ -40,21 +42,13 @@ export default function TrainingPage() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col gap-12 max-w-5xl mx-auto w-full py-6"
+      className="flex flex-col gap-12 w-full py-6"
     >
-      <header className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-accent/10 border border-accent/20 flex items-center justify-center rounded-lg">
-            <GraduationCap size={20} className="text-accent" />
-          </div>
-          <div>
-            <h1 className="brand-font text-2xl text-text-heading tracking-tight">
-              {trainingContent.pageTitle}
-            </h1>
-            <p className="text-sm text-text-muted">{trainingContent.pageSubtitle}</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Training"
+        title={trainingContent.pageTitle}
+        subtitle={trainingContent.pageSubtitle}
+      />
 
       <section className="glass-card p-6 flex flex-col gap-2">
         <h2 className="text-lg font-bold text-text-heading">{intro.headline}</h2>
@@ -75,19 +69,9 @@ export default function TrainingPage() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="glass-card overflow-hidden"
+                className="glass-card overflow-hidden p-0"
               >
-                <div className="relative w-full bg-black" style={{ paddingBottom: "56.25%" }}>
-                  <iframe
-                    src={vimeoEmbedUrl(video.id)}
-                    className="absolute inset-0 w-full h-full"
-                    frameBorder="0"
-                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    title={video.title}
-                  />
-                </div>
+                <VideoThumbnailCard videoId={video.id} title={video.title} />
                 <div className="p-4 flex flex-col gap-1.5">
                   <span className="text-[9px] font-bold text-accent uppercase tracking-widest bg-accent/10 px-2 py-0.5 rounded self-start">
                     Video {i + 1}

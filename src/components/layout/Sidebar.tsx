@@ -2,9 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LogOut, ChevronRight, Lock, X } from "lucide-react";
+import { LogOut, ChevronRight, Lock, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { clsx } from "clsx";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { brand } from "@/config/brand.config";
 import {
   getVisibleWorkflowSteps,
@@ -21,6 +22,8 @@ import { isFeatureEnabled } from "@/config/features.config";
 import { BlogBuilderNav } from "@/features/blog-builder/components/BlogBuilderNav";
 import type { NavItem } from "@/config/navigation.config";
 
+const COLLAPSE_KEY = "sms_sidebar_collapsed";
+
 interface SidebarProps {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
@@ -28,6 +31,7 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
   const workflowSteps = getVisibleWorkflowSteps();
   const coreResourceNav = getCoreResourceNav();
   const premiumNav = getVisiblePremiumNav();
@@ -48,6 +52,22 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
 
   const handleNavClick = () => onMobileClose?.();
 
+  useEffect(() => {
+    const stored = localStorage.getItem(COLLAPSE_KEY);
+    const isCollapsed = stored === "1";
+    setCollapsed(isCollapsed);
+    document.documentElement.dataset.sidebar = isCollapsed ? "collapsed" : "expanded";
+  }, []);
+
+  const toggleCollapse = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
+      document.documentElement.dataset.sidebar = next ? "collapsed" : "expanded";
+      return next;
+    });
+  };
+
   const renderNavLink = (item: NavItem, progress: number) => {
     const isActive = pathname === item.path;
     const Icon = getNavIcon(item.icon);
@@ -60,11 +80,13 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
           className="command-nav-link py-3 sm:py-4 opacity-40 cursor-not-allowed"
           title="Complete the previous step first"
         >
-          <div className="flex items-center gap-3 min-w-0">
+          <div className={clsx("flex items-center gap-3 min-w-0", collapsed && "justify-center")}>
             <Lock size={18} className="text-text-muted shrink-0" />
-            <span className="brand-font text-sm font-medium text-text-muted leading-snug">
-              {item.label}
-            </span>
+            {!collapsed && (
+              <span className="brand-font text-sm font-medium text-text-muted leading-snug">
+                {item.label}
+              </span>
+            )}
           </div>
         </div>
       );
@@ -75,13 +97,16 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         key={item.path}
         href={item.path}
         onClick={handleNavClick}
-        className={clsx("command-nav-link py-3 sm:py-4", isActive && "active")}
+        title={collapsed ? item.label : undefined}
+        className={clsx("command-nav-link py-3 sm:py-4", isActive && "active", collapsed && "justify-center px-2")}
       >
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className={clsx("flex items-center gap-3 min-w-0 flex-1", collapsed && "justify-center")}>
           <Icon size={18} className={clsx("shrink-0", isActive ? "text-accent" : "text-text-muted")} />
-          <span className="brand-font text-sm font-medium leading-snug">{item.label}</span>
+          {!collapsed && (
+            <span className="brand-font text-sm font-medium leading-snug">{item.label}</span>
+          )}
         </div>
-        {isActive && <ChevronRight size={14} className="text-accent ml-2 shrink-0" />}
+        {isActive && !collapsed && <ChevronRight size={14} className="text-accent ml-2 shrink-0" />}
       </Link>
     );
   };
@@ -90,9 +115,10 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
     <aside
       className={clsx(
         "sidebar-glass fixed inset-y-0 left-0 z-50 flex flex-col h-[100dvh] overflow-hidden shrink-0",
-        "w-[min(18rem,88vw)] lg:static lg:w-72 lg:translate-x-0",
-        "transition-transform duration-300 ease-out",
-        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        "w-[min(18rem,88vw)] lg:w-[var(--sidebar-w)]",
+        "transition-[width,transform] duration-300 ease-out",
+        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        "lg:static"
       )}
     >
       {workflowSteps.length > 0 && (
@@ -112,9 +138,21 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
 
       <div className="flex flex-col p-4 sm:p-6 gap-6 sm:gap-8 relative z-10 h-full">
         <div className="flex items-start justify-between gap-2">
-          <Link href="/dashboard" className="min-w-0 flex-1" onClick={handleNavClick}>
-            <BrandLogo size="sm" />
+          <Link
+            href="/dashboard"
+            className={clsx("min-w-0 flex-1", collapsed && "lg:flex lg:justify-center lg:flex-none")}
+            onClick={handleNavClick}
+          >
+            <BrandLogo size="sm" compact={collapsed} />
           </Link>
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="hidden lg:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-text-muted hover:text-text-heading hover:bg-white/5"
+          >
+            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          </button>
           <button
             type="button"
             aria-label="Close menu"
@@ -128,47 +166,59 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         <nav className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar pb-6">
           {workflowSteps.length > 0 && (
             <>
-              <span className="text-xs font-black tracking-[0.25em] text-text-muted uppercase px-3 sm:px-5 mb-2">
-                Menu
-              </span>
+              {!collapsed && (
+                <span className="text-xs font-black tracking-[0.25em] text-text-muted uppercase px-3 sm:px-5 mb-2">
+                  Menu
+                </span>
+              )}
               {workflowSteps.map((step) => renderNavLink(step, workflowProgress))}
             </>
           )}
 
-          {blogEnabled && <BlogBuilderNav pathname={pathname} onNavClick={handleNavClick} />}
+          {blogEnabled && (!collapsed || mobileOpen) && (
+            <BlogBuilderNav pathname={pathname} onNavClick={handleNavClick} />
+          )}
 
           {premiumNav.length > 0 && (
             <>
-              <span className="text-[10px] font-black tracking-[0.25em] text-[#D4AF37] uppercase px-3 sm:px-5 mt-4 mb-2">
-                Society Access
-              </span>
+              {(!collapsed || mobileOpen) && (
+                <span className="text-[10px] font-black tracking-[0.25em] text-[#D4AF37] uppercase px-3 sm:px-5 mt-4 mb-2">
+                  Society Access
+                </span>
+              )}
               {premiumNav.map((step) => renderNavLink(step, workflowProgress))}
             </>
           )}
 
           {coreResourceNav.length > 0 && (
             <>
-              <span className="text-[10px] font-black tracking-[0.25em] text-text-muted uppercase px-3 sm:px-5 mt-4 mb-2">
-                Resources
-              </span>
+              {(!collapsed || mobileOpen) && (
+                <span className="text-[10px] font-black tracking-[0.25em] text-text-muted uppercase px-3 sm:px-5 mt-4 mb-2">
+                  Resources
+                </span>
+              )}
               {coreResourceNav.map((step) => renderNavLink(step, workflowProgress))}
             </>
           )}
 
-          <SidebarPromos />
+          {(!collapsed || mobileOpen) && <SidebarPromos />}
 
           <div className="mt-auto flex flex-col gap-4 pt-4 sm:pt-6">
-            {(isFeatureEnabled("dopamine") || isFeatureEnabled("extraction-workflow")) && (
+            {(isFeatureEnabled("extraction-workflow")) && (!collapsed || mobileOpen) && (
               <SidebarStatusPanel />
             )}
             <button
               type="button"
               onClick={handleLogout}
-              className="command-nav-link py-3 sm:py-4 text-red-400/60 hover:text-red-400 hover:bg-red-500/5"
+              title={collapsed ? "Sign Out" : undefined}
+              className={clsx(
+                "command-nav-link py-3 sm:py-4 text-red-400/60 hover:text-red-400 hover:bg-red-500/5",
+                collapsed && "justify-center px-2"
+              )}
             >
-              <div className="flex items-center gap-3">
+              <div className={clsx("flex items-center gap-3", collapsed && "justify-center")}>
                 <LogOut size={18} className="shrink-0" />
-                <span className="brand-font text-sm font-medium">Sign Out</span>
+                {!collapsed && <span className="brand-font text-sm font-medium">Sign Out</span>}
               </div>
             </button>
           </div>

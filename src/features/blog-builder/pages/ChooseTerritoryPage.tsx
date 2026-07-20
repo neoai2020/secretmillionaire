@@ -8,6 +8,9 @@ import { useBlogBuilder } from "../context/BlogBuilderContext";
 import { SuggestionGrid } from "../components/SuggestionGrid";
 import { GenerationQuotaWidget } from "../components/GenerationQuotaWidget";
 import { localTerritorySuggestions } from "../lib/local-territory-suggestions";
+import { PageHeader } from "@/components/ui/page-header";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { EarningsBanner } from "@/components/ui/earnings-banner";
 
 export default function ChooseTerritoryPage() {
   const router = useRouter();
@@ -17,6 +20,7 @@ export default function ChooseTerritoryPage() {
   const [fetching, setFetching] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const [suggestHint, setSuggestHint] = useState<string | null>(null);
+  const [showOfferBanner, setShowOfferBanner] = useState(false);
 
   const fetchSuggestions = async () => {
     const trimmed = hobby.trim();
@@ -29,6 +33,7 @@ export default function ChooseTerritoryPage() {
     setSuggestHint(null);
     setSuggestError(null);
     setFetching(true);
+    setShowOfferBanner(true);
 
     try {
       const res = await fetch("/api/blog/suggest-territories", {
@@ -72,17 +77,12 @@ export default function ChooseTerritoryPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Step 1</p>
-        <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-text-heading tracking-tight">
-          Pick Your Topic
-        </h1>
-        <p className="text-[#9fb0b5] text-base sm:text-lg max-w-2xl leading-relaxed">
-          What will your website be about? Type in a hobby or interest you enjoy — or press the
-          button and we&apos;ll suggest good topics for you.
-        </p>
-      </div>
+    <div className="flex flex-col gap-6 sm:gap-8 w-full">
+      <PageHeader
+        eyebrow="Step 1"
+        title="Pick Your Topic"
+        subtitle="What will your website be about? Type in a hobby or interest you enjoy — or press the button and we'll suggest good topics for you."
+      />
 
       <GenerationQuotaWidget />
 
@@ -135,7 +135,10 @@ export default function ChooseTerritoryPage() {
             {suggestError}
           </p>
         )}
+        {fetching && <GenerationProgress label="Finding topic ideas for your website…" />}
       </div>
+
+      {showOfferBanner && !fetching && suggestions.length > 0 && <EarningsBanner />}
 
       <SuggestionGrid
         suggestions={suggestions}

@@ -23,8 +23,13 @@ import { GlobalNetworkMap } from "@/features/extraction-workflow/components/Glob
 import { ScanTerminal } from "@/features/extraction-workflow/components/ScanTerminal";
 import { ProfitTicker } from "@/features/extraction-workflow/components/ProfitTicker";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
+import { PageHeader } from "@/components/ui/page-header";
+import { VideoThumbnailCard } from "@/components/ui/video-thumbnail-card";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { EarningsBanner } from "@/components/ui/earnings-banner";
+import { HonestActivity } from "@/components/ui/honest-activity";
 import { brand } from "@/config/brand.config";
-import { trainingContent, vimeoEmbedUrl } from "@/config/training.config";
+import { trainingContent } from "@/config/training.config";
 
 const INTRO_VIDEO = trainingContent.videos[0];
 
@@ -123,6 +128,7 @@ export default function ConnectDashboardPage() {
 
   const [stats, setStats] = useState<DashboardStats>({ websites: 0, articles: 0, clicks: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [showOfferBanner, setShowOfferBanner] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -161,6 +167,7 @@ export default function ConnectDashboardPage() {
 
   const handleBegin = async () => {
     if (running) return;
+    setShowOfferBanner(true);
     if (!connected) await connect();
     if (!scanned) await scan();
   };
@@ -168,39 +175,28 @@ export default function ConnectDashboardPage() {
   const dailyGoal = extracted ? balance : commissionsFound;
 
   return (
-    <div className="flex flex-col gap-8 sm:gap-10 max-w-5xl w-full mx-auto">
-      {/* Welcome */}
-      <div className="flex flex-col gap-3">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4AF37]">Home</p>
-        <h1 className="brand-font text-3xl sm:text-4xl lg:text-5xl text-[#E2E8F0] tracking-tight">
-          Welcome to {brand.productName}
-        </h1>
-        <p className="text-[#9fb0b5] text-base sm:text-lg max-w-3xl leading-relaxed">
-          You build a website that recommends products. When someone buys through your links, you
-          get paid. You only need to do three things — each one takes just a few minutes.
-        </p>
-      </div>
+    <div className="flex flex-col gap-8 sm:gap-10 w-full">
+      <PageHeader
+        eyebrow="Home"
+        title={`Welcome to ${brand.productName}`}
+        subtitle="You build a website that recommends products. When someone buys through your links, you get paid. You only need to do three things — each one takes just a few minutes."
+      />
 
       {/* Video training — top of page */}
       <section className="rounded-2xl border border-[#D4AF37]/25 bg-[#12141a] p-5 sm:p-6 flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <PlayCircle size={22} className="text-[#D4AF37]" />
-          <h2 className="brand-font text-xl sm:text-2xl text-[#E2E8F0]">
+          <h2 className="ds-h2">
             {INTRO_VIDEO?.title ?? "Video training"}
           </h2>
         </div>
         {INTRO_VIDEO ? (
-          <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-[#1e2128] bg-[#0B0C10]">
-            <iframe
-              src={vimeoEmbedUrl(INTRO_VIDEO.id)}
-              className="absolute inset-0 h-full w-full"
-              frameBorder="0"
-              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-              allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
-              title={INTRO_VIDEO.title}
-            />
-          </div>
+          <VideoThumbnailCard
+            videoId={INTRO_VIDEO.id}
+            title={INTRO_VIDEO.title}
+            caption={INTRO_VIDEO.description}
+            eager
+          />
         ) : (
           <div className="relative aspect-video w-full rounded-xl border border-[#1e2128] bg-[#0B0C10] flex flex-col items-center justify-center gap-2 text-center px-4">
             <PlayCircle size={40} className="text-[#6b7280]" />
@@ -211,8 +207,7 @@ export default function ConnectDashboardPage() {
         )}
         <Link
           href="/training"
-          className="inline-flex items-center justify-center gap-2 min-h-12 px-4 rounded-xl font-bold text-[#0B0C10] text-base max-w-md"
-          style={{ background: "linear-gradient(135deg, #D4AF37 0%, #b8962e 100%)" }}
+          className="inline-flex items-center justify-center gap-2 min-h-12 px-4 rounded-xl font-bold text-white text-base max-w-md btn-primary"
         >
           Open training guides
           <ArrowRight size={18} />
@@ -246,10 +241,7 @@ export default function ConnectDashboardPage() {
               <p className="text-base text-[#9fb0b5] leading-relaxed flex-1">{item.detail}</p>
               <Link
                 href={item.href}
-                className="mt-auto inline-flex items-center justify-center gap-2 min-h-12 px-4 rounded-xl font-bold text-[#0B0C10] text-base"
-                style={{
-                  background: "linear-gradient(135deg, #45A29E 0%, #2d7a76 100%)",
-                }}
+                className="mt-auto inline-flex items-center justify-center gap-2 min-h-12 px-4 rounded-xl font-bold text-white text-base btn-primary"
               >
                 {item.cta}
                 <ArrowRight size={18} />
@@ -309,11 +301,7 @@ export default function ConnectDashboardPage() {
                 disabled={running}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                className="w-full max-w-lg mx-auto py-4 sm:py-5 px-4 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10]"
-                style={{
-                  background: "linear-gradient(135deg, #45A29E 0%, #2d7a76 100%)",
-                  boxShadow: "0 0 40px rgba(69, 162, 158, 0.35)",
-                }}
+                className="w-full max-w-lg mx-auto py-4 sm:py-5 px-4 rounded-xl font-bold text-base sm:text-lg text-white btn-primary disabled:opacity-50"
               >
                 <span className="flex items-center justify-center gap-2">
                   <Zap size={22} />
@@ -333,11 +321,7 @@ export default function ConnectDashboardPage() {
                   exit={{ opacity: 0 }}
                   className="flex flex-col gap-4"
                 >
-                  <p className="text-sm font-bold uppercase tracking-[0.15em] text-[#45A29E]">
-                    Step 1 of 3 — Connecting…
-                  </p>
-                  <GlobalNetworkMap active />
-                  <AiLoadingBar label="Connecting your account" className="max-w-lg mx-auto w-full" />
+                  <GenerationProgress label="Step 1 of 3 — Connecting your account" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -347,14 +331,14 @@ export default function ConnectDashboardPage() {
                   exit={{ opacity: 0 }}
                   className="flex flex-col gap-4"
                 >
-                  <p className="text-sm font-bold uppercase tracking-[0.15em] text-[#45A29E]">
-                    Step 2 of 3 — Looking for commission opportunities…
-                  </p>
+                  <GenerationProgress label="Step 2 of 3 — Looking for commission opportunities" />
                   <ScanTerminal active />
                 </motion.div>
               )}
             </AnimatePresence>
           )}
+
+          {showOfferBanner && setupPhase !== "B" && <EarningsBanner />}
 
           {setupPhase === "C" && (
             <div className="text-center flex flex-col gap-4">
@@ -370,11 +354,7 @@ export default function ConnectDashboardPage() {
                 onClick={extract}
                 disabled={isRouting}
                 whileHover={{ scale: isRouting ? 1 : 1.02 }}
-                className="w-full max-w-md mx-auto py-4 sm:py-5 px-4 rounded-xl font-bold text-base sm:text-lg text-[#0B0C10] disabled:opacity-70"
-                style={{
-                  background: "linear-gradient(135deg, #D4AF37 0%, #b8962e 100%)",
-                  boxShadow: "0 0 40px rgba(212, 175, 55, 0.35)",
-                }}
+                className="w-full max-w-md mx-auto py-4 sm:py-5 px-4 rounded-xl font-bold text-base sm:text-lg text-white btn-primary disabled:opacity-70"
               >
                 <span className="flex items-center justify-center gap-3">
                   {isRouting ? (
@@ -438,6 +418,8 @@ export default function ConnectDashboardPage() {
           ))}
         </div>
       </section>
+
+      <HonestActivity stats={stats} />
 
     </div>
   );

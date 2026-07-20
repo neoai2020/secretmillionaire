@@ -46,9 +46,9 @@ export function BrandLogo({ size = "sm", showTagline = true, compact = false }: 
       />
       <div className="flex flex-col min-w-0">
         <span
-          className={`brand-font ${compact ? "text-xs sm:text-sm leading-tight" : s.title} text-text-primary tracking-tight leading-tight line-clamp-2 sm:line-clamp-none`}
+          className={`brand-font whitespace-nowrap ${compact ? "text-xs sm:text-sm leading-tight" : s.title} text-text-primary tracking-tight leading-tight`}
         >
-          {brand.productName}
+          {brand.productName.replace(/ /g, "\u00a0")}
         </span>
         {showTagline && !compact && (
           <span className={`${s.tagline} font-semibold text-text-muted mt-0.5 truncate`}>

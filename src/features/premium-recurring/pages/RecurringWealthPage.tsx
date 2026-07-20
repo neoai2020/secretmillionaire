@@ -22,6 +22,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { RECURRING_PRODUCTS, type RecurringProduct } from "../data/products";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { WelcomeOfferBanner } from "@/components/ui/welcome-offer-banner";
 
 const NICHE_COLORS: Record<string, string> = {
   "Pet Training": "text-amber-400 bg-amber-400/10 border-amber-400/20",
@@ -52,11 +54,13 @@ function GetWebsitePopup({
 }) {
   const [affiliateLink, setAffiliateLink] = useState("");
   const [building, setBuilding] = useState(false);
+  const [showOfferBanner, setShowOfferBanner] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleBuild = async () => {
     if (!affiliateLink.trim()) return;
     setBuilding(true);
+    setShowOfferBanner(true);
     setError(null);
     try {
       const res = await fetch("/api/blog/get-website", {
@@ -85,15 +89,8 @@ function GetWebsitePopup({
         )}
 
         {building ? (
-          <div className="flex flex-col items-center gap-4 py-8 text-center">
-            <Loader2 className="w-10 h-10 animate-spin text-accent" />
-            <div>
-              <p className="text-base font-bold text-text-heading">Building your website…</p>
-              <p className="text-xs text-text-muted mt-1 max-w-xs">
-                Cloning the tested-to-convert articles for <strong className="text-text-secondary">{product.name}</strong> and
-                weaving in your link. This can take a minute the first time — hang tight.
-              </p>
-            </div>
+          <div className="py-4">
+            <GenerationProgress label="Building your website…" offer="welcome" />
           </div>
         ) : (
           <div className="space-y-5">

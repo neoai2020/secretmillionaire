@@ -50,7 +50,7 @@ export interface PromoSlot {
 export const promoSlots: PromoSlot[] = [
   {
     id: "global-top",
-    enabled: true,
+    enabled: false,
     template: "horizontal-banner",
     placement: "global-top",
     content: {

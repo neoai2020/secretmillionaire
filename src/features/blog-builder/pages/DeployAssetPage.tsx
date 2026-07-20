@@ -5,6 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Rocket, ArrowRight, CheckCircle2, RotateCcw } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { EarningsBanner } from "@/components/ui/earnings-banner";
+import { PageHeader } from "@/components/ui/page-header";
 import { useBlogBuilder } from "../context/BlogBuilderContext";
 import { GenerationTerminal } from "../components/GenerationTerminal";
 import { DeploySitePreview } from "../components/DeploySitePreview";
@@ -136,6 +139,7 @@ export default function DeployAssetPage() {
   const [quota, setQuota] = useState<GenerationQuota | null>(null);
   const [previewPostId, setPreviewPostId] = useState<string | null>(null);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [showOfferBanner, setShowOfferBanner] = useState(false);
   const slotProgressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressCreepTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const deployRunning = useRef(false);
@@ -559,6 +563,7 @@ export default function DeployAssetPage() {
     setError(null);
     setCanResume(false);
     setGenerating(true);
+    setShowOfferBanner(true);
 
     const niche = territory.trim() || hobby.trim();
     if (!niche) {
@@ -813,7 +818,7 @@ export default function DeployAssetPage() {
           <DeploySitePreview site={site} />
 
           {(phase === "generating" || phase === "publishing") && (
-            <AiLoadingBar
+            <GenerationProgress
               label={
                 phase === "publishing"
                   ? "Publishing your website"
@@ -821,10 +826,10 @@ export default function DeployAssetPage() {
                     ? `Generating content — ${postsWithImages}/${postSlots.length} posts with images`
                     : `Finalizing — ${completedPosts}/${postSlots.length} posts ready`
               }
-              progress={progress}
-              active
             />
           )}
+
+          {showOfferBanner && phase === "complete" && <EarningsBanner />}
 
           {postSlots.length > 0 && (
             <DeployPostGrid slots={postSlots} onViewPost={setPreviewPostId} />
