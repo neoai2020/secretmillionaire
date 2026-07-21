@@ -7,9 +7,6 @@ import {
   GraduationCap,
   Menu,
   Rocket,
-  Repeat,
-  Megaphone,
-  ShieldCheck,
   Globe,
   Headphones,
   ExternalLink,
@@ -19,10 +16,11 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useWorkflowNav } from "@/context/WorkflowNavContext";
 import { offers } from "@/config/offers.config";
 import { trainingContent } from "@/config/training.config";
-import { isFeatureEnabled } from "@/config/features.config";
+import { PREMIUM_FEATURES, PREMIUM_SECTION_LABEL } from "@/lib/premium-features";
 
 const tabs = [
   { title: "Home", url: "/dashboard", icon: LayoutGrid },
@@ -30,19 +28,6 @@ const tabs = [
   { title: "Links", url: "/link-vault", icon: FileText },
   { title: "Training", url: "/training", icon: GraduationCap },
 ];
-
-const premiumItems = [
-  { title: "Accelerator", url: "/accelerator", icon: Rocket },
-  { title: "Recurring Wealth", url: "/recurring-wealth", icon: Repeat },
-  { title: "Social Payouts", url: "/social-payouts", icon: Megaphone },
-  { title: "Wealth Protector", url: "/protector", icon: ShieldCheck },
-].filter((item) => {
-  if (item.url === "/accelerator") return isFeatureEnabled("premium-accelerator");
-  if (item.url === "/recurring-wealth") return isFeatureEnabled("premium-recurring");
-  if (item.url === "/social-payouts") return isFeatureEnabled("premium-social");
-  if (item.url === "/protector") return isFeatureEnabled("premium-protector");
-  return true;
-});
 
 const exclusiveOffers = [
   {
@@ -87,7 +72,7 @@ export function BottomNav() {
   }, [moreOpen]);
 
   const tabUrls = tabs.map((t) => t.url);
-  const premiumUrls = premiumItems.map((p) => p.url);
+  const premiumUrls = PREMIUM_FEATURES.map((p) => p.href);
   const moreActive =
     !tabUrls.includes(pathname) &&
     !premiumUrls.some((u) => pathname.startsWith(u));
@@ -179,29 +164,34 @@ export function BottomNav() {
                 </div>
               </div>
 
-              {premiumItems.length > 0 ? (
-                <div>
-                  <p className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-widest text-[#D4AF37]">
-                    Society Access
+              {PREMIUM_FEATURES.length > 0 ? (
+                <div className="premium-nav-section p-2">
+                  <p className="relative z-10 mb-1 flex items-center gap-1.5 px-2 pt-1 text-xs font-black uppercase tracking-widest text-[#D4AF37]">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 animate-pulse-glow" fill="currentColor" />
+                    {PREMIUM_SECTION_LABEL}
                   </p>
-                  <div className="space-y-1.5">
-                    {premiumItems.map((item) => {
+                  <div className="relative z-10 space-y-1.5">
+                    {PREMIUM_FEATURES.map((item, index) => {
                       const Icon = item.icon;
-                      const isActive = pathname.startsWith(item.url);
+                      const isActive = pathname.startsWith(item.href);
                       return (
-                        <Link
-                          key={item.url}
-                          href={item.url}
-                          onClick={() => setMoreOpen(false)}
-                          className={`flex min-h-[52px] items-center gap-3 rounded-xl border px-4 py-3 text-base font-semibold ${
-                            isActive
-                              ? "border-[#D4AF37]/40 bg-[#D4AF37]/15 text-[#D4AF37]"
-                              : "border-[#D4AF37]/20 text-[#D4AF37]/80 active:bg-[#D4AF37]/10"
-                          }`}
+                        <motion.div
+                          key={item.href}
+                          initial={{ opacity: 0, x: -12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 + index * 0.05 }}
                         >
-                          <Icon className="h-5 w-5" />
-                          {item.title}
-                        </Link>
+                          <Link
+                            href={item.href}
+                            onClick={() => setMoreOpen(false)}
+                            className={`premium-sidebar-item flex min-h-[52px] items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold text-slate-300 ${
+                              isActive ? "is-active" : ""
+                            }`}
+                          >
+                            <Icon className={`h-5 w-5 ${isActive ? "text-[#D4AF37]" : "text-[#D4AF37]/80"}`} />
+                            {item.label}
+                          </Link>
+                        </motion.div>
                       );
                     })}
                   </div>

@@ -1,236 +1,195 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Check, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { brand } from "@/config/brand.config";
-import { BrandLogo } from "@/components/layout/BrandLogo";
 import {
   onboardingContent,
-  ONBOARDING_BETA_QUALIFICATION_CTA_URL,
-  ONBOARDING_DASHBOARD_ROUTE,
   ONBOARDING_META_KEY,
+  ONBOARDING_PRODUCT_NAME,
 } from "@/config/onboarding-content";
-
-const PAGE_BG = brand.colors.page;
-
-interface PreparingRow {
-  label: string;
-  description: string;
-  completed: boolean;
-}
-
-async function persistCompletion(): Promise<void> {
-  let userId: string | null = null;
-  let existingMeta: Record<string, unknown> = {};
-
-  try {
-    const { data } = await supabase.auth.getUser();
-    userId = data.user?.id ?? null;
-    existingMeta = (data.user?.user_metadata ?? {}) as Record<string, unknown>;
-  } catch {
-    // ignore
-  }
-
-  if (userId) {
-    try {
-      await supabase
-        .from("users")
-        .update({ onboarding_completed_at: new Date().toISOString() })
-        .eq("id", userId);
-    } catch {
-      // ignore
-    }
-  }
-
-  try {
-    await supabase.auth.updateUser({
-      data: { ...existingMeta, [ONBOARDING_META_KEY]: true },
-    });
-  } catch {
-    // ignore
-  }
-}
-
-function PreparingStep({ onContinue }: { onContinue: () => void }) {
-  const [rows, setRows] = useState<PreparingRow[]>(
-    onboardingContent.preparing.rows.map((r) => ({ ...r, completed: false }))
-  );
-  const generationRef = useRef(0);
-
-  useEffect(() => {
-    generationRef.current += 1;
-    const myGen = generationRef.current;
-    const delays = [400, 500, 600];
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
-    let cumulative = 0;
-
-    onboardingContent.preparing.rows.forEach((_, idx) => {
-      cumulative += delays[Math.min(idx, delays.length - 1)];
-      const t = setTimeout(() => {
-        if (generationRef.current !== myGen) return;
-        setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, completed: true } : r)));
-      }, cumulative);
-      timeouts.push(t);
-    });
-
-    return () => timeouts.forEach(clearTimeout);
-  }, []);
-
-  const allDone = rows.every((r) => r.completed);
-
-  return (
-    <section className="flex flex-col min-h-0 flex-1 justify-start w-full max-w-2xl mx-auto gap-4 px-1 sm:px-0">
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white text-center">
-        {onboardingContent.preparing.title}
-      </h1>
-      <div className="flex flex-col gap-3">
-        {rows.map((row, idx) => (
-          <div
-            key={idx}
-            className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4"
-          >
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                row.completed
-                  ? "bg-[#45A29E]/20 text-[#45A29E]"
-                  : "bg-[#D4AF37]/10 text-[#D4AF37]"
-              }`}
-            >
-              {row.completed ? <Check size={18} /> : <Loader2 size={18} className="animate-spin" />}
-            </div>
-            <div>
-              <p className="text-sm font-bold text-white">{row.label}</p>
-              <p className="text-xs text-slate-400">{row.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <p
-        className="text-xs rounded-xl p-3 border"
-        style={{
-          color: brand.colors.platinumSilver,
-          backgroundColor: "rgba(212, 175, 55, 0.08)",
-          borderColor: "rgba(212, 175, 55, 0.25)",
-        }}
-      >
-        <strong style={{ color: brand.colors.vaultGold }}>Tip:</strong> {onboardingContent.preparing.tip}
-      </p>
-      <button
-        type="button"
-        disabled={!allDone}
-        onClick={onContinue}
-        className="btn-primary w-full disabled:opacity-50"
-      >
-        {onboardingContent.preparing.continueCta}
-      </button>
-    </section>
-  );
-}
-
-function WelcomeCompleteStep({
-  onClaimOffer,
-  onSkip,
-  busy,
-}: {
-  onClaimOffer: () => void;
-  onSkip: () => void;
-  busy: boolean;
-}) {
-  const { welcome, partnerOffer } = onboardingContent;
-  const showPartnerCta = partnerOffer.enabled;
-  const primaryCta = showPartnerCta
-    ? partnerOffer.qualification.primaryCta
-    : welcome.continueCta;
-  const skipCta = showPartnerCta ? partnerOffer.qualification.noThanksCta : null;
-
-  return (
-    <section className="flex flex-col min-h-0 flex-1 justify-start w-full max-w-2xl mx-auto gap-6 text-center">
-      <div
-        className="w-16 h-16 mx-auto rounded-full flex items-center justify-center"
-        style={{ backgroundColor: "rgba(69, 162, 158, 0.15)" }}
-      >
-        <CheckCircle2 size={32} style={{ color: brand.colors.encryptedGreen }} />
-      </div>
-      <h1 className="text-3xl font-extrabold text-white">{welcome.title}</h1>
-      <p className="text-slate-400 leading-relaxed">{welcome.body}</p>
-      <button type="button" disabled={busy} onClick={onClaimOffer} className="btn-primary w-full">
-        {busy ? "Saving..." : primaryCta}
-      </button>
-      {skipCta && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onSkip}
-          className="text-sm text-slate-400 underline hover:text-slate-300 transition-colors"
-        >
-          {skipCta}
-        </button>
-      )}
-    </section>
-  );
-}
+import { resolveOnboardingGate } from "@/lib/onboarding-gate";
 
 export function OnboardingFlow() {
   const router = useRouter();
-  const [step, setStep] = useState<0 | 1>(0);
-  const [busy, setBusy] = useState(false);
+  const cfg = onboardingContent.activation;
 
-  const goToDashboard = () => {
-    router.replace(ONBOARDING_DASHBOARD_ROUTE);
-  };
+  const [firstName, setFirstName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [activationStep, setActivationStep] = useState(0);
 
-  const finishOnboarding = async () => {
-    if (busy) return;
-    setBusy(true);
-    await persistCompletion();
-    setBusy(false);
-    goToDashboard();
-  };
-
-  const handleClaimOffer = async () => {
-    if (busy) return;
-    setBusy(true);
-    await persistCompletion();
-    if (ONBOARDING_BETA_QUALIFICATION_CTA_URL) {
-      window.open(ONBOARDING_BETA_QUALIFICATION_CTA_URL, "_blank", "noopener,noreferrer");
+  const verifyNotCompleted = useCallback(async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      router.replace("/login");
+      return;
     }
-    goToDashboard();
+    const gate = await resolveOnboardingGate(supabase, user.id, user.user_metadata);
+    if (gate.isComplete) {
+      router.replace(onboardingContent.dashboardRoute);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    void verifyNotCompleted();
+  }, [verifyNotCompleted]);
+
+  useEffect(() => {
+    const timers = cfg.infoSteps.map((_, i) =>
+      window.setTimeout(() => setActivationStep(i + 1), 600 * (i + 1))
+    );
+    return () => timers.forEach(window.clearTimeout);
+  }, [cfg.infoSteps]);
+
+  const handleActivate = async () => {
+    const trimmed = firstName.trim();
+    if (!trimmed || submitting) return;
+
+    setSubmitting(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      try {
+        await supabase
+          .from("users")
+          .update({ onboarding_completed_at: new Date().toISOString() })
+          .eq("id", user.id);
+      } catch {
+        // swallow — auth metadata is the fallback
+      }
+
+      try {
+        await supabase.auth.updateUser({
+          data: {
+            ...user.user_metadata,
+            [ONBOARDING_META_KEY]: true,
+            first_name: trimmed,
+            full_name: trimmed,
+          },
+        });
+      } catch {
+        // swallow
+      }
+
+      router.push(onboardingContent.dashboardRoute);
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-[300] h-[100dvh] max-h-[100dvh] overflow-y-auto" style={{ backgroundColor: PAGE_BG }}>
-      <div className="relative z-10 flex flex-col min-h-[100dvh] px-4 sm:px-6 md:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 safe-top safe-bottom">
-        <header className="flex flex-col items-center gap-2 shrink-0 mb-4 sm:mb-5">
-          <BrandLogo size="md" showTagline={false} />
-          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">
-            {brand.memberLabel} Onboarding
-          </span>
-        </header>
-
-        <div className="flex flex-col min-h-0 flex-1">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="flex flex-col min-h-0 flex-1"
-            >
-              {step === 0 && <PreparingStep onContinue={() => setStep(1)} />}
-              {step === 1 && (
-                <WelcomeCompleteStep
-                  onClaimOffer={handleClaimOffer}
-                  onSkip={finishOnboarding}
-                  busy={busy}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
+    <div className="fixed inset-0 z-[300] flex min-h-screen overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-teal-50">
+      <aside className="hidden w-72 shrink-0 flex-col border-r border-slate-200 bg-white p-8 lg:flex">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/logo.png"
+            alt={ONBOARDING_PRODUCT_NAME}
+            width={44}
+            height={44}
+            className="rounded-xl"
+          />
+          <div>
+            <p className="text-lg font-black text-slate-900">{ONBOARDING_PRODUCT_NAME}</p>
+            <p className="text-sm text-slate-500">{onboardingContent.productTagline}</p>
+          </div>
         </div>
-      </div>
+
+        <ul className="mt-10 space-y-3">
+          {cfg.sidebarStatus.map((item, i) => (
+            <li
+              key={item.label}
+              className={`rounded-xl border p-4 transition-all duration-500 ${
+                activationStep > i
+                  ? "translate-x-0 border-teal-200 bg-teal-50 opacity-100"
+                  : "border-slate-100 bg-slate-50 opacity-60"
+              }`}
+            >
+              <p className="text-xs font-medium text-slate-500">{item.label}</p>
+              <p className="text-sm font-bold text-teal-700">{item.status}</p>
+            </li>
+          ))}
+        </ul>
+      </aside>
+
+      <main className="flex flex-1 flex-col overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-6 py-12 sm:px-10">
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <Image
+              src="/logo.png"
+              alt={ONBOARDING_PRODUCT_NAME}
+              width={40}
+              height={40}
+              className="rounded-xl"
+            />
+            <div>
+              <p className="text-base font-black text-slate-900">{ONBOARDING_PRODUCT_NAME}</p>
+              <p className="text-xs text-slate-500">{onboardingContent.productTagline}</p>
+            </div>
+          </div>
+
+          <h1 className="text-3xl font-black text-slate-900 sm:text-4xl">{cfg.headline}</h1>
+          <p className="mt-3 text-lg text-slate-600">{cfg.subheadline}</p>
+
+          <input
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder={cfg.inputPlaceholder}
+            autoComplete="given-name"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && firstName.trim() && !submitting) {
+                void handleActivate();
+              }
+            }}
+            className="mt-8 h-16 w-full rounded-2xl border-2 border-slate-200 bg-white px-5 text-xl text-slate-900 shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-[#45A29E] focus:ring-4 focus:ring-[#45A29E]/15"
+          />
+
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="mb-4 text-sm font-bold text-slate-900">{cfg.infoTitle}</p>
+            <ol className="space-y-3">
+              {cfg.infoSteps.map((step, i) => (
+                <li
+                  key={step}
+                  className={`flex items-start gap-3 text-sm transition-all duration-500 ${
+                    activationStep > i ? "text-slate-700 opacity-100" : "text-slate-300 opacity-50"
+                  }`}
+                >
+                  <span
+                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                      activationStep > i ? "bg-teal-500 text-white" : "bg-slate-200 text-slate-400"
+                    }`}
+                  >
+                    {activationStep > i ? "✓" : i + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <p className="mt-5 text-sm font-medium text-amber-700">{cfg.note}</p>
+
+          <button
+            type="button"
+            onClick={() => void handleActivate()}
+            disabled={!firstName.trim() || submitting}
+            className="mt-8 h-16 w-full rounded-2xl bg-gradient-to-r from-[#45A29E] to-[#D4AF37] text-xl font-extrabold text-white shadow-lg shadow-teal-200 transition-all hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          >
+            {submitting ? "Activating…" : cfg.ctaLabel}
+          </button>
+        </div>
+      </main>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LogOut, ChevronRight, Lock, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LogOut, ChevronRight, Lock, X, PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-react";
 import { clsx } from "clsx";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -10,9 +10,9 @@ import { brand } from "@/config/brand.config";
 import {
   getVisibleWorkflowSteps,
   getCoreResourceNav,
-  getVisiblePremiumNav,
   isNavItemLocked,
 } from "@/lib/features";
+import { PREMIUM_FEATURES, PREMIUM_SECTION_LABEL } from "@/lib/premium-features";
 import { getNavIcon } from "@/lib/nav-icons";
 import { SidebarPromos } from "./PromoOrchestrator";
 import { useWorkflowNav } from "@/context/WorkflowNavContext";
@@ -34,7 +34,6 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const workflowSteps = getVisibleWorkflowSteps();
   const coreResourceNav = getCoreResourceNav();
-  const premiumNav = getVisiblePremiumNav();
   const workflow = useWorkflowNav();
   const workflowProgress = workflow.progress;
   const blogEnabled = isFeatureEnabled("blog-builder");
@@ -179,15 +178,59 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             <BlogBuilderNav pathname={pathname} onNavClick={handleNavClick} />
           )}
 
-          {premiumNav.length > 0 && (
-            <>
-              {(!collapsed || mobileOpen) && (
-                <span className="text-[10px] font-black tracking-[0.25em] text-[#D4AF37] uppercase px-3 sm:px-5 mt-4 mb-2">
-                  Society Access
-                </span>
-              )}
-              {premiumNav.map((step) => renderNavLink(step, workflowProgress))}
-            </>
+          {PREMIUM_FEATURES.length > 0 && (
+            <div className="mt-4">
+              <div className={clsx("premium-nav-section", collapsed && !mobileOpen ? "p-1" : "p-2")}>
+                {(!collapsed || mobileOpen) && (
+                  <p className="relative z-10 flex items-center gap-1.5 px-2.5 sm:px-3 pb-2 pt-1.5 text-[10px] font-black tracking-[0.25em] text-[#D4AF37] uppercase">
+                    <Sparkles className="h-3 w-3 shrink-0 animate-pulse-glow" fill="currentColor" />
+                    {PREMIUM_SECTION_LABEL}
+                  </p>
+                )}
+                <ul className="relative z-10 space-y-1">
+                  {PREMIUM_FEATURES.map((item, index) => {
+                    const isActive = pathname === item.href;
+                    const Icon = item.icon;
+                    return (
+                      <motion.li
+                        key={item.href}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.15 + index * 0.05 }}
+                      >
+                        <Link
+                          href={item.href}
+                          onClick={handleNavClick}
+                          title={collapsed ? item.label : undefined}
+                          className={clsx(
+                            "premium-sidebar-item flex items-center gap-3 rounded-xl py-3 text-sm font-medium text-text-secondary",
+                            collapsed && !mobileOpen ? "justify-center px-2" : "px-3 sm:px-4",
+                            isActive && "is-active"
+                          )}
+                        >
+                          <Icon
+                            size={18}
+                            className={clsx("shrink-0", isActive ? "text-[#D4AF37]" : "text-[#D4AF37]/80")}
+                          />
+                          {(!collapsed || mobileOpen) && (
+                            <span className="brand-font text-sm font-medium leading-snug">
+                              {item.label}
+                            </span>
+                          )}
+                          {(!collapsed || mobileOpen) && isActive && (
+                            <motion.span
+                              layoutId="activePremiumIndicator"
+                              className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-[#D4AF37]"
+                              style={{ boxShadow: "0 0 10px rgba(212, 175, 55, 0.7)" }}
+                            />
+                          )}
+                        </Link>
+                      </motion.li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
           )}
 
           {coreResourceNav.length > 0 && (

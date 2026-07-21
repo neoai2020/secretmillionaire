@@ -29,6 +29,7 @@ import { GenerationProgress } from "@/components/ui/generation-progress";
 import { EarningsBanner } from "@/components/ui/earnings-banner";
 import { ContactSupportWidget } from "@/components/dashboard/ContactSupportWidget";
 import { DashboardTipsWidget } from "@/components/dashboard/DashboardTipsWidget";
+import { PremiumUpgradesWidget } from "@/components/dashboard/PremiumUpgradesWidget";
 import { brand } from "@/config/brand.config";
 import { trainingContent } from "@/config/training.config";
 
@@ -429,6 +430,7 @@ export default function ConnectDashboardPage() {
             <p className="text-xs font-bold uppercase tracking-wider text-[#9fb0b5] mb-4">Tips</p>
             <DashboardTipsWidget />
           </div>
+          <PremiumUpgradesWidget />
         </aside>
       </div>
 
