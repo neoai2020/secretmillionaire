@@ -27,7 +27,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { VideoThumbnailCard } from "@/components/ui/video-thumbnail-card";
 import { GenerationProgress } from "@/components/ui/generation-progress";
 import { EarningsBanner } from "@/components/ui/earnings-banner";
-import { HonestActivity } from "@/components/ui/honest-activity";
+import { ContactSupportWidget } from "@/components/dashboard/ContactSupportWidget";
+import { DashboardTipsWidget } from "@/components/dashboard/DashboardTipsWidget";
 import { brand } from "@/config/brand.config";
 import { trainingContent } from "@/config/training.config";
 
@@ -182,6 +183,8 @@ export default function ConnectDashboardPage() {
         subtitle="You build a website that recommends products. When someone buys through your links, you get paid. You only need to do three things — each one takes just a few minutes."
       />
 
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        <div className="xl:col-span-3 flex flex-col gap-8 sm:gap-10">
       {/* Video training — top of page */}
       <section className="rounded-2xl border border-[#D4AF37]/25 bg-[#12141a] p-5 sm:p-6 flex flex-col gap-4">
         <div className="flex items-center gap-2">
@@ -418,8 +421,16 @@ export default function ConnectDashboardPage() {
           ))}
         </div>
       </section>
+        </div>
 
-      <HonestActivity stats={stats} />
+        <aside className="min-w-0 space-y-6 xl:col-span-1">
+          <ContactSupportWidget />
+          <div className="card-base border-[#1e2128] p-5">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#9fb0b5] mb-4">Tips</p>
+            <DashboardTipsWidget />
+          </div>
+        </aside>
+      </div>
 
     </div>
   );

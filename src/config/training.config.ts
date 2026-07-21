@@ -1,5 +1,5 @@
 import { brand } from "./brand.config";
-import { PARTNER_LINK_PLACEHOLDER } from "./offers.config";
+import { FREE_TRAINING_URL } from "@/lib/support";
 
 /** Vimeo embed URL with uploader/channel chrome hidden (no byline, portrait, or title). */
 export function vimeoEmbedUrl(videoId: string): string {
@@ -10,7 +10,7 @@ export function vimeoEmbedUrl(videoId: string): string {
 export const trainingContent = {
   pageTitle: "Member Training",
   pageSubtitle: `Simple step-by-step guides for ${brand.productName} members`,
-  externalTrainingUrl: PARTNER_LINK_PLACEHOLDER,
+  externalTrainingUrl: FREE_TRAINING_URL,
   videos: [
     {
       id: "1209908982",

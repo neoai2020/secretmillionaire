@@ -1,6 +1,8 @@
+import { SUPPORT_EMAIL } from "@/lib/support";
+
 export const support = {
-  email: "SecretMillionairesociety@neoai.freshdesk.com",
-  contactUrl: "mailto:SecretMillionairesociety@neoai.freshdesk.com",
+  email: SUPPORT_EMAIL,
+  contactUrl: `mailto:${SUPPORT_EMAIL}`,
   helpCenterUrl: "",
   headline: "Contact Support",
   pageTitle: "Support",
