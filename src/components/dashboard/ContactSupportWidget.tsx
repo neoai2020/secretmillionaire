@@ -42,7 +42,11 @@ async function parseJsonResponse(res: Response) {
   }
 }
 
-export function ContactSupportWidget() {
+type ContactSupportWidgetProps = {
+  embedded?: boolean;
+};
+
+export function ContactSupportWidget({ embedded = false }: ContactSupportWidgetProps) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [formState, setFormState] = useState<FormState>("idle");
@@ -125,9 +129,13 @@ export function ContactSupportWidget() {
     setErrorMessage("");
   };
 
+  const shellClassName = embedded
+    ? "min-w-0 space-y-5"
+    : "card-base min-w-0 overflow-hidden border-[#45A29E]/25 p-5 space-y-5";
+
   if (formState === "success") {
     return (
-      <div className="card-base min-w-0 overflow-hidden border-[#45A29E]/25 p-5 space-y-5">
+      <div className={shellClassName}>
         <div className="flex flex-col items-center">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-green-500/30 bg-green-500/10">
             <CheckCircle2 className="h-6 w-6 text-green-400" />
@@ -189,19 +197,23 @@ export function ContactSupportWidget() {
   }
 
   return (
-    <div className="card-base min-w-0 overflow-hidden border-[#45A29E]/25 p-5 space-y-5">
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#45A29E]/25 bg-[#45A29E]/10">
-          <Headphones className="text-[#45A29E]" size={22} />
-        </div>
-        <h3 className="ds-h3">Contact Support</h3>
-      </div>
+    <div className={shellClassName}>
+      {!embedded ? (
+        <>
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#45A29E]/25 bg-[#45A29E]/10">
+              <Headphones className="text-[#45A29E]" size={22} />
+            </div>
+            <h3 className="ds-h3">Contact Support</h3>
+          </div>
 
-      <p className="text-sm leading-relaxed text-[#9fb0b5]">
-        We usually reply within about 2 hours. Because of high email volume, please allow{" "}
-        <span className="font-medium text-[#E2E8F0]">24–48 hours</span> during busy periods. Your
-        answer will go to the email you enter below.
-      </p>
+          <p className="text-sm leading-relaxed text-[#9fb0b5]">
+            We usually reply within about 2 hours. Because of high email volume, please allow{" "}
+            <span className="font-medium text-[#E2E8F0]">24–48 hours</span> during busy periods. Your
+            answer will go to the email you enter below.
+          </p>
+        </>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="min-w-0">

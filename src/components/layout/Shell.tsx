@@ -26,6 +26,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/auth/");
 
   const isPublicBlog = pathname.startsWith("/sites/");
+  const isSupportPage = pathname === "/support";
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -93,9 +94,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
           <div className="app-content-layer mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col">
             {children}
-            <div className="mt-auto pt-10 sm:pt-16">
-              <GlobalFooterPromo />
-            </div>
+            {!isSupportPage ? (
+              <div className="mt-auto pt-10 sm:pt-16">
+                <GlobalFooterPromo />
+              </div>
+            ) : null}
           </div>
         </main>
       </div>
