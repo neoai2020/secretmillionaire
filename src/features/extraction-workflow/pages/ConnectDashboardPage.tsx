@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,6 +27,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { VideoThumbnailCard } from "@/components/ui/video-thumbnail-card";
 import { GenerationProgress } from "@/components/ui/generation-progress";
 import { EarningsBanner } from "@/components/ui/earnings-banner";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 import { ContactSupportWidget } from "@/components/dashboard/ContactSupportWidget";
 import { DashboardTipsWidget } from "@/components/dashboard/DashboardTipsWidget";
 import { PremiumUpgradesWidget } from "@/components/dashboard/PremiumUpgradesWidget";
@@ -131,6 +132,7 @@ export default function ConnectDashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({ websites: 0, articles: 0, clicks: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   const [showOfferBanner, setShowOfferBanner] = useState(false);
+  const goalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -166,6 +168,8 @@ export default function ConnectDashboardPage() {
   const setupDone = extracted;
   const needsSetup = !extracted;
   const setupPhase = scanned ? "C" : running ? "B" : "A";
+
+  useScrollToResult(running, goalRef, scanned);
 
   const handleBegin = async () => {
     if (running) return;
@@ -345,7 +349,7 @@ export default function ConnectDashboardPage() {
           {showOfferBanner && setupPhase !== "B" && <EarningsBanner />}
 
           {setupPhase === "C" && (
-            <div className="text-center flex flex-col gap-4">
+            <div ref={goalRef} className="text-center flex flex-col gap-4 scroll-mt-24">
               <p className="brand-font text-4xl sm:text-5xl text-[#D4AF37]">
                 ${commissionsFound.toFixed(2)}
                 <span className="text-lg text-[#9fb0b5] font-sans font-medium">/day</span>

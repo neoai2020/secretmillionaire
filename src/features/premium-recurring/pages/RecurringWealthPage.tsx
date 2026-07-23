@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
@@ -135,6 +135,15 @@ function GetWebsitePopup({
 export default function RecurringWealthPage() {
   const [built, setBuilt] = useState<Record<number, BuiltSite>>({});
   const [activeProduct, setActiveProduct] = useState<RecurringProduct | null>(null);
+  const productsRef = useRef<HTMLDivElement>(null);
+
+  const handleBuilt = (productId: number, slug: string) => {
+    setBuilt((prev) => ({ ...prev, [productId]: { slug } }));
+    setActiveProduct(null);
+    window.setTimeout(() => {
+      productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 250);
+  };
 
   return (
     <div className="page-stack w-full">
@@ -152,7 +161,7 @@ export default function RecurringWealthPage() {
       </motion.div>
 
       {/* Product list */}
-      <div className="flex flex-col gap-4">
+      <div ref={productsRef} className="flex flex-col gap-4 scroll-mt-24">
         {RECURRING_PRODUCTS.map((product, index) => {
           const nc = NICHE_COLORS[product.niche] || DEFAULT_NC;
           const builtSite = built[product.id];
@@ -221,7 +230,7 @@ export default function RecurringWealthPage() {
           <GetWebsitePopup
             product={activeProduct}
             onClose={() => setActiveProduct(null)}
-            onBuilt={(slug) => setBuilt((prev) => ({ ...prev, [activeProduct.id]: { slug } }))}
+            onBuilt={(slug) => handleBuilt(activeProduct.id, slug)}
           />
         )}
       </AnimatePresence>

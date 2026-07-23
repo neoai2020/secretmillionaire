@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
     Loader2, Check, ExternalLink, ArrowLeft, Search, Radar,
@@ -9,6 +9,8 @@ import {
 import { useSearch, Ad } from "@/features/core-workflow/context/SearchContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 
 function PlatformBadge({ platform }: { platform: string }) {
     const isReddit = platform === "Reddit";
@@ -92,8 +94,12 @@ export default function RadarPage() {
 
     const [loadingChip, setLoadingChip] = useState<string | null>(null);
     const router = useRouter();
+    const resultsRef = useRef<HTMLDivElement>(null);
 
     const currentPosts = postsByVariation[activeChip] || [];
+    const isLoadingAds = loadingChip === activeChip;
+
+    useScrollToResult(isLoadingAds, resultsRef, currentPosts.length > 0);
 
     const fetchPostsForChip = async (chip: string) => {
         setLoadingChip(chip);
@@ -204,14 +210,14 @@ export default function RadarPage() {
                 ))}
             </div>
 
+            {isLoadingAds && (
+                <GenerationProgress label={`Finding ads for “${activeChip}”…`} />
+            )}
+
             {/* Ads grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div ref={resultsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 scroll-mt-24">
                 <AnimatePresence mode="popLayout">
-                    {loadingChip === activeChip ? (
-                        Array.from({ length: 6 }).map((_, i) => (
-                            <div key={`skel-${i}`} className="h-36 rounded-xl border border-border-dim/20 bg-surface/20 animate-pulse" />
-                        ))
-                    ) : currentPosts.length > 0 ? (
+                    {isLoadingAds ? null : currentPosts.length > 0 ? (
                         currentPosts.map((post) => (
                             <AdCard
                                 key={post.id}

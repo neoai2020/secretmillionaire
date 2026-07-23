@@ -23,6 +23,7 @@ import {
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
 import { GenerationProgress } from "@/components/ui/generation-progress";
 import { WelcomeOfferBanner } from "@/components/ui/welcome-offer-banner";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 import { FacebookPostCard } from "@/features/blog-builder/components/FacebookPostCard";
 import type { SavedFacebookPost } from "@/features/blog-builder/lib/facebook-posts-vault";
 
@@ -108,6 +109,9 @@ export default function AcceleratorPage() {
 
   const messageTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useScrollToResult(generating, resultsRef);
 
   useEffect(() => {
     if (!generating) {
@@ -438,7 +442,7 @@ export default function AcceleratorPage() {
             )}
 
             {posts.length > 0 && (
-              <div className="flex flex-col gap-3">
+              <div ref={resultsRef} className="flex flex-col gap-3 scroll-mt-24">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-accent">
                     {posts.length} saved post{posts.length === 1 ? "" : "s"} · link points to{" "}

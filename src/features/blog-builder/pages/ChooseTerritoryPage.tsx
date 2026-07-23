@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Loader2, MapPin, ArrowRight, Sparkles } from "lucide-react";
 import { useBlogBuilder } from "../context/BlogBuilderContext";
@@ -11,6 +11,7 @@ import { localTerritorySuggestions } from "../lib/local-territory-suggestions";
 import { PageHeader } from "@/components/ui/page-header";
 import { GenerationProgress } from "@/components/ui/generation-progress";
 import { EarningsBanner } from "@/components/ui/earnings-banner";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 
 export default function ChooseTerritoryPage() {
   const router = useRouter();
@@ -21,6 +22,9 @@ export default function ChooseTerritoryPage() {
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const [suggestHint, setSuggestHint] = useState<string | null>(null);
   const [showOfferBanner, setShowOfferBanner] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useScrollToResult(fetching, resultsRef);
 
   const fetchSuggestions = async () => {
     const trimmed = hobby.trim();
@@ -140,12 +144,14 @@ export default function ChooseTerritoryPage() {
 
       {showOfferBanner && !fetching && suggestions.length > 0 && <EarningsBanner />}
 
-      <SuggestionGrid
-        suggestions={suggestions}
-        selected={territory}
-        onSelect={setTerritory}
-        loading={fetching}
-      />
+      <div ref={resultsRef} className="scroll-mt-24">
+        <SuggestionGrid
+          suggestions={suggestions}
+          selected={territory}
+          onSelect={setTerritory}
+          loading={fetching}
+        />
+      </div>
 
       <motion.button
         type="button"

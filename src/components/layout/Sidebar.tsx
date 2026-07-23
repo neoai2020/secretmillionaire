@@ -165,7 +165,7 @@ function SidebarContent({
         </div>
       </div>
 
-      <nav className="relative z-10 flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar px-2 py-2 pb-4">
+      <nav className="sidebar-scrollbar relative z-10 flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 py-2 pb-4">
         {workflowSteps.length > 0 && (
           <>
             {!collapsed && (
@@ -297,7 +297,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   return (
     <>
       <aside
-        className="sidebar-glass fixed left-0 top-0 z-30 hidden h-dvh flex-col overflow-y-auto transition-[width] duration-300 ease-out lg:flex"
+        className="sidebar-glass fixed left-0 top-0 z-30 hidden h-dvh flex flex-col overflow-hidden transition-[width] duration-300 ease-out lg:flex"
         style={{ width: "var(--sidebar-w)" }}
       >
         <SidebarContent collapsed={collapsed} onToggle={toggleCollapse} />
@@ -314,7 +314,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
 
       <aside
         className={clsx(
-          "sidebar-glass fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(var(--sidebar-w),88vw)] flex-col overflow-y-auto transition-transform duration-300 ease-out lg:hidden",
+          "sidebar-glass fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(var(--sidebar-w),88vw)] flex-col overflow-hidden transition-transform duration-300 ease-out lg:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

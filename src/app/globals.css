@@ -208,6 +208,39 @@ html[data-sidebar="collapsed"] {
     display: none;
   }
 
+  .sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(69, 162, 158, 0.65) rgba(255, 255, 255, 0.04);
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 7px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 9999px;
+    margin-block: 6px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg,
+      rgba(212, 175, 55, 0.9) 0%,
+      rgba(69, 162, 158, 0.95) 100%
+    );
+    border: 2px solid rgba(5, 10, 10, 0.55);
+    border-radius: 9999px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg,
+      rgba(212, 175, 55, 1) 0%,
+      rgba(79, 209, 197, 1) 100%
+    );
+  }
+
   .app-glow-orb {
     position: absolute;
     border-radius: 9999px;

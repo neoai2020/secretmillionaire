@@ -39,7 +39,7 @@ export function GenerationProgress({
           style={{ width: `${progress}%` }}
         />
       </div>
-      {offer === "welcome" ? <WelcomeOfferBanner /> : <EarningsBanner />}
+      {offer === "welcome" ? <WelcomeOfferBanner compact /> : <EarningsBanner compact />}
     </div>
   );
 }

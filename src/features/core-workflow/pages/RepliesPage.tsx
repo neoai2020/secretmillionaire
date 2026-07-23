@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     MessageSquare, Sparkles, RefreshCw, ExternalLink,
@@ -10,6 +10,8 @@ import {
 import { useSearch, Ad } from "@/features/core-workflow/context/SearchContext";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 
 function PlatformBadge({ platform }: { platform: string }) {
     const isReddit = platform === "Reddit";
@@ -36,6 +38,10 @@ export default function RepliesPage() {
     const [loadingReplyId, setLoadingReplyId] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const resultsRef = useRef<HTMLDivElement>(null);
+    const isGenerating = Boolean(loadingReplyId);
+
+    useScrollToResult(isGenerating, resultsRef);
 
     const handleGenerate = async (post: Ad) => {
         setLoadingReplyId(post.id);
@@ -145,8 +151,12 @@ export default function RepliesPage() {
                 </div>
             </header>
 
+            {isGenerating && (
+                <GenerationProgress label="Generating personalized replies…" />
+            )}
+
             {/* Ad cards */}
-            <div className="flex flex-col gap-4">
+            <div ref={resultsRef} className="flex flex-col gap-4 scroll-mt-24">
                 {currentAds.map((post, idx) => {
                     const replies = repliesByPostId[post.id] || [];
                     const isExpanded = expandedIds.has(post.id);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import {
@@ -19,6 +19,7 @@ import {
 import { AffiliateLinkPicker } from "@/components/AffiliateLinkPicker";
 import { GenerationProgress } from "@/components/ui/generation-progress";
 import { WelcomeOfferBanner } from "@/components/ui/welcome-offer-banner";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 import { isValidAffiliateUrl } from "@/features/blog-builder/lib/affiliate-url";
 import { SOCIAL_NICHES, SOCIAL_POSTS } from "../data/posts";
 
@@ -35,6 +36,9 @@ export default function SocialPayoutsPage() {
   const [showOfferBanner, setShowOfferBanner] = useState(false);
   const [revealing, setRevealing] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useScrollToResult(revealing, resultsRef, showPosts);
 
   const filtered = useMemo(
     () => (activeNiche === "All" ? SOCIAL_POSTS : SOCIAL_POSTS.filter((p) => p.niche === activeNiche)),
@@ -169,7 +173,7 @@ export default function SocialPayoutsPage() {
 
       {/* Posts */}
       {showPosts && (
-        <div className="flex flex-col gap-4">
+        <div ref={resultsRef} className="flex flex-col gap-4 scroll-mt-24">
           <div className="flex items-center justify-between">
             <h3 className="brand-font text-lg text-text-heading flex items-center gap-2">
               <Sparkles className="text-[#D4AF37]" size={18} /> Your Posts — Ready to Copy

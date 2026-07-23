@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Crown, Zap, Link as LinkIcon, ArrowRight, Copy, Check,
     ChevronRight, Flame, RotateCcw, Sparkles, ExternalLink
 } from "lucide-react";
 import { clsx } from "clsx";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { WelcomeOfferBanner } from "@/components/ui/welcome-offer-banner";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 
 interface Post {
     id: string;
@@ -61,8 +64,12 @@ export default function DfyPage() {
     const [affiliateLink, setAffiliateLink] = useState("");
     const [results, setResults] = useState<PostWithReplies[]>([]);
     const [loadingPhase, setLoadingPhase] = useState<"" | "finding" | "generating">("");
+    const [showOfferBanner, setShowOfferBanner] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [error, setError] = useState("");
+    const resultsRef = useRef<HTMLDivElement>(null);
+
+    useScrollToResult(Boolean(loadingPhase), resultsRef);
 
     const handleSelectKeyword = (kw: typeof KEYWORDS[0]) => {
         setSelectedKeyword(kw);
@@ -80,6 +87,7 @@ export default function DfyPage() {
 
         setError("");
         setStep(3);
+        setShowOfferBanner(true);
 
         try {
             // Phase 1: Find real posts
@@ -388,26 +396,24 @@ export default function DfyPage() {
 
                         {/* Loading state */}
                         {loadingPhase && (
-                            <div className="flex flex-col items-center py-20 gap-4">
-                                <div className="w-14 h-14 border-2 border-border-dim border-t-accent rounded-full animate-spin" />
-                                <div className="text-center flex flex-col gap-1">
-                                    <span className="text-sm font-bold text-text-primary">
-                                        {loadingPhase === "finding"
-                                            ? "Finding High-Ranking Posts..."
-                                            : "Generating Replies With Your Link..."}
-                                    </span>
-                                    <span className="text-xs text-text-muted">
-                                        {loadingPhase === "finding"
-                                            ? "Scanning Reddit & Quora for the best opportunities"
-                                            : "Crafting personalized replies for each post"}
-                                    </span>
-                                </div>
+                            <div className="py-6">
+                                <GenerationProgress
+                                    label={
+                                        loadingPhase === "finding"
+                                            ? "Finding high-ranking posts…"
+                                            : "Generating replies with your link…"
+                                    }
+                                    offer="welcome"
+                                />
                             </div>
                         )}
 
-                        {/* Results */}
+                        {showOfferBanner && !loadingPhase && results.length > 0 && (
+                            <WelcomeOfferBanner />
+                        )}
+
                         {!loadingPhase && results.length > 0 && (
-                            <div className="flex flex-col gap-4">
+                            <div ref={resultsRef} className="flex flex-col gap-4 scroll-mt-24">
                                 <div className="flex items-center justify-between px-1">
                                     <h2 className="text-lg font-bold text-white">
                                         {results.length} Posts Found — Replies Ready

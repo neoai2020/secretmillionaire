@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { useSearch, AnalysisData } from "@/features/core-workflow/context/SearchContext";
 import { clsx } from "clsx";
+import { GenerationProgress } from "@/components/ui/generation-progress";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 
 function Tooltip({ text }: { text: string }) {
     return (
@@ -83,6 +85,8 @@ export default function AnalysisPage() {
 
     const analysisRef = useRef(analysisByVariation);
     const activityRef = useRef(activityByVariation);
+    const resultsRef = useRef<HTMLDivElement>(null);
+    const isAnalyzing = loadingChips.size > 0;
     useEffect(() => { analysisRef.current = analysisByVariation; }, [analysisByVariation]);
     useEffect(() => { activityRef.current = activityByVariation; }, [activityByVariation]);
 
@@ -123,6 +127,8 @@ export default function AnalysisPage() {
 
     const analyzedCount = variations.filter(v => analysisByVariation[v]).length;
     const allAnalyzed = analyzedCount === variations.length;
+
+    useScrollToResult(isAnalyzing, resultsRef, analyzedCount > 0);
 
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
@@ -247,6 +253,10 @@ export default function AnalysisPage() {
                 </span>
             </div>
 
+            {isAnalyzing && (
+                <GenerationProgress label="Analyzing keyword demand across variations…" />
+            )}
+
             {/* How-to-read guide */}
             <AnimatePresence>
                 {showGuide && (
@@ -301,7 +311,7 @@ export default function AnalysisPage() {
             </AnimatePresence>
 
             {/* Data Table */}
-            <div className="border border-border-dim/30 rounded-xl overflow-hidden bg-[#0a0a0c]">
+            <div ref={resultsRef} className="border border-border-dim/30 rounded-xl overflow-hidden bg-[#0a0a0c] scroll-mt-24">
                 {/* Table Header */}
                 <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-[#0c0c0e] border-b border-border-dim/20">
                     <div className="col-span-4">

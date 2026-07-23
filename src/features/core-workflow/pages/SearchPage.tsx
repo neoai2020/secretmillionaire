@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, ArrowRight, History, Loader2, Zap } from "lucide-react";
 import { useSearch } from "@/features/core-workflow/context/SearchContext";
 import { motion } from "framer-motion";
+import { GenerationProgress } from "@/components/ui/generation-progress";
 
 export default function SearchPage() {
     const {
@@ -68,6 +69,10 @@ export default function SearchPage() {
 
             {/* Search Input */}
             <div className="w-full flex flex-col gap-3">
+                {loading && (
+                    <GenerationProgress label="Finding ads for your topic…" />
+                )}
+
                 <div className="relative group">
                     <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-accent transition-colors" />
                     <input

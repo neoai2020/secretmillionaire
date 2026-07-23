@@ -7,6 +7,7 @@ import { Rocket, ArrowRight, CheckCircle2, RotateCcw } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
 import { GenerationProgress } from "@/components/ui/generation-progress";
 import { EarningsBanner } from "@/components/ui/earnings-banner";
+import { useScrollToResult } from "@/hooks/useScrollToResult";
 import { useBlogBuilder } from "../context/BlogBuilderContext";
 import { GenerationTerminal } from "../components/GenerationTerminal";
 import { DeploySitePreview } from "../components/DeploySitePreview";
@@ -142,6 +143,10 @@ export default function DeployAssetPage() {
   const slotProgressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressCreepTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const deployRunning = useRef(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const isGenerating = phase === "generating" || phase === "publishing";
+
+  useScrollToResult(isGenerating, resultsRef);
 
   const clearProgressCreepTimer = () => {
     if (progressCreepTimer.current) {
@@ -810,9 +815,10 @@ export default function DeployAssetPage() {
 
       {showContent && site && (
         <motion.div
+          ref={resultsRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-6 scroll-mt-24"
         >
           <DeploySitePreview site={site} />
 
