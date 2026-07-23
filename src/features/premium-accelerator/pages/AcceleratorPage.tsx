@@ -23,7 +23,6 @@ import {
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
 import { GenerationProgress } from "@/components/ui/generation-progress";
 import { WelcomeOfferBanner } from "@/components/ui/welcome-offer-banner";
-import { PageHeader } from "@/components/ui/page-header";
 import { FacebookPostCard } from "@/features/blog-builder/components/FacebookPostCard";
 import type { SavedFacebookPost } from "@/features/blog-builder/lib/facebook-posts-vault";
 
@@ -231,7 +230,7 @@ export default function AcceleratorPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 pb-16 max-w-5xl mx-auto w-full">
+    <div className="page-stack w-full">
       {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 sm:p-8 lg:p-12 text-center border border-[#D4AF37]/15">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] mb-5">

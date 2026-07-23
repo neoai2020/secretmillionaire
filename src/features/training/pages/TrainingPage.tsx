@@ -42,7 +42,7 @@ export default function TrainingPage() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col gap-12 w-full py-6"
+      className="page-stack w-full"
     >
       <PageHeader
         eyebrow="Training"

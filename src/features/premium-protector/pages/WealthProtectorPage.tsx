@@ -44,7 +44,7 @@ export default function WealthProtectorPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-8 pb-16 max-w-5xl mx-auto w-full">
+    <div className="page-stack w-full">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

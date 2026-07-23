@@ -60,11 +60,15 @@ export default function LinkVaultPage() {
   }, [links, sessionLoaded, loading, saveLinksToVault]);
 
   if (loading) {
-    return <p className="text-[#6b7280] text-sm animate-pulse">Loading link vault...</p>;
+    return (
+      <div className="page-stack w-full">
+        <p className="text-[#6b7280] text-sm animate-pulse">Loading link vault...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
+    <div className="page-stack w-full page-container">
       <div className="flex flex-col gap-2">
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Saved Links</p>
         <h1 className="brand-font text-2xl sm:text-3xl text-[#C5C6C7] tracking-tight">Link Vault</h1>

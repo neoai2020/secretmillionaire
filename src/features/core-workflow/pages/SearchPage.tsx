@@ -50,7 +50,7 @@ export default function SearchPage() {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center min-h-[70vh] gap-10 max-w-xl mx-auto w-full"
+            className="page-stack w-full page-container items-center justify-center min-h-[60vh] sm:min-h-[70vh]"
         >
             {/* Header */}
             <div className="text-center flex flex-col items-center gap-3">

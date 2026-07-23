@@ -58,6 +58,10 @@
   --glow-gold: 0 0 32px rgba(212, 175, 55, 0.15);
 
   --sidebar-w: 280px;
+  --sidebar-gap: 2rem;
+  --content-max: 80rem;
+  --content-narrow: 48rem;
+  --content-wide: 80rem;
   --radius-md: 0.75rem;
 }
 
@@ -99,7 +103,8 @@ html[data-sidebar="collapsed"] {
   }
 
   .card-base {
-    @apply rounded-2xl p-6 transition-all duration-200;
+    @apply rounded-2xl transition-all duration-200;
+    padding: clamp(1rem, 2.5vw, 1.5rem);
     background: var(--bg-panel-glass);
     backdrop-filter: blur(20px) saturate(160%);
     -webkit-backdrop-filter: blur(20px) saturate(160%);
@@ -136,6 +141,14 @@ html[data-sidebar="collapsed"] {
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
+  .app-bg {
+    background-color: var(--bg-page);
+    background-image:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(69, 162, 158, 0.14) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 50% at 95% 85%, rgba(212, 175, 55, 0.1) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
   .sidebar-glass {
     background: var(--bg-sidebar);
     backdrop-filter: blur(20px) saturate(160%);
@@ -151,6 +164,48 @@ html[data-sidebar="collapsed"] {
   .app-content-layer {
     position: relative;
     z-index: 1;
+  }
+
+  .app-page-shell {
+    width: 100%;
+  }
+
+  @media (min-width: 1024px) {
+    .app-page-shell {
+      padding: 0;
+    }
+  }
+
+  .page-container {
+    width: 100%;
+    max-width: var(--content-narrow);
+    margin-inline: auto;
+  }
+
+  .page-container-wide {
+    width: 100%;
+  }
+
+  .page-container-narrow {
+    width: 100%;
+    max-width: 40rem;
+    margin-inline: auto;
+  }
+
+  .page-stack {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.25rem, 2.5vw, 2rem);
+    width: 100%;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
   .app-glow-orb {
@@ -191,8 +246,10 @@ html[data-sidebar="collapsed"] {
   }
 
   .command-nav-link {
-    @apply flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 rounded-xl text-sm transition-all duration-300 relative overflow-hidden;
+    @apply flex items-center justify-between rounded-xl text-sm transition-all duration-300 relative overflow-hidden;
     @apply text-text-secondary hover:text-text-heading hover:bg-white/5;
+    padding: 0.625rem clamp(0.75rem, 2vw, 1rem);
+    min-height: 2.75rem;
   }
 
   .command-nav-link.active {
@@ -507,7 +564,7 @@ html[data-sidebar="collapsed"] {
   }
 
   .ds-h1 {
-    font-size: clamp(1.75rem, 1.35rem + 1.6vw, 2.375rem);
+    font-size: clamp(1.625rem, 1.1rem + 2.2vw, 2.5rem);
     font-weight: 800;
     letter-spacing: -0.025em;
     line-height: 1.15;

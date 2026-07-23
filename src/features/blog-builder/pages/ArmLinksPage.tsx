@@ -116,7 +116,7 @@ export default function ArmLinksPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
+    <div className="page-stack w-full page-container">
       <div className="flex flex-col gap-2">
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Step 2</p>
         <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-[#C5C6C7] tracking-tight">

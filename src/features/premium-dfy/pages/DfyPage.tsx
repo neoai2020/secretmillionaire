@@ -160,7 +160,7 @@ export default function DfyPage() {
         <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col gap-10 py-10 max-w-5xl mx-auto w-full"
+            className="page-stack w-full"
         >
             {/* Header */}
             <header className="flex flex-col items-center text-center gap-5">
@@ -517,7 +517,7 @@ export default function DfyPage() {
             </AnimatePresence>
 
             {/* Footer */}
-            <footer className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-4 pb-10">
+            <footer className="mt-10 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
                 <div className="flex items-center gap-8">
                     {["5 Hot Keywords", "Real Posts Found", "AI Replies + Your Link", "Copy & Earn"].map((b, i) => (
                         <div key={i} className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">

@@ -65,7 +65,7 @@ export default function SocialPayoutsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 pb-16 max-w-5xl mx-auto w-full">
+    <div className="page-stack w-full">
       {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 sm:p-8 lg:p-12 text-center border border-[#D4AF37]/15">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/20">

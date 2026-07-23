@@ -177,15 +177,15 @@ export default function ConnectDashboardPage() {
   const dailyGoal = extracted ? balance : commissionsFound;
 
   return (
-    <div className="flex flex-col gap-8 sm:gap-10 w-full">
+    <div className="page-stack w-full">
       <PageHeader
         eyebrow="Home"
         title={`Welcome to ${brand.productName}`}
         subtitle="You build a website that recommends products. When someone buys through your links, you get paid. You only need to do three things — each one takes just a few minutes."
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-        <div className="xl:col-span-3 flex flex-col gap-8 sm:gap-10">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-8">
+        <div className="min-w-0 space-y-6 sm:space-y-8">
       {/* Video training — top of page */}
       <section className="rounded-2xl border border-[#D4AF37]/25 bg-[#12141a] p-5 sm:p-6 flex flex-col gap-4">
         <div className="flex items-center gap-2">
@@ -424,7 +424,7 @@ export default function ConnectDashboardPage() {
       </section>
         </div>
 
-        <aside className="min-w-0 space-y-6 xl:col-span-1">
+        <aside className="min-w-0 space-y-6">
           <ContactSupportWidget />
           <div className="card-base border-[#1e2128] p-5">
             <p className="text-xs font-bold uppercase tracking-wider text-[#9fb0b5] mb-4">Tips</p>

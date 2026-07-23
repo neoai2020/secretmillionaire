@@ -1,11 +1,13 @@
 "use client";
 
+import { clsx } from "clsx";
 import { brand } from "@/config/brand.config";
 
 interface BrandLogoProps {
   size?: "sm" | "md" | "lg";
   showTagline?: boolean;
   compact?: boolean;
+  splitTitle?: boolean;
 }
 
 const SIZES = {
@@ -29,11 +31,21 @@ const SIZES = {
   },
 };
 
-export function BrandLogo({ size = "sm", showTagline = true, compact = false }: BrandLogoProps) {
+export function BrandLogo({
+  size = "sm",
+  showTagline = true,
+  compact = false,
+  splitTitle = false,
+}: BrandLogoProps) {
   const s = SIZES[size];
+  const societyIndex = brand.productName.lastIndexOf(" Society");
+  const titleBeforeSociety =
+    societyIndex > 0 ? brand.productName.slice(0, societyIndex) : brand.productName;
+  const titleAfterSociety =
+    societyIndex > 0 ? brand.productName.slice(societyIndex + 1) : "";
 
   return (
-    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+    <div className={clsx("flex items-center min-w-0", compact ? "justify-center" : "gap-2.5 sm:gap-3")}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={brand.logo.src}
@@ -44,18 +56,32 @@ export function BrandLogo({ size = "sm", showTagline = true, compact = false }: 
         loading="eager"
         decoding="async"
       />
-      <div className="flex flex-col min-w-0">
-        <span
-          className={`brand-font whitespace-nowrap ${compact ? "text-xs sm:text-sm leading-tight" : s.title} text-text-primary tracking-tight leading-tight`}
-        >
-          {brand.productName.replace(/ /g, "\u00a0")}
-        </span>
-        {showTagline && !compact && (
-          <span className={`${s.tagline} font-semibold text-text-muted mt-0.5 truncate`}>
-            {brand.tagline}
+      {!compact && (
+        <div className="flex flex-col min-w-0">
+          <span
+            className={clsx(
+              "brand-font text-text-primary tracking-tight leading-tight",
+              s.title,
+              !splitTitle && "whitespace-nowrap"
+            )}
+          >
+            {splitTitle && titleAfterSociety ? (
+              <>
+                {titleBeforeSociety.replace(/ /g, "\u00a0")}
+                <br />
+                {titleAfterSociety.replace(/ /g, "\u00a0")}
+              </>
+            ) : (
+              brand.productName.replace(/ /g, "\u00a0")
+            )}
           </span>
-        )}
-      </div>
+          {showTagline && (
+            <span className={`${s.tagline} font-semibold text-text-muted mt-0.5 truncate`}>
+              {brand.tagline}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

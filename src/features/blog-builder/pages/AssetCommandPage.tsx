@@ -95,12 +95,16 @@ export default function AssetCommandPage() {
   };
 
   if (loading) {
-    return <p className="text-[#9fb0b5] text-base animate-pulse">Loading your websites...</p>;
+    return (
+      <div className="page-stack w-full">
+        <p className="text-[#9fb0b5] text-base animate-pulse">Loading your websites...</p>
+      </div>
+    );
   }
 
   if (summaries.length === 0) {
     return (
-      <div className="flex flex-col gap-6 max-w-5xl w-full mx-auto">
+      <div className="page-stack w-full">
         <VaultHeader quota={quota} siteCount={0} />
         <div className="rounded-xl border border-dashed border-white/15 p-10 text-center flex flex-col items-center gap-4">
           <FolderOpen className="text-[#6b7280]" size={40} strokeWidth={1.25} />
@@ -123,7 +127,7 @@ export default function AssetCommandPage() {
     const summary = summaries.find((s) => s.site.id === openSiteId);
 
     return (
-      <div className="flex flex-col gap-6 sm:gap-8 max-w-5xl w-full mx-auto">
+      <div className="page-stack w-full">
         <button
           type="button"
           onClick={closeFolder}
@@ -247,7 +251,7 @@ export default function AssetCommandPage() {
   const latestSiteId = activeSiteId ?? summaries[0]?.site.id ?? null;
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 max-w-5xl w-full mx-auto">
+    <div className="page-stack w-full">
       <VaultHeader quota={quota} siteCount={summaries.length} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

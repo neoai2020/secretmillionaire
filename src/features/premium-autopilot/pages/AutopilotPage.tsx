@@ -169,7 +169,7 @@ export default function AutomatedProfitsPage() {
         <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col gap-0 max-w-5xl mx-auto w-full py-6"
+            className="page-stack w-full"
         >
             {/* Hero */}
             <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-accent/10 via-surface to-accent-muted/10 border border-accent/20 p-10 md:p-16 flex flex-col items-center text-center gap-6">
@@ -453,7 +453,7 @@ export default function AutomatedProfitsPage() {
             </section>
 
             {/* Footer */}
-            <footer className="mt-16 pt-8 border-t border-white/5 flex flex-col items-center gap-4 pb-10">
+            <footer className="mt-16 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
                 <div className="flex items-center gap-6 flex-wrap justify-center">
                     {["100+ Sources", "9 Niches", "Submit Once", "Traffic Forever"].map((b, i) => (
                         <div key={i} className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">

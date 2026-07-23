@@ -15,9 +15,10 @@ import { useBlogBuilder } from "../context/BlogBuilderContext";
 interface BlogBuilderNavProps {
   pathname: string;
   onNavClick: () => void;
+  collapsed?: boolean;
 }
 
-export function BlogBuilderNav({ pathname, onNavClick }: BlogBuilderNavProps) {
+export function BlogBuilderNav({ pathname, onNavClick, collapsed = false }: BlogBuilderNavProps) {
   const blogSteps = getVisibleBlogBuilderWorkflowSteps();
   const blogResources = getVisibleBlogBuilderResourceNav();
   const { blogProgress } = useBlogBuilder();
@@ -31,14 +32,19 @@ export function BlogBuilderNav({ pathname, onNavClick }: BlogBuilderNavProps) {
       return (
         <div
           key={item.path}
-          className="command-nav-link py-3 sm:py-4 opacity-40 cursor-not-allowed"
+          className={clsx(
+            "command-nav-link py-3 sm:py-4 opacity-40 cursor-not-allowed",
+            collapsed && "justify-center px-2"
+          )}
           title="Complete the previous step first"
         >
-          <div className="flex items-center gap-3 min-w-0">
+          <div className={clsx("flex items-center gap-3 min-w-0", collapsed && "justify-center")}>
             <Lock size={18} className="text-text-muted shrink-0" />
-            <span className="brand-font text-sm font-medium text-text-muted leading-snug">
-              {item.label}
-            </span>
+            {!collapsed && (
+              <span className="brand-font text-sm font-medium text-text-muted leading-snug">
+                {item.label}
+              </span>
+            )}
           </div>
         </div>
       );
@@ -49,13 +55,20 @@ export function BlogBuilderNav({ pathname, onNavClick }: BlogBuilderNavProps) {
         key={item.path}
         href={item.path}
         onClick={onNavClick}
-        className={clsx("command-nav-link py-3 sm:py-4", isActive && "active")}
+        title={collapsed ? item.label : undefined}
+        className={clsx(
+          "command-nav-link py-3 sm:py-4",
+          isActive && "active",
+          collapsed && "justify-center px-2"
+        )}
       >
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className={clsx("flex items-center gap-3 min-w-0 flex-1", collapsed && "justify-center")}>
           <Icon size={18} className={clsx("shrink-0", isActive ? "text-accent" : "text-text-muted")} />
-          <span className="brand-font text-sm font-medium leading-snug">{item.label}</span>
+          {!collapsed && (
+            <span className="brand-font text-sm font-medium leading-snug">{item.label}</span>
+          )}
         </div>
-        {isActive && <ChevronRight size={14} className="text-accent ml-2 shrink-0" />}
+        {isActive && !collapsed && <ChevronRight size={14} className="text-accent ml-2 shrink-0" />}
       </Link>
     );
   };
@@ -64,9 +77,11 @@ export function BlogBuilderNav({ pathname, onNavClick }: BlogBuilderNavProps) {
 
   return (
     <>
-      <span className="text-xs font-black tracking-[0.25em] text-[#6b7280] uppercase px-3 sm:px-5 mt-4 mb-2">
-        Build Your Website
-      </span>
+      {!collapsed && (
+        <span className="text-xs font-black tracking-[0.25em] text-[#6b7280] uppercase px-3 sm:px-5 mt-3 mb-1.5">
+          Build Your Website
+        </span>
+      )}
       {blogSteps.map(renderNavLink)}
       {blogResources.map(renderNavLink)}
     </>

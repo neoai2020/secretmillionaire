@@ -53,7 +53,11 @@ const moreLinks = [
   { title: "Support", url: "/support", icon: Headphones },
 ];
 
-export function BottomNav() {
+interface BottomNavProps {
+  onOpenSidebar?: () => void;
+}
+
+export function BottomNav({ onOpenSidebar }: BottomNavProps) {
   const pathname = usePathname();
   const workflow = useWorkflowNav();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -111,7 +115,7 @@ export function BottomNav() {
 
           <button
             type="button"
-            onClick={() => setMoreOpen(true)}
+            onClick={() => (onOpenSidebar ? onOpenSidebar() : setMoreOpen(true))}
             className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors ${
               moreActive ? "text-[#D4AF37]" : "text-slate-500 active:text-white"
             }`}

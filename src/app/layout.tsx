@@ -26,7 +26,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var c=localStorage.getItem("sms_sidebar_collapsed")==="1";document.documentElement.dataset.sidebar=c?"collapsed":"expanded";}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="text-text-primary selection:bg-accent/30 antialiased min-h-dvh">
         <AppProviders>{children}</AppProviders>
       </body>

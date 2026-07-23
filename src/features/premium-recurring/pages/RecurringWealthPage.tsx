@@ -137,7 +137,7 @@ export default function RecurringWealthPage() {
   const [activeProduct, setActiveProduct] = useState<RecurringProduct | null>(null);
 
   return (
-    <div className="flex flex-col gap-8 pb-16 max-w-5xl mx-auto w-full">
+    <div className="page-stack w-full">
       {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 sm:p-8 lg:p-12 text-center border border-[#D4AF37]/15">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] mb-5">

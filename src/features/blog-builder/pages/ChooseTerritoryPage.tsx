@@ -77,7 +77,7 @@ export default function ChooseTerritoryPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 w-full">
+    <div className="page-stack w-full page-container">
       <PageHeader
         eyebrow="Step 1"
         title="Pick Your Topic"

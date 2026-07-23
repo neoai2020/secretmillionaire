@@ -18,7 +18,7 @@ export function AuthLayout({ children, subtitle }: AuthLayoutProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="app-content-layer w-full max-w-md relative z-10"
+        className="app-content-layer w-full max-w-md mx-auto relative z-10 px-1 sm:px-0"
       >
         <div className="glass-card p-6 sm:p-8 lg:p-10 flex flex-col gap-6 sm:gap-8 shadow-2xl">
           <div className="flex flex-col items-center gap-4 text-center">

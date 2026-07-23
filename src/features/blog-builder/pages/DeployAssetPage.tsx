@@ -7,7 +7,6 @@ import { Rocket, ArrowRight, CheckCircle2, RotateCcw } from "lucide-react";
 import { AiLoadingBar } from "@/components/ui/AiLoadingBar";
 import { GenerationProgress } from "@/components/ui/generation-progress";
 import { EarningsBanner } from "@/components/ui/earnings-banner";
-import { PageHeader } from "@/components/ui/page-header";
 import { useBlogBuilder } from "../context/BlogBuilderContext";
 import { GenerationTerminal } from "../components/GenerationTerminal";
 import { DeploySitePreview } from "../components/DeploySitePreview";
@@ -761,7 +760,7 @@ export default function DeployAssetPage() {
       (phase === "error" && postSlots.some((s) => s.status === "complete")));
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 max-w-4xl w-full mx-auto">
+    <div className="page-stack w-full page-container">
       <div className="flex flex-col gap-2">
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#D4AF37]">Step 3</p>
         <h1 className="brand-font text-2xl sm:text-3xl lg:text-4xl text-[#C5C6C7] tracking-tight">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { BrandLogo } from "./BrandLogo";
 import { GlobalFooterPromo, PromoOrchestrator } from "./PromoOrchestrator";
@@ -44,46 +45,53 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-dvh overflow-hidden w-full bg-page">
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close menu"
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
+    <div className="app-bg flex min-h-dvh min-w-0 overflow-x-clip">
       <Sidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
 
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden transition-[padding] duration-300 lg:pl-[var(--sidebar-w)]">
+      <div className="flex min-w-0 flex-1 flex-col">
         <header
-          className="lg:hidden sticky top-0 z-30 mobile-header-glass shrink-0 safe-top border-b border-white/5"
+          className="mobile-header-glass fixed inset-x-0 top-0 z-40 shrink-0 border-b border-white/5 lg:hidden"
           style={{ paddingTop: "env(safe-area-inset-top)" }}
         >
-          <div className="flex items-center justify-center px-4 py-3">
-            <Link href="/dashboard" className="min-w-0" onClick={() => setSidebarOpen(false)}>
-              <BrandLogo size="sm" showTagline={false} compact />
+          <div className="grid h-14 grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2 px-4">
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={() => setSidebarOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-text-muted transition-colors hover:bg-white/5 hover:text-text-heading"
+            >
+              <Menu size={20} />
+            </button>
+            <Link
+              href="/dashboard"
+              className="min-w-0 justify-self-center"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <BrandLogo size="sm" showTagline={false} />
             </Link>
+            <span className="w-9" aria-hidden />
           </div>
           {showConnection && (
-            <div className="px-4 pb-3 flex justify-center sm:justify-end">
+            <div className="flex justify-center px-4 pb-3 sm:justify-end">
               <ConnectionStatus />
             </div>
           )}
         </header>
 
-        {showConnection && (
-          <div className="hidden lg:flex sticky top-0 z-20 justify-end px-8 pt-4 pb-2">
-            <ConnectionStatus />
-          </div>
-        )}
-
-        <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth relative app-main-canvas">
+        <main
+          className="relative min-w-0 flex-1 overflow-x-clip overflow-y-auto scroll-smooth px-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))] transition-[padding] duration-300 sm:px-6 lg:pb-8 lg:pl-[calc(var(--sidebar-w)+var(--sidebar-gap))] lg:pr-8 lg:pt-8 app-main-canvas"
+        >
           <div className="app-glow-orb app-glow-orb-teal" aria-hidden />
           <div className="app-glow-orb app-glow-orb-gold" aria-hidden />
           <div className="app-glow-orb app-glow-orb-center" aria-hidden />
-          <div className="app-content-layer px-4 sm:px-6 md:px-10 lg:px-12 pt-4 sm:pt-6 lg:pt-4 pb-24 sm:pb-28 lg:pb-16 max-w-7xl mx-auto min-h-full flex flex-col w-full">
+
+          {showConnection && (
+            <div className="app-content-layer mb-4 hidden justify-end lg:flex">
+              <ConnectionStatus />
+            </div>
+          )}
+
+          <div className="app-content-layer mx-auto flex min-h-full w-full min-w-0 max-w-7xl flex-col">
             {children}
             <div className="mt-auto pt-10 sm:pt-16">
               <GlobalFooterPromo />
@@ -92,7 +100,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      <BottomNav />
+      <BottomNav onOpenSidebar={() => setSidebarOpen(true)} />
       <PromoOrchestrator />
     </div>
   );
