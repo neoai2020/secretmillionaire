@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { clsx } from "clsx";
 import {
   GraduationCap,
   Play,
@@ -35,7 +37,38 @@ const {
   videoPlaceholder,
 } = trainingContentData;
 
+type TrainingTab = "videos" | "faq";
+
+function TrainingTabButton({
+  active,
+  onClick,
+  icon: Icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: typeof Play;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        "inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-all",
+        active
+          ? "bg-accent text-text-on-accent shadow-[0_0_20px_rgba(69,162,158,0.25)]"
+          : "border border-border-dim/40 bg-surface/40 text-text-primary hover:border-accent/30 hover:bg-accent/5"
+      )}
+    >
+      <Icon size={14} />
+      {label}
+    </button>
+  );
+}
+
 export default function TrainingPage() {
+  const [activeTab, setActiveTab] = useState<TrainingTab>("videos");
   const faqCount = faqSections.reduce((acc, s) => acc + s.items.length, 0);
 
   return (
@@ -45,11 +78,28 @@ export default function TrainingPage() {
       className="page-stack w-full"
     >
       <PageHeader
-        eyebrow="Training"
+        eyebrow="Academy"
         title={trainingContent.pageTitle}
         subtitle={trainingContent.pageSubtitle}
       />
 
+      <div className="flex flex-wrap gap-3 -mt-2">
+        <TrainingTabButton
+          active={activeTab === "videos"}
+          onClick={() => setActiveTab("videos")}
+          icon={Play}
+          label="Training Videos"
+        />
+        <TrainingTabButton
+          active={activeTab === "faq"}
+          onClick={() => setActiveTab("faq")}
+          icon={GraduationCap}
+          label="FAQ"
+        />
+      </div>
+
+      {activeTab === "videos" ? (
+        <>
       <section className="glass-card p-6 flex flex-col gap-2">
         <h2 className="text-lg font-bold text-text-heading">{intro.headline}</h2>
         <p className="text-[13px] text-text-secondary leading-relaxed">{intro.body}</p>
@@ -58,7 +108,7 @@ export default function TrainingPage() {
       <section className="flex flex-col gap-6">
         <div className="flex items-center gap-2">
           <Play size={16} className="text-accent" />
-          <h2 className="text-lg font-bold text-text-heading">Video Training</h2>
+          <h2 className="text-lg font-bold text-text-heading">Platform Tutorials</h2>
         </div>
 
         {VIDEOS.length > 0 ? (
@@ -239,6 +289,28 @@ export default function TrainingPage() {
         </div>
       </section>
 
+      <section className="border border-accent/20 rounded-xl bg-accent/5 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-base font-bold text-text-heading">{cta.title}</h3>
+          <p className="text-[13px] text-text-muted">{cta.subtitle}</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+          <Link href={cta.primaryHref} className="btn-primary h-11 px-6 text-sm rounded-lg flex items-center gap-2">
+            <TrainingIcon id="mapPin" size={16} />
+            <span>{cta.primaryLabel}</span>
+            <ArrowRight size={14} />
+          </Link>
+          <Link
+            href={cta.secondaryHref}
+            className="h-11 px-6 text-sm rounded-lg flex items-center gap-2 border border-accent/30 text-accent hover:bg-accent/5 transition-colors"
+          >
+            <TrainingIcon id="repeat" size={16} />
+            <span>{cta.secondaryLabel}</span>
+          </Link>
+        </div>
+      </section>
+        </>
+      ) : (
       <section className="flex flex-col gap-8">
         <div className="flex items-center gap-2">
           <HelpCircle size={16} className="text-accent" />
@@ -261,27 +333,7 @@ export default function TrainingPage() {
           ))}
         </div>
       </section>
-
-      <section className="border border-accent/20 rounded-xl bg-accent/5 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-base font-bold text-text-heading">{cta.title}</h3>
-          <p className="text-[13px] text-text-muted">{cta.subtitle}</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-          <Link href={cta.primaryHref} className="btn-primary h-11 px-6 text-sm rounded-lg flex items-center gap-2">
-            <TrainingIcon id="mapPin" size={16} />
-            <span>{cta.primaryLabel}</span>
-            <ArrowRight size={14} />
-          </Link>
-          <Link
-            href={cta.secondaryHref}
-            className="h-11 px-6 text-sm rounded-lg flex items-center gap-2 border border-accent/30 text-accent hover:bg-accent/5 transition-colors"
-          >
-            <TrainingIcon id="repeat" size={16} />
-            <span>{cta.secondaryLabel}</span>
-          </Link>
-        </div>
-      </section>
+      )}
     </motion.div>
   );
 }

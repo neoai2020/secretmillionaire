@@ -1,4 +1,3 @@
-import { brand } from "./brand.config";
 import { FREE_TRAINING_URL } from "@/lib/support";
 
 /** Vimeo embed URL with uploader/channel chrome hidden (no byline, portrait, or title). */
@@ -8,8 +7,8 @@ export function vimeoEmbedUrl(videoId: string): string {
 
 /** Page shell metadata; body copy lives in `training-content.ts`. */
 export const trainingContent = {
-  pageTitle: "Member Training",
-  pageSubtitle: `Simple step-by-step guides for ${brand.productName} members`,
+  pageTitle: "Training",
+  pageSubtitle: "Video tutorials and frequently asked questions",
   externalTrainingUrl: FREE_TRAINING_URL,
   videos: [
     {
