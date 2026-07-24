@@ -53,7 +53,6 @@ export function ContactSupportWidget({ embedded = false }: ContactSupportWidgetP
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [sentViaMailto, setSentViaMailto] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
   useEffect(() => {
     void supabase.auth.getUser().then(({ data: { user } }) => {
       if (user?.email) setEmail(user.email);
@@ -98,7 +97,9 @@ export function ContactSupportWidget({ embedded = false }: ContactSupportWidgetP
         }
 
         if (res.status === 401) {
-          throw new Error("Your session expired. Please refresh the page and try again.");
+          // Session went stale (e.g. expired mid-visit) — mailto still delivers.
+          finishWithMailto(trimmedEmail, trimmedMessage, setSubmittedEmail, setSentViaMailto, setFormState);
+          return;
         }
 
         if (res.ok && data.success) {
